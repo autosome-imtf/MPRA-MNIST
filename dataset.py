@@ -10,21 +10,34 @@ from dataclass import SeqObj, VectorDsFeature, ScalarDsFeature
 class MpraDataset(Dataset):
     
     """ Sequence dataset. """
+
+    flag = ...
     
-    def __init__(self, 
-                 ds: pd.DataFrame = None,
+    def __init__(self,
+                 split: str = "",
+                 cell_type: str = "",
                  transform = None):
         """
         Parameters
         ----------
-        ds : pd.DataFrame
-            Training dataset.
+        split (string): 'train', 'val' or 'test', required
+        cell_type (string): -
         transform (callable, optional): A function/transform that takes in NuclSeq dataclass object and returns a transformed version. Default: None.
         """
-        self.ds = ds
+        #self.info = INFO[self.flag] # cool method to info about dataset
+        
         self.transform = transform
         self._scalars = {}
         self._vectors = {}
+        self._data_path = "./datasets/" + self.flag + "/"
+
+        self.split = split
+        self.cell_type = "_" + cell_type
+
+        if self.split in ["train", "val", "test"]:
+            self.ds = pd.read_csv(self._data_path + self.split + self.cell_type + '.tsv', sep='\t')
+        else:
+            raise ValueError
         
     def __getitem__(self, i):
         sequence = self.ds.seq.values[i]
@@ -38,8 +51,8 @@ class MpraDataset(Dataset):
         if self.transform is not None:
             Seq = self.transform(Seq)
             
-        #return Seq.seq, Seq.seqsize, Seq.scalars, Seq.vectors, mean
-        return Seq
+        return Seq.seq, mean
+        #return Seq
 
     @property
     def scalars(self):
@@ -65,15 +78,4 @@ class MpraDataset(Dataset):
         return len(self.ds.seq)
 
 class VikramDataset(MpraDataset):
-    def __init__(self, transform = None):
-        super().__init__()
-        
-        seqs = ["agtactagagtc","atatatatatat"]
-        scal = [1,2]
-        vect = [[1,0,1,0,1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1,0,1,0,1]]
-        self.ds = pd.DataFrame({"seq" : seqs,"scalar1": scal,"vector1": vect,"mean_value":[5,6]})
-        
-        self.add_numeric_scalar("scalar1", val = self.ds.scalar1.values)
-        self.add_categorial_vector("vector1", val = self.ds.vector1.values, pad_value = 2)
-        self.transform = transform
-    
+    flag = "Vikram_splited"      
