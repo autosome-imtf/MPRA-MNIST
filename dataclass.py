@@ -41,7 +41,7 @@ class VectorDsFeature:
                     if not v in levels:
                       levels[v] = len(levels)
 
-            if not pad_value in levels: # Why?
+            if not pad_value in levels:
                 levels[pad_value] = len(levels)
 
 
@@ -92,7 +92,8 @@ class SeqObj:
 
     scalars: dict[str, ScalarFeature]
     vectors: dict[str, VectorFeature]
-    
+
+    add_feature_channel = False
     is_flank_added = False
     reverse: bool = False
     use_reverse_channel: bool = False

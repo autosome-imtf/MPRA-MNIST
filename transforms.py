@@ -75,10 +75,18 @@ class Seq2Tensor(nn.Module):
         to_concat = [X]
         
         if Seq.use_reverse_channel: # adding reverse_channel
-            rev = torch.full( (1, Seq.right_end - Seq.left_start + 1), Seq.rev, dtype=torch.float32)
+            rev = torch.full( (1, Seq.seqsize), Seq.rev, dtype=torch.float32)
             to_concat.append(rev)
             
         # add channels scalar and vector
+        if Seq.add_feature_channel:
+            for ch in Seq.feature_channels:
+                if ch in Seq.scalars.keys():
+                    rev = torch.full( (1, Seq.seqsize),  Seq.scalars[ch].val, dtype=torch.float32)
+                    to_concat.append(rev)
+                if ch in Seq.vectors.keys():
+                    rev = torch.tensor([Seq.vectors[ch].val])
+                    to_concat.append(rev)
             
          # create final tensor
         if len(to_concat) > 1:
@@ -110,7 +118,10 @@ class AddFlanks(nn.Module):
         Seq.seq = self.left_side + Seq.seq + self.right_side
 
         # change vector feature
-        Seq.vectors
+        for name in Seq.vectors:
+            left_flank_vect = [Seq.vectors[name].tp.levels[Seq.vectors[name].pad_value] for i in range(len(self.left_side))]
+            right_flank_vect = [Seq.vectors[name].tp.levels[Seq.vectors[name].pad_value] for i in range(len(self.right_side))]
+            Seq.vectors[name].val = left_flank_vect + Seq.vectors[name].val + right_flank_vect
 
         return Seq
         
@@ -119,21 +130,22 @@ class AddFlanks(nn.Module):
 
 class LeftCrop(nn.Module):
     '''
-
+        min_crop, max_crop: int - min max sizes of cropped sequence from left side
     '''
-    def __init__(self, left_indent):
+    def __init__(self, min_crop, max_crop):
         super().__init__()
-        self.left_indent = left_indent
+        self.min = min_crop
+        self.max = max_crop
         
     def forward(self, Seq):
 
-        crop_coordinate = torch.randint(size=(1,), low = 0, high = self.left_indent).item()
+        crop_coordinate = torch.randint(size=(1,), low = self.min, high = self.max + 1).item()
         
-        Seq.seq = Seq.seq[crop_coordinate : ]
+        Seq.seq = Seq.seq[ - crop_coordinate : ]
 
         #change vector feature
         for name in Seq.vectors:
-            Seq.vectors[name].val = Seq.vectors[name].val[crop_coordinate : ]
+            Seq.vectors[name].val = Seq.vectors[name].val[ - crop_coordinate : ]
         
         return Seq
         
@@ -142,21 +154,22 @@ class LeftCrop(nn.Module):
 
 class RightCrop(nn.Module):
     '''
-
+        min_crop, max_crop: int - min max sizes of cropped sequence from right side
     '''
-    def __init__(self, right_indent):
+    def __init__(self, min_crop, max_crop):
         super().__init__()
-        self.right_indent = right_indent
+        self.min = min_crop
+        self.max = max_crop
         
     def forward(self, Seq):
 
-        crop_coordinate = torch.randint(size=(1,), low = 0, high = self.right_indent).item()
+        crop_coordinate = torch.randint(size=(1,), low = self.min, high = self.max + 1).item()
         
-        Seq.seq = Seq.seq[ : - crop_coodinate]
+        Seq.seq = Seq.seq[ : crop_coordinate]
 
         # change vvector feature
         for name in Seq.vectors:
-            Seq.vectors[name].val = Seq.vectors[name].val[ : - crop_coodinate]
+            Seq.vectors[name].val = Seq.vectors[name].val[ : crop_coordinate]
         
         return Seq
         
@@ -197,9 +210,10 @@ class Reverse(nn.Module):
         super().__init__()
         
     def forward(self, Seq):
-        Seq.reverse = True
+        
         r = torch.rand((1,)).item()
         if  r > 0.5:
+            Seq.reverse = True
             Seq.seq = reverse_complement(Seq.seq)
             Seq.rev = 1.0
         return Seq
@@ -207,15 +221,20 @@ class Reverse(nn.Module):
     def __repr__(self):
         return self.__class__.__name__ + '()'
 def reverse_complement(seq, mapping={"A": "T", "G":"C", "T":"A", "C": "G", 'N': 'N'}):
-        s = "".join(mapping[s] for s in reversed(seq))
+        s = "".join(mapping[s] for s in reversed(seq.upper()))
         return s
 
 class AddFeatureChannels(nn.Module):
-    def __init__(self, channels):
+    def __init__(self, 
+                 channels # = array of str[]
+                ):
         super().__init__()
         self.channels = channels
     def forward(self, Seq):
+        Seq.add_feature_channel = True
         #user must know scalar and vector features of dataframe
+        for ch in self.channels:
+            Seq.feature_channels.append(ch)
         return Seq
         
     def __repr__(self):
