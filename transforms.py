@@ -4,6 +4,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import List, T
 
 CODES = {
     "A": 0,
@@ -26,7 +27,7 @@ class Compose:
         self.Totensor = Seq2Tensor()
 
     def __call__(self, Seq):
-        totensor = False # variable to use Seq2Tensor lastly
+        totensor = False # variable to use Seq2Tensor last
         
         for transformation in self.transforms:
             
@@ -77,6 +78,8 @@ class Seq2Tensor(nn.Module):
             rev = torch.full( (1, Seq.right_end - Seq.left_start + 1), Seq.rev, dtype=torch.float32)
             to_concat.append(rev)
             
+        # add channels scalar and vector
+            
          # create final tensor
         if len(to_concat) > 1:
             Seq.seq = torch.concat(to_concat, dim=0)
@@ -106,6 +109,9 @@ class AddFlanks(nn.Module):
         Seq.is_flank_added = True
         Seq.seq = self.left_side + Seq.seq + self.right_side
 
+        # change vector feature
+        Seq.vectors
+
         return Seq
         
     def __repr__(self):
@@ -124,6 +130,10 @@ class LeftCrop(nn.Module):
         crop_coordinate = torch.randint(size=(1,), low = 0, high = self.left_indent).item()
         
         Seq.seq = Seq.seq[crop_coordinate : ]
+
+        #change vector feature
+        for name in Seq.vectors:
+            Seq.vectors[name].val = Seq.vectors[name].val[crop_coordinate : ]
         
         return Seq
         
@@ -143,6 +153,10 @@ class RightCrop(nn.Module):
         crop_coordinate = torch.randint(size=(1,), low = 0, high = self.right_indent).item()
         
         Seq.seq = Seq.seq[ : - crop_coodinate]
+
+        # change vvector feature
+        for name in Seq.vectors:
+            Seq.vectors[name].val = Seq.vectors[name].val[ : - crop_coodinate]
         
         return Seq
         
@@ -165,6 +179,10 @@ class RandomCrop(nn.Module):
         crop_coordinate = torch.randint(size=(1,), low = 0, high = Seq.seqsize - self.output_size + 1).item()
             
         Seq.seq = Seq.seq[ crop_coordinate : crop_coordinate + self.output_size ] 
+
+        #change vector feature
+        for name in Seq.vectors:
+            Seq.vectors[name].val = Seq.vectors[name].val[ crop_coordinate : crop_coordinate + self.output_size]
             
         return Seq
         
@@ -191,6 +209,18 @@ class Reverse(nn.Module):
 def reverse_complement(seq, mapping={"A": "T", "G":"C", "T":"A", "C": "G", 'N': 'N'}):
         s = "".join(mapping[s] for s in reversed(seq))
         return s
+
+class AddFeatureChannels(nn.Module):
+    def __init__(self, channels):
+        super().__init__()
+        self.channels = channels
+    def forward(self, Seq):
+        #user must know scalar and vector features of dataframe
+        return Seq
+        
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+
 class AddReverseChannel(nn.Module):
     '''
 

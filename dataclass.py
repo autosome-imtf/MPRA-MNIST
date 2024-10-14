@@ -41,8 +41,9 @@ class VectorDsFeature:
                     if not v in levels:
                       levels[v] = len(levels)
 
-            if not pad_value in levels:
+            if not pad_value in levels: # Why?
                 levels[pad_value] = len(levels)
+
 
         return cls(val=val, tp=Categorial(levels), pad_value=pad_value)
 

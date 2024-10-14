@@ -12,7 +12,7 @@ class MpraDataset(Dataset):
     """ Sequence dataset. """
     
     def __init__(self, 
-                 ds: pd.DataFrame,
+                 ds: pd.DataFrame = None,
                  transform = None):
         """
         Parameters
@@ -38,7 +38,8 @@ class MpraDataset(Dataset):
         if self.transform is not None:
             Seq = self.transform(Seq)
             
-        return Seq.seq, Seq.seqsize, mean
+        #return Seq.seq, Seq.seqsize, Seq.scalars, Seq.vectors, mean
+        return Seq
 
     @property
     def scalars(self):
@@ -62,4 +63,21 @@ class MpraDataset(Dataset):
     
     def __len__(self):
         return len(self.ds.seq)
+
+class VikramDataset(MpraDataset):
+    def __init__(self, pad_value = None, transform = None):
+        super().__init__()
+        
+        seqs = ["agtactagagtc","atatatatatat"]
+        scal = [1,2]
+        vect = [[1,0,1,0,1,0,1,0,1,0,1,0],[0,1,0,1,0,1,0,1,0,1,0,1]]
+        self.ds = pd.DataFrame({"seq" : seqs,"scalar1": scal,"vector1": vect,"mean_value":[5,6]})
+        
+        if pad_value is None: #user defines pad_value
+            pad_value = len(self.ds.seq.values[0])
+        self.pad_value = pad_value
+        
+        self.add_numeric_scalar("scalar1", val = self.ds.scalar1.values)
+        self.add_categorial_vector("vector1", val = self.ds.vector1.values, pad_value = self.pad_value)
+        self.transform = transform
     
