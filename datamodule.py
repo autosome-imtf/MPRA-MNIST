@@ -1,46 +1,59 @@
-import lightning.pytorch as pl
+import pytorch_lightning as pl
 import pandas as pd
+
+from torch.utils.data import DataLoader
+
+from training_config import TrainingConfig
+
+from dataset import VikramDataset, VikramTestDataset
 import transforms as t
-from torch.utils.data import DataLoader, random_split
-from dataset import TrainSeqDatasetProb #, TestSeqDatasetProb
 
 class SeqDataModule(pl.LightningDataModule):
     def __init__(self, 
-                 num_workers,
-                 train_batch_size,
-                 valid_batch_size,
-                 data_path: pd.DataFrame):
+                 train_fold:int,
+                 val_fold: int,
+                 test_fold: int,
+                 cfg: TrainingConfig,
+                 cell_type: str,
+                 train_transform = None,
+                 test_transform = None):
         super().__init__()
-        self.num_workers = num_workers
-        self.train_batch_size = train_batch_size
-        self.valid_batch_size = valid_batch_size
-        df = pd.read_csv(data_path, 
-                 sep='\t')
-        df.columns = ['seq_id', 'seq', 'mean_value', 'fold_num', 'rev'][0:len(df.columns)]
-        if "rev" in df.columns:
-            df = df[df.rev == 0] # delete all lines, where rev = 1
-        df = df.drop(columns=['fold_num', 'rev'])
+        self.cfg = cfg
+        self.cell_type = cell_type
+        self.train_ds = VikramDataset(cell_type = self.cell_type, split = train_fold, transform = train_transform)
+        self.val_ds = VikramDataset(cell_type = self.cell_type, split = val_fold, transform = test_transform) 
+        self.test_ds = VikramDataset(cell_type = self.cell_type, split = test_fold, transform = test_transform) 
+        self.test_transform = test_transform
+        self.test_fold = test_fold
         
-        df_dataset = TrainSeqDatasetProb(df, transform = t.Compose([t.Seq2Tensor(),t.UseReverse()]))
-        
-        self.train, self.valid, self.test = random_split(df_dataset,(0.6,0.2,0.2))
-
     def train_dataloader(self):
         
-        return DataLoader(self.train, 
-                          batch_size=self.train_batch_size,
-                          num_workers=self.num_workers,
-                          shuffle = True) 
+        return DataLoader(self.train_ds, 
+                          batch_size=self.cfg.train_batch_size,
+                          num_workers=self.cfg.num_workers,
+                          shuffle=True) 
     
     def val_dataloader(self):
 
-        return DataLoader(self.valid, 
-                          batch_size=self.valid_batch_size,
-                          num_workers=self.num_workers,
+        return DataLoader(self.val_ds, 
+                          batch_size=self.cfg.valid_batch_size,
+                          num_workers=self.cfg.num_workers,
                           shuffle=False)
+        
     def dls_for_predictions(self):
         
-        return DataLoader(self.test,
-                              batch_size=self.valid_batch_size,
-                              num_workers=self.num_workers,
+        test_dl =  DataLoader(self.test_ds,
+                              batch_size=self.cfg.valid_batch_size,
+                              num_workers=self.cfg.num_workers,
                               shuffle=False)
+        yield "forw_pred", test_dl
+        if self.cfg.reverse_augment:
+            
+            self.test_transform.transforms.append(t.ReverseTest())
+            self.test_ds = VikramDataset(cell_type = self.cell_type, split = self.test_fold, transform = self.test_transform) 
+            
+            rev_test_dl =  DataLoader(self.test_ds,
+                              batch_size=self.cfg.valid_batch_size,
+                              num_workers=self.cfg.num_workers,
+                              shuffle=False)
+            yield "rev_pred", rev_test_dl

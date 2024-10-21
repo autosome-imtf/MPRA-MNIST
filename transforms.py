@@ -220,6 +220,23 @@ class Reverse(nn.Module):
     
     def __repr__(self):
         return self.__class__.__name__ + '()'
+class ReverseTest(nn.Module):
+    '''
+
+    '''
+    def __init__(self):
+        super().__init__()
+        
+    def forward(self, Seq):
+        
+        
+        Seq.reverse = True
+        Seq.seq = reverse_complement(Seq.seq)
+        Seq.rev = 1.0
+        return Seq
+    
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
 def reverse_complement(seq, mapping={"A": "T", "G":"C", "T":"A", "C": "G", 'N': 'N'}):
         s = "".join(mapping[s] for s in reversed(seq.upper()))
         return s

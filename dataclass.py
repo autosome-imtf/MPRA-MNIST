@@ -89,10 +89,10 @@ class SeqObj:
     """Class for keeping track of a seq in df"""
     
     seq: str
-
+    
     scalars: dict[str, ScalarFeature]
     vectors: dict[str, VectorFeature]
-
+    split: str = ""
     add_feature_channel = False
     is_flank_added = False
     reverse: bool = False
