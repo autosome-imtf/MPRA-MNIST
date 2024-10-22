@@ -6,29 +6,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, T
-
-def splitting(data_path, split, cell_type):
-    split_default = {"train" : [0,8], "val" : [9], "test" : [10]}
-    dataframe = pd.read_csv(data_path + cell_type + '.tsv', sep='\t')
-        
-    if isinstance(split,str): # if split is str and "train", "val" or "test"
-        if split in split_default:
-            if len(split_default[split]) == 1:
-                df = dataframe[dataframe.fold == split_default[split][0]]
-            else:
-                df = dataframe[(dataframe.fold >= 0) & (dataframe.fold <= 8)]
-        else:
-            raise ValueError
-    elif isinstance(split, list): # if split is a list
-        for spl in split:
-            assert spl < 11 and spl > 0, f"{spl} not in range 1 - 10" 
-        df = dataframe[dataframe.fold.isin(split)].reset_index(drop = True)
-    elif isinstance(split, int): # if split is integer
-        assert split < 11 and split > 0, f"{split} not in range 1 - 10" 
-        df = dataframe[dataframe.fold == split]
-    else:
-        raise ValueError
-    return df
     
 def set_global_seed(seed: int) -> None:
     """
