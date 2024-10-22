@@ -20,6 +20,10 @@ def n2id(n):
 class Compose:
     """
     Composes several transforms together. This transform does not support torchscript.
+
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
     """
     def __init__(self, transforms):
         
@@ -55,6 +59,10 @@ class Compose:
 class Seq2Tensor(nn.Module):
     '''
     Encode sequences using one-hot encoding after preprocessing.
+
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
     '''
     def __init__(self):
         super().__init__()
@@ -102,6 +110,12 @@ class Seq2Tensor(nn.Module):
 class AddFlanks(nn.Module):
     '''
     Add forward and back flanks to 5' -> 3'
+
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
+    left_flank (str)
+    right_flank (str)
     '''
     def __init__(self, left_flank = "", right_flank = ""):
         
@@ -130,7 +144,20 @@ class AddFlanks(nn.Module):
 
 class LeftCrop(nn.Module):
     '''
-        min_crop, max_crop: int - min max sizes of cropped sequence from left side
+    Operation of cutting a slice of a sequence with a random length from min_crop to max_crop. 
+    Right end of sequence always constant and the crop operation results in the cutting off of the left side of sequence.
+    i.e len(ABCDEFGHKLMNOPQRSTUV) = 20 -----> 
+    RightCrop(SeqObj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can result:
+    --> FGHKLMNOPQRSTUV
+    --> EFGHKLMNOPQRSTUV
+    --> DEFGHKLMNOPQRSTUV
+    --> CDEFGHKLMNOPQRSTUV
+    min_crop can be equal to max_crop, then length of output seq wil be min_crop = max_crop
+
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
+    min_crop, max_crop: int - min max sizes of cropped sequence from left side
     '''
     def __init__(self, min_crop, max_crop):
         super().__init__()
@@ -154,7 +181,20 @@ class LeftCrop(nn.Module):
 
 class RightCrop(nn.Module):
     '''
-        min_crop, max_crop: int - min max sizes of cropped sequence from right side
+    Operation of cutting a slice of a sequence with a random length from min_crop to max_crop. 
+    Left end of sequence always constant and the crop operation results in the cutting off of the right side of sequence.
+    i.e len(ABCDEFGHKLMNOPQRSTUV) = 20 -----> 
+    RightCrop(SeqObj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can result:
+    --> ABCDEFGHKLMNOPQ
+    --> ABCDEFGHKLMNOPQR
+    --> ABCDEFGHKLMNOPQRS
+    --> ABCDEFGHKLMNOPQRST
+    min_crop can be equal to max_crop, then length of output seq wil be min_crop = max_crop
+
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
+    min_crop, max_crop  (int): - min, max sizes of cropped sequence from right side
     '''
     def __init__(self, min_crop, max_crop):
         super().__init__()
@@ -178,6 +218,10 @@ class RightCrop(nn.Module):
 
 class RandomCrop(nn.Module):
     '''
+    Operation of cutting a random slice of a sequence with a given length
+
+    Parameters
+    ----------
     Seq (sequence): SeqObj.
     output_size (int): Expected lehgth of the crop.
     '''
@@ -204,15 +248,22 @@ class RandomCrop(nn.Module):
         
 class Reverse(nn.Module):
     '''
-
+    Reverse complement transformation to sequence
+    i.e AATCGG -> CCGATT
+    
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
+    prob (float from 0 to 1): reverse complement tranformation probability 
     '''
-    def __init__(self):
+    def __init__(self, prob):
         super().__init__()
+        self.prob = prob
         
     def forward(self, Seq):
         
-        r = torch.rand((1,)).item()
-        if  r > 0.5:
+        rand = torch.rand((1,)).item()
+        if  rand < self.prob or self.prob == 1:
             Seq.reverse = True
             Seq.seq = reverse_complement(Seq.seq)
             Seq.rev = 1.0
@@ -220,38 +271,33 @@ class Reverse(nn.Module):
     
     def __repr__(self):
         return self.__class__.__name__ + '()'
-class ReverseTest(nn.Module):
-    '''
 
-    '''
-    def __init__(self):
-        super().__init__()
-        
-    def forward(self, Seq):
-        
-        
-        Seq.reverse = True
-        Seq.seq = reverse_complement(Seq.seq)
-        Seq.rev = 1.0
-        return Seq
-    
-    def __repr__(self):
-        return self.__class__.__name__ + '()'
 def reverse_complement(seq, mapping={"A": "T", "G":"C", "T":"A", "C": "G", 'N': 'N'}):
         s = "".join(mapping[s] for s in reversed(seq.upper()))
         return s
 
 class AddFeatureChannels(nn.Module):
+    '''
+    Operation of adding additional channel. Storing info about features of sequence
+    
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
+    channels (list[str]): dataframe's feture channels
+    '''
     def __init__(self, 
                  channels # = array of str[]
                 ):
         super().__init__()
         self.channels = channels
+        
     def forward(self, Seq):
         Seq.add_feature_channel = True
+        
         #user must know scalar and vector features of dataframe
         for ch in self.channels:
             Seq.feature_channels.append(ch)
+            
         return Seq
         
     def __repr__(self):
@@ -259,7 +305,11 @@ class AddFeatureChannels(nn.Module):
 
 class AddReverseChannel(nn.Module):
     '''
-
+    Operation of adding additional channel. Storing info about is sequence reversed or not
+    
+    Parameters
+    ----------
+    Seq (sequence): SeqObj.
     '''
     def __init__(self):
         super().__init__()
