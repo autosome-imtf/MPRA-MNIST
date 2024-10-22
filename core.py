@@ -164,7 +164,7 @@ for test_fold in test_fold_range:
             t.AddFlanks("GGCCCGCTCTAGACCTGCAGG","CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT"),
             t.RandomCrop(230),
             t.Seq2Tensor(),
-            t.Reverse(),
+            t.Reverse(0.5),
         
         ])
         test_transform = t.Compose([
@@ -205,4 +205,7 @@ for test_fold in test_fold_range:
                                data,
                               test_fold,
                               train_cfg,
-                     args.to_mean_score, "datasets/VikramDataset/" + args.cell_type + "_averaged.tsv")
+                     save_dir = dump_dir,
+                     to_mean_score = args.to_mean_score, 
+                     data_path_averaged = "datasets/VikramDataset/" + args.cell_type + "_averaged.tsv",
+                    pref = "new_format")
