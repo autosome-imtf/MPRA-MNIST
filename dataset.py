@@ -31,7 +31,7 @@ class MpraDataset(Dataset):
         
     def __getitem__(self, i):
         sequence = self.ds.seq.values[i]
-        mean = self.ds.mean_value.values[i].astype(np.float32)
+        mean = self.ds.expression.values[i].astype(np.float32)
         
         scals = {name: sc[i] for name, sc in self.scalars.items()} if hasattr(self, 'scalars') else {}
         vecs = {name: vec[i] for name, vec in self.vectors.items()} if hasattr(self, 'vectors') else {}
