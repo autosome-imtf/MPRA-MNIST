@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import List, T
+from typing import List, T, Union
 import torch
 
 from torch.utils.data import  Dataset
@@ -27,19 +27,18 @@ class MpraDataset(Dataset):
             Transformation applied to the target data.
         """
     Parent_flag = "MpraDaraset"
-    flag = "..."
     
     
     def __init__(self,
-                 ds: pd.DataFrame = None,
-                 split: str | List[int] | int = None,
-                 cell_type: str = None,
+                 split: str | List[int] | int,
+                 cell_type: str,
+                 download=False,
+                 root=DEFAULT_ROOT,
                  transform = None,
                  target_transform = None
                 ):
-        self.ds = ds
         self.split = split
-        self.cell_type = cell_type
+        self._cell_type = cell_type
         self.transform = transform
         self.target_transform = target_transform
         self._scalars = {}
@@ -105,6 +104,7 @@ class MpraDataset(Dataset):
         body.append(f"Description: {self.info['description']}")
         lines = [head] + [" " * _repr_indent + line for line in body]
         return "\n".join(lines)
+        
 """
         DATASETS
 """
@@ -134,7 +134,7 @@ class VikramDataset(MpraDataset):
                  transform = None,
                  target_transform = None,
                 ):
-        super().__init__()
+        super().__init__(split, cell_type)
         if cell_type not in self.cell_types:
             raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.cell_types}.")
         self._cell_type = cell_type
@@ -157,7 +157,10 @@ class VikramDataset(MpraDataset):
         Parses the input split and returns a list of folds.
         '''
         
-        split_default = {"train" : [1, 2, 3, 4, 5, 6, 7, 8], "val" : [9], "test" : [10]} # default split of data
+        split_default = {"train" : [1, 2, 3, 4, 5, 6, 7, 8], 
+                         "val" : [9], 
+                         "test" : [10]
+                        } # default split of data
         
         # Process string input
         if isinstance(split, str):
@@ -174,5 +177,87 @@ class VikramDataset(MpraDataset):
             for spl in split:
                 if not (1 <= spl <= 10):
                     raise ValueError(f"Fold {spl} not in range 1-10.")
+        
+        return split
+
+class MalinoisDataset(MpraDataset):
+    """
+        Attributes
+        ----------
+        split : str | List[int] | int
+            Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
+        cell_type : str
+            Specifies the cell type for filtering the data.
+        
+        transform : callable, optional
+            Transformation applied to each sequence object.
+        target_transform : callable, optional
+            Transformation applied to the target data.
+    """
+    cell_types = ['HepG2', 'K562', 'SKNSH']
+    flag = "MalinoisDataset"
+    
+    def __init__(self,
+                 split: str | List[Union[int, str]] | int,
+                 cell_type: str,
+                 transform = None,
+                 target_transform = None,
+                ):
+        super().__init__(split, cell_type)
+        
+        if cell_type not in self.cell_types:
+            raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.cell_types}.")
+            
+        self._cell_type = cell_type
+        self.transform = transform
+        self.target_transform = target_transform
+        self.split = self.split_parse(split)
+        
+        try:
+            df = pd.read_csv(self._data_path + 'Malinois.tsv', sep='\t')
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {self._data_path + self._cell_type}.tsv")
+
+        df.rename(columns = {'sequence': 'seq'}, inplace = True)
+        target_column = self._cell_type + "_log2FC"
+        df["target"] = df[target_column].astype(np.float32)
+        
+        self.ds = df[df.chr.isin(self.split)].reset_index(drop=True)
+        
+    def split_parse(self, split: list[Union[int, str]] | int | str) -> list[str]:
+        '''
+        Parses the input split and returns a list of folds.
+        '''
+        
+        split_default = {"train" : [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 20, 22, "Y"], 
+                         "val" : [19, 21, "X"], 
+                         "test" : [7, 13]
+                        } # default split of data
+        
+        # Process string input for specific keys or fold names ("X", "Y")
+        if isinstance(split, str):
+            if split in ["X", "Y"]:
+                split = [split]
+            elif split in split_default:
+                split = split_default[split]
+            else:
+                raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', or 'test'.")
+
+        # int to list for unified processing
+        if isinstance(split, int):
+            split = [split]
+            
+        # Validate list of folds
+        if isinstance(split, list):
+            result = []
+            for item in split:
+                if isinstance(item, int) and 1 <= item <= 22:
+                    result.append(str(item))
+                elif isinstance(item, str) and item in ["X", "Y"]:
+                    result.append(item)
+                else:
+                    raise ValueError(f"Invalid fold value: {item}. Must be an integer in range 1-22 or 'X'/'Y'.")
+
+            split = result  # Ensure final result is clean and validated
         
         return split

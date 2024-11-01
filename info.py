@@ -1,5 +1,3 @@
-__version__ = "3.0.2"
-
 
 import os
 from os.path import expanduser
@@ -34,6 +32,16 @@ INFO = {
         "scalar_features": {},
         "vector_features": {},
         "n_samples": {"train": 98336, "val": 12292, "test": 12292},
+        "folds": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10}
+    },
+    "MalinoisDataset": {
+        "python_class": "MalinoisDataset",
+        "description": "MalinoisDataset is based on ",
+        "url": "-",
+        "target_columns": {"K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {"train": 1, "val": 1, "test": 1},
         "folds": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10}
     },
 }
