@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
+from functools import partial
 
 from torch.utils.data import  Dataset
 from dataclass import SeqObj, VectorDsFeature, ScalarDsFeature
@@ -31,9 +32,9 @@ class MpraDataset(Dataset):
     
     def __init__(self,
                  split: str | List[int] | int,
-                 cell_type: str,
-                 download=False,
-                 root=DEFAULT_ROOT,
+                 cell_type: str = None,
+                 download: bool = False,
+                 root: str = DEFAULT_ROOT,
                  transform = None,
                  target_transform = None
                 ):
@@ -195,11 +196,24 @@ class MalinoisDataset(MpraDataset):
             Transformation applied to the target data.
     """
     cell_types = ['HepG2', 'K562', 'SKNSH']
+    data_project = ['UKBB', 'GTEX', 'CRE']
+    project_column = 'data_project'
+    sequence_column = 'sequence'
+    chr_column = 'chr'
+    stderr_columns = ['K562_lfcSE', 'HepG2_lfcSE', 'SKNSH_lfcSE']
     flag = "MalinoisDataset"
     
     def __init__(self,
                  split: str | List[Union[int, str]] | int,
                  cell_type: str,
+                 activity_columns = ['K562_log2FC', 'HepG2_log2FC', 'SKNSH_log2FC'],
+                 normalize: bool = False,
+                 duplication_cutoff: float = 0.5,
+                 stderr_threshold: float = 1.0,
+                 std_multiple_cut: float = 6.0,
+                 up_cutoff_move: float = 4.0,
+                 padded_seq_len: int = 600, 
+                 synth_seed: int = 0,
                  transform = None,
                  target_transform = None,
                 ):
@@ -207,23 +221,102 @@ class MalinoisDataset(MpraDataset):
         
         if cell_type not in self.cell_types:
             raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.cell_types}.")
-            
+        self.activity_columns = activity_columns
+        self.normalize = normalize
+        self.duplication_cutoff = duplication_cutoff
+        self.stderr_threshold = stderr_threshold
+        self.std_multiple_cut = std_multiple_cut
+        self.up_cutoff_move = up_cutoff_move
+        self.padded_seq_len = padded_seq_len
         self._cell_type = cell_type
         self.transform = transform
         self.target_transform = target_transform
-        self.split = self.split_parse(split)
-        
-        try:
-            df = pd.read_csv(self._data_path + 'Malinois.tsv', sep='\t')
-        except FileNotFoundError:
-            raise FileNotFoundError(f"File not found: {self._data_path + self._cell_type}.tsv")
 
-        df.rename(columns = {'sequence': 'seq'}, inplace = True)
-        target_column = self._cell_type + "_log2FC"
-        df["target"] = df[target_column].astype(np.float32)
+        self.split = self.split_parse(split)
+        self.ds = self._load_and_filter_data()
+
+    def _load_and_filter_data(self):
+        """
+        Preprocesses the dataset based on provided parameters.
+        """
+        columns = [self.sequence_column, *self.activity_columns, self.chr_column, self.project_column, *self.stderr_columns]
+        try:
+            df = pd.read_csv(self._data_path + 'Malinois.tsv', sep='\t', low_memory=False)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {self._data_path}.tsv")
+
+        df = df[columns].dropna()
         
-        self.ds = df[df.chr.isin(self.split)].reset_index(drop=True)
+        # set name of sequence column to seq
+        df.rename(columns = {'sequence': 'seq'}, inplace = True) 
+        self.sequence_column = "seq"
         
+        # define target_column
+        target_column = self._cell_type + "_log2FC" 
+        df["target"] = df[target_column].astype(np.float32) 
+        
+        df = df[df[self.project_column].isin(self.data_project)].reset_index(drop=True)
+
+        # filter by stderr
+        # Threshold for feature stderr of examples to be used for train/val/test
+        quality_filter = df[self.stderr_columns].max(axis = 1) < self.stderr_threshold 
+        df = df[quality_filter].reset_index(drop=True)
+
+        # Cut-off for extreme value filtering
+        means = df[self.activity_columns].mean().to_numpy()
+        stds  = df[self.activity_columns].std().to_numpy()
+
+        # Cut-off shift for extreme value filtering
+        up_cut   = means + stds * self.std_multiple_cut + self.up_cutoff_move
+        down_cut = means - stds * self.std_multiple_cut 
+        
+        non_extremes_filter_up = (df[self.activity_columns] < up_cut).to_numpy().all(axis=1)
+        df = df.loc[non_extremes_filter_up]
+        
+        non_extremes_filter_down = (df[self.activity_columns] > down_cut).to_numpy().all(axis=1)
+        df = df.loc[non_extremes_filter_down]
+        self.num_examples = len(df)
+        if self.normalize:   
+            df[self.activity_columns] = (df[self.activity_columns] - means) / stds
+            self.activity_means = torch.Tensor(means)
+            self.activity_stds = torch.Tensor(stds)
+
+        for idx, cell in enumerate(self.activity_columns):
+            cell_name = cell.rstrip('_mean')
+            top_cut_value = round(up_cut[idx], 2)
+            bottom_cut_value = round(down_cut[idx], 2)
+            print(f'{cell_name} | top cut value: {top_cut_value}, bottom cut value: {bottom_cut_value}')
+        print('')    
+        num_up_cuts   = np.sum(~non_extremes_filter_up)
+        num_down_cuts = np.sum(~non_extremes_filter_down)
+        print(f'Number of examples discarded from top: {num_up_cuts}')
+        print(f'Number of examples discarded from bottom: {num_down_cuts}')
+        print('')
+        print(f'Number of examples available: {self.num_examples}')
+        print('-'*50)
+        print('')
+
+        df = df[df.chr.isin(self.split)].reset_index(drop=True)
+        
+        activities = df[self.activity_columns].to_numpy()
+        activity_tensor = torch.Tensor(activities)
+        sort_tensor = torch.max(activity_tensor, dim = -1).values
+
+        #duplicating
+        self.n_duplicated = 0
+        if self.duplication_cutoff is not None:
+            
+            self.n_duplicated = (sort_tensor >= self.duplication_cutoff).sum().item()
+            print(df.seq.shape[0])
+            print(self.n_duplicated)
+        return df
+
+    def __len__(self):
+        #dataset_len = self.ds.seq.shape[0] + self.n_duplicated
+        dataset_len = self.ds.seq.shape[0]
+        return dataset_len
+
+
     def split_parse(self, split: list[Union[int, str]] | int | str) -> list[str]:
         '''
         Parses the input split and returns a list of folds.
