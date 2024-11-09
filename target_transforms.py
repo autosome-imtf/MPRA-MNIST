@@ -43,6 +43,7 @@ class Normalize(nn.Module):
         The standard deviation used for normalization.
     """
     def __init__(self, mean: float, std: float):
+        super().__init__()
         self.mean = mean
         self.std = std
         
