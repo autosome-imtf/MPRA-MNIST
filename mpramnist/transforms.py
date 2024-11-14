@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, T, Optional
-from dataclass import SeqObj
+from .dataclass import SeqObj
 
 CODES = {
     "A": 0,
@@ -106,7 +106,6 @@ class Compose:
         transformations = '\n    '.join(repr(t) for t in self.transforms)
         return f"{self.__class__.__name__}(\n    {transformations}\n)"
         
-
 class AddFlanks(nn.Module):
     """
     Adds left and right flanks to the DNA sequence in the 5' -> 3' direction.

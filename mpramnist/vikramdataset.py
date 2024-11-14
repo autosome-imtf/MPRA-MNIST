@@ -2,10 +2,11 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
+from .info import INFO
 
-import MpraDataset
+from .mpradataset import MpraDataset
 
-class VikramDataset(MpraDataset.MpraDataset):
+class VikramDataset(MpraDataset):
 
     LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG" # from human_legnet
     RIGHT_FLANK = "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT" # from human_legnet
@@ -41,6 +42,7 @@ class VikramDataset(MpraDataset.MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
+        self.info = INFO[self.flag]
         
         try:
             df = pd.read_csv(self._data_path + self._cell_type + '.tsv', sep='\t')

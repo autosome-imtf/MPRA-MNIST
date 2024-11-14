@@ -4,8 +4,8 @@ from typing import List, T, Union, Optional, Callable
 import torch
 
 from torch.utils.data import  Dataset
-from dataclass import SeqObj, VectorDsFeature, ScalarDsFeature
-from info import INFO, HOMEPAGE, DEFAULT_ROOT
+from .dataclass import SeqObj, VectorDsFeature, ScalarDsFeature
+from .info import INFO, HOMEPAGE, DEFAULT_ROOT
 
 class MpraDataset(Dataset):
     
@@ -43,7 +43,7 @@ class MpraDataset(Dataset):
         self.target_transform = target_transform
         self._scalars = {}
         self._vectors = {}
-        self._data_path = "./datasets/" + self.flag + "/"
+        self._data_path = "./../datasets/" + self.flag + "/"
         self.info = INFO[self.flag]
 
     def __getitem__(self, i):

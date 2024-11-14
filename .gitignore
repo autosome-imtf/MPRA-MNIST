@@ -1,2 +1,6 @@
 *logs/
 .ipynb_checkpoints/
+build/
+datasets/
+dist/
+*egg-info/
