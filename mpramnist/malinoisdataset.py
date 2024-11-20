@@ -25,9 +25,10 @@ class MalinoisDataset(MpraDataset):
                   duplication_cutoff: Optional[float] = None,
                   stderr_threshold: float = 1.0,
                   std_multiple_cut: float = 6.0,
-                  up_cutoff_move: float = 4.0,
+                  up_cutoff_move: float = 3.0,
                   transform: Optional[Callable] = None,
                   target_transform: Optional[Callable] = None,
+                  use_reverse_complement = False
                 ):
         """
         Initializes the dataset loader with specified filtering, duplication, and transformation settings.
@@ -71,6 +72,7 @@ class MalinoisDataset(MpraDataset):
         self.std_multiple_cut = std_multiple_cut
         self.up_cutoff_move = up_cutoff_move
         self.filtration = filtration
+        self.use_reverse_complement = use_reverse_complement
         self.transform = transform
         self.target_transform = target_transform
         
@@ -143,8 +145,26 @@ class MalinoisDataset(MpraDataset):
         # Handle duplication if specified
         if self.duplication_cutoff is not None:
             df = self.duplicate_high_activity_rows(df, activity_columns)
-            
+        '''
+        if self.use_reverse_complement:
+            rev_aug = df.copy()
+            rev_aug.seq = rev_aug.seq.apply(self.reverse_complement)
+            df = pd.concat([df, rev_aug], ignore_index =True)
+        '''
+        targets = df[activity_columns].to_numpy()
+        seq = df.seq.to_numpy()
+        df = {"targets" : targets, "seq" : seq}
+        
         return df
+
+    def reverse_complement(self, seq: str, mapping=None) -> str:
+        if mapping is None:
+            mapping = {"A": "T", "G": "C", "T": "A", "C": "G", "N": "N"}
+        
+        try:
+            return "".join(mapping[base] for base in reversed(seq.upper()))
+        except KeyError as e:
+            raise ValueError(f"Invalid character in sequence: {e}")
 
     def _filter_data(self, df: pd.DataFrame,
                      activity_columns: List[str],

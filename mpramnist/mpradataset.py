@@ -46,10 +46,11 @@ class MpraDataset(Dataset):
         self._data_path = "./../datasets/" + self.flag + "/"
         self.info = INFO[self.flag]
 
+
     def __getitem__(self, i):
         
-        sequence = self.ds.seq.values[i]
-        target = self.ds[self.target].values[i].astype(np.float32)
+        sequence = self.ds["seq"][i]
+        target = self.ds["targets"][i].astype(np.float32)
         
         scals = {name: sc[i] for name, sc in self.scalars.items()} if hasattr(self, 'scalars') else {}
         vecs = {name: vec[i] for name, vec in self.vectors.items()} if hasattr(self, 'vectors') else {}
@@ -84,7 +85,8 @@ class MpraDataset(Dataset):
         self._vectors[name] = VectorDsFeature.categorial(val=val, pad_value=pad_value, levels=levels)
     
     def __len__(self):
-        return len(self.ds) if self.ds is not None else 0
+        #return len(self.ds) if self.ds is not None else 0
+        return len(self.ds["seq"])
 
     def __repr__(self):
         """Adapted from torchvision."""

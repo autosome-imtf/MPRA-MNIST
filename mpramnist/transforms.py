@@ -43,11 +43,11 @@ class Seq2Tensor(nn.Module):
         
         code = [n2id(x) for x in Seq.seq]
         code = torch.from_numpy(np.array(code))
-        code = F.one_hot(code, num_classes=5) # 5th class is N
+        code = F.one_hot(code, num_classes=5).float() # 5th class is N
 
         # Encode 'N' class with 0.25
         code[code[:, 4] == 1] = 0.25 
-        code = code[:, :4].float()
+        code = code[:, :4]
         X = code.transpose(0, 1)
          
         to_concat = [X]
