@@ -442,7 +442,6 @@ class Reverse(nn.Module):
 def reverse_complement(seq: str, mapping=None) -> str:
     if mapping is None:
         mapping = {"A": "T", "G": "C", "T": "A", "C": "G", "N": "N"}
-    
     try:
         return "".join(mapping[base] for base in reversed(seq.upper()))
     except KeyError as e:

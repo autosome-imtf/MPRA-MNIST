@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from typing import List, T, Union, Optional, Callable
+from functools import partial
 import torch
 import os
 
@@ -12,7 +13,6 @@ class MalinoisDataset(MpraDataset):
     
     cell_types = ['HepG2', 'K562', 'SKNSH']
     project_column = 'data_project'
-    sequence_column = "sequence"
     chr_column = 'chr'
     flag = "MalinoisDataset"
     
@@ -22,13 +22,14 @@ class MalinoisDataset(MpraDataset):
                  activity_columns: List[str] = ['K562_log2FC', 'HepG2_log2FC', 'SKNSH_log2FC'],
                   stderr_columns: List[str] = ['K562_lfcSE', 'HepG2_lfcSE', 'SKNSH_lfcSE'],
                   data_project: List[str] = ['UKBB', 'GTEX', 'CRE'],
+                  sequence_column = "sequence",
                   duplication_cutoff: Optional[float] = None,
                   stderr_threshold: float = 1.0,
                   std_multiple_cut: float = 6.0,
                   up_cutoff_move: float = 3.0,
                   transform: Optional[Callable] = None,
                   target_transform: Optional[Callable] = None,
-                  use_reverse_complement = False
+                  use_original_reverse_complement = False
                 ):
         """
         Initializes the dataset loader with specified filtering, duplication, and transformation settings.
@@ -66,13 +67,14 @@ class MalinoisDataset(MpraDataset):
         
         # Assign attributes
         self.stderr_columns = stderr_columns
+        self.sequence_column = sequence_column
         self.data_project = data_project
         self.duplication_cutoff = duplication_cutoff
         self.stderr_threshold = stderr_threshold
         self.std_multiple_cut = std_multiple_cut
         self.up_cutoff_move = up_cutoff_move
         self.filtration = filtration
-        self.use_reverse_complement = use_reverse_complement
+        self.use_original_reverse_complement = use_original_reverse_complement
         self.transform = transform
         self.target_transform = target_transform
         
@@ -109,8 +111,10 @@ class MalinoisDataset(MpraDataset):
             If `filtration` is not one of ['original', 'own', 'none'].
         """
         
-        file_path = os.path.join(self._data_path, 'Malinois.tsv')
+        #file_path = os.path.join(self._data_path, 'MPRA_ALL_HD_v2.tsv')
+        file_path = os.path.join(self._data_path, 'Table_S2__MPRA_dataset.txt')
         try:
+            #df = pd.read_csv(file_path, sep=' ', low_memory=False)
             df = pd.read_csv(file_path, sep='\t', low_memory=False)
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -120,15 +124,15 @@ class MalinoisDataset(MpraDataset):
         df = df[columns].dropna()
         
         # Rename sequence column
+        df.rename(columns = {self.sequence_column: "seq"}, inplace = True) 
         self.sequence_column = "seq"
-        df.rename(columns = {'sequence': self.sequence_column}, inplace = True) 
-
+        
         # Filter by project column
         df = df[df[self.project_column].isin(self.data_project)].reset_index(drop=True)
 
         # Apply filtration
         filters = {
-            "original": lambda df: self._filter_data(df, activity_columns),
+            "original": lambda df: self._filter_data(df, activity_columns, self.stderr_columns),
             "own": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, 
                                                 self.data_project, self.duplication_cutoff, 
                                                 self.stderr_threshold, self.std_multiple_cut, self.up_cutoff_move),
@@ -145,17 +149,42 @@ class MalinoisDataset(MpraDataset):
         # Handle duplication if specified
         if self.duplication_cutoff is not None:
             df = self.duplicate_high_activity_rows(df, activity_columns)
-        '''
-        if self.use_reverse_complement:
+
+        if self.use_original_reverse_complement:
+            
+            #padding
+            fn_padding = partial(self.original_pad_seq,
+                                  in_column_name=self.sequence_column,
+                                  padded_seq_len=600)
+            df[self.sequence_column] = df.apply(fn_padding, axis = 1)
+            
+            # reverse_complement
             rev_aug = df.copy()
             rev_aug.seq = rev_aug.seq.apply(self.reverse_complement)
             df = pd.concat([df, rev_aug], ignore_index =True)
-        '''
+            
         targets = df[activity_columns].to_numpy()
         seq = df.seq.to_numpy()
         df = {"targets" : targets, "seq" : seq}
         
         return df
+
+    def original_pad_seq(self, df, in_column_name, padded_seq_len = 600, upStreamSeq = LEFT_FLANK, downStreamSeq = RIGHT_FLANK):
+        sequence = df[in_column_name]
+        origSeqLen = len(sequence)
+        paddingLen = padded_seq_len - origSeqLen
+        assert paddingLen <= (len(upStreamSeq) + len(downStreamSeq)), 'Not enough padding available'
+        if paddingLen > 0:
+            if -paddingLen//2 + paddingLen%2 < 0:
+                upPad = upStreamSeq[-paddingLen//2 + paddingLen%2:]
+            else:
+                upPad = ''
+            downPad = downStreamSeq[:paddingLen//2 + paddingLen%2]
+            paddedSequence = upPad + sequence + downPad
+            assert len(paddedSequence) == padded_seq_len, 'Kiubo?'
+            return paddedSequence
+        else:
+            return sequence
 
     def reverse_complement(self, seq: str, mapping=None) -> str:
         if mapping is None:
@@ -173,7 +202,7 @@ class MalinoisDataset(MpraDataset):
                      duplication_cutoff = 0.5,
                      stderr_threshold = 1.0,
                      std_multiple_cut = 6.0,
-                     up_cutoff_move = 4.0) -> pd.DataFrame:
+                     up_cutoff_move = 3.0) -> pd.DataFrame:
         '''
         Filters the DataFrame based on specified thresholds for standard error and activity metrics.
     
@@ -222,7 +251,7 @@ class MalinoisDataset(MpraDataset):
         # Apply combined filtering for non-extreme values
         non_extremes_filter = ((df[activity_columns] < up_cut) & (df[activity_columns] > down_cut)).all(axis=1)
         df = df[non_extremes_filter].reset_index(drop=True)
-
+        
         return df  
 
     def duplicate_high_activity_rows(self, df: pd.DataFrame, activity_columns: List[str]) -> pd.DataFrame:
@@ -306,4 +335,5 @@ class MalinoisDataset(MpraDataset):
                 if act not in default_activity_columns:
                     raise ValueError(f"Invalid activity column: {act}. Must be one of {default_activity_columns}.")
                 activity_columns[i] = act + "_log2FC"
+                #activity_columns[i] = act + "_mean"
         return activity_columns

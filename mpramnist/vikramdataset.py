@@ -51,9 +51,13 @@ class VikramDataset(MpraDataset):
             
         target_column = "averaged_expression" if averaged_target else "expression"
         #df["target"] = df[target_column].astype(np.float32)
-        self.target = target_column
+        #self.target = target_column
             
         self.ds = df[df.fold.isin(self.split)].reset_index(drop=True)
+        
+        targets = self.ds[target_column].to_numpy()
+        seq = self.ds.seq.to_numpy()
+        self.ds = {"targets" : targets, "seq" : seq}
         
     def split_parse(self, split: list[int] | int | str) -> list[int]:
         '''
