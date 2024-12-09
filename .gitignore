@@ -1,6 +1,1 @@
-*logs/
-.ipynb_checkpoints/
-build/
-datasets/
-dist/
-*egg-info/
+*/__pycache__
