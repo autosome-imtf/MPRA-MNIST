@@ -43,10 +43,7 @@ class Seq2Tensor(nn.Module):
         
         code = [n2id(x) for x in Seq.seq]
         code = torch.from_numpy(np.array(code))
-        try:
-            code = F.one_hot(code, num_classes=5).float() # 5th class is N
-        except RuntimeError:
-            print("code: ", code)
+        code = F.one_hot(code, num_classes=5).float() # 5th class is N
         
 
         # Encode 'N' class with 0.25
@@ -304,6 +301,7 @@ class CenterCrop(nn.Module):
                 f"Sequence size ({Seq.seqsize}) must be greater than or equal to output_size ({self.output_size})."
             )
         crop_len = Seq.seqsize - self.output_size
+        
         if crop_len > 1:
             Seq.seq = Seq.seq[ crop_len // 2 + crop_len % 2 : ]
             Seq.seq = Seq.seq[ : - crop_len // 2 + crop_len % 2]
@@ -312,9 +310,12 @@ class CenterCrop(nn.Module):
 
         #change vector feature
         for name in Seq.vectors:
-            Seq.vectors[name].val = Seq.vectors[name].val[ crop_len // 2 + crop_len % 2 : ]
-            Seq.vectors[name].val = Seq.vectors[name].val[ : - crop_len // 2 + crop_len % 2]
-            
+            if crop_len > 1:
+                Seq.vectors[name].val = Seq.vectors[name].val[ crop_len // 2 + crop_len % 2 : ]
+                Seq.vectors[name].val = Seq.vectors[name].val[ : - crop_len // 2 + crop_len % 2]
+            elif crop_len == 1:
+                Seq.vectors[name].val = Seq.vectors[name].val[ 1 : ]
+
         return Seq
         
     def __repr__(self) -> str:
