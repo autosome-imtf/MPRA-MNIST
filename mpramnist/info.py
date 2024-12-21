@@ -68,4 +68,16 @@ INFO = {
                   "test": "7, 13"
                  }
     },
+    "MassiveStarrDataset": {
+        "python_class": "MassiveStarrDataset",
+        "description": "MassiveStarrDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
 }
