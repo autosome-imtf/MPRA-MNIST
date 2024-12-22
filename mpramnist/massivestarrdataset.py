@@ -43,7 +43,8 @@ class MassiveStarrDataset(MpraDataset):
         labels = []
         for name,seq in fa:
             seqs.append(seq)
-        label1, label0 = [np.float32(1) for i in range(len(seqs)//2)], [np.float32(0) for i in range(len(seqs)//2)]
+        last = len(seqs)//2 if len(seqs)%2 == 0 else len(seqs)//2 + 1
+        label1, label0 = [np.float32(1) for i in range(len(seqs)//2)], [np.float32(0) for i in range(last)]
 
         return {"targets": label1 + label0, "seq": seqs}
         
