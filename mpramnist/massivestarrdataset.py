@@ -9,7 +9,7 @@ from .mpradataset import MpraDataset
 class MassiveStarrDataset(MpraDataset):
     
     flag = "MassiveStarrSeqDataset"
-    tasks = ["RandomEnhancer", "GenomeEnhancer", "GenomePromoter", "DifferentialExpression", "CapturePromoter", "AtacSeq", "binary"]
+    tasks = ["randomenhancer", "genomeenhancer", "genomepromoter", "differentialexpression", "capturepromoter", "atacseq", "binary"]
     
     def __init__(self,
                  task: str,
@@ -35,33 +35,22 @@ class MassiveStarrDataset(MpraDataset):
         self.ds = self.load_data(self.split, self.task)
 
     def load_data(self, split, task):
-        #define task
-        if task == "RandomEnhancer":
-            task = "./ranEnh/"
+        task = self.define_task(task)
+        
         #load data files
-        if split == "test":
-            positive = pyfastx.Fastx(f'{self._data_path}{task}{split}_pos.fasta.gz')
-            pos_seqs = []
-            pos_labels = []
-            for name,seq in positive:
-                pos_labels.append(np.float32(1))
-                pos_seqs.append(seq)
-            negative = pyfastx.Fastx(f'{self._data_path}{task}{split}_neg.fasta.gz')
-            neg_seqs =  []
-            neg_labels = []
-            for name,seq in negative:
-                neg_labels.append(np.float32(0))
-                neg_seqs.append(seq)
-            return {"targets": pos_labels + neg_labels, "seq": pos_seqs + neg_seqs}
-            
         fa = pyfastx.Fastx(f'{self._data_path}{task}{split}.fasta.gz')
         seqs = []
         labels = []
         for name,seq in fa:
             seqs.append(seq)
-        label1, label0 = [np.float32(1) for i in seqs], [np.float32(0) for i in seqs]
+        label1, label0 = [np.float32(1) for i in range(len(seqs)//2)], [np.float32(0) for i in range(len(seqs)//2)]
 
         return {"targets": label1 + label0, "seq": seqs}
+        
+    def define_task(self, name):
+        tasks = ["./ranEnh/", "./genEnh/", "./genProm/", "./diffExp/", "./CaptProm/", "./ATACSeq/", "./binary/"]
+        if name.lower() in self.tasks:
+            return tasks[self.tasks.index(name.lower())]
         
     def split_parse(self, split: list[int] | int | str) -> list[int]:
         '''
