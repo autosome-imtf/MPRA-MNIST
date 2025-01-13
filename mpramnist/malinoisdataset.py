@@ -292,10 +292,14 @@ class MalinoisDataset(MpraDataset):
                          "val" : [19, 21, "X"], 
                          "test" : [7, 13]
                         } # default split of data
-        
+
+        list_of_chr = [str(i) for i in range(23)]
         # Process string input for specific keys or fold names ("X", "Y")
         if isinstance(split, str):
-            if split in ["X", "Y"]:
+            
+            if split in list_of_chr: # for case when "22"
+                split = [split]
+            elif split in ["X", "Y"]:
                 split = [split]
             elif split in split_default:
                 split = split_default[split]
@@ -303,19 +307,21 @@ class MalinoisDataset(MpraDataset):
                 raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', or 'test'.")
 
         # int to list for unified processing
-        if isinstance(split, int):
-            split = [split]
+        elif isinstance(split, int):
+            split = [str(split)]
             
         # Validate list of folds
-        if isinstance(split, list):
+        elif isinstance(split, list):
             result = []
             for item in split:
                 if isinstance(item, int) and 1 <= item <= 22:
                     result.append(str(item))
                 elif isinstance(item, str) and item in ["X", "Y"]:
                     result.append(item)
+                elif isinstance(item, str) and item in list_of_chr:
+                    result.append(item)
                 else:
-                    raise ValueError(f"Invalid fold value: {item}. Must be an integer in range 1-22 or 'X'/'Y'.")
+                    raise ValueError(f"Invalid fold value: {item}. Must be in range 1-22 or 'X'/'Y'.")
 
             split = result  # Ensure final result is clean and validated
         
