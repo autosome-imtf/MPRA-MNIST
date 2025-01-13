@@ -293,18 +293,16 @@ class MalinoisDataset(MpraDataset):
                          "test" : [7, 13]
                         } # default split of data
 
-        list_of_chr = [str(i) for i in range(23)]
+        list_of_chr = [str(i) for i in range(23)] + ["X", "Y"]
         # Process string input for specific keys or fold names ("X", "Y")
         if isinstance(split, str):
             
-            if split in list_of_chr: # for case when "22"
-                split = [split]
-            elif split in ["X", "Y"]:
+            if split in list_of_chr:
                 split = [split]
             elif split in split_default:
                 split = split_default[split]
             else:
-                raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', or 'test'.")
+                raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', or 'test', range 1-22 or 'X', 'Y'.")
 
         # int to list for unified processing
         elif isinstance(split, int):
@@ -316,8 +314,6 @@ class MalinoisDataset(MpraDataset):
             for item in split:
                 if isinstance(item, int) and 1 <= item <= 22:
                     result.append(str(item))
-                elif isinstance(item, str) and item in ["X", "Y"]:
-                    result.append(item)
                 elif isinstance(item, str) and item in list_of_chr:
                     result.append(item)
                 else:
