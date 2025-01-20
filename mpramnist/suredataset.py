@@ -50,31 +50,34 @@ class SureDataset(MpraDataset):
             self.output_names = ["avg_K562_exp", "avg_HepG2_exp"]
             self.num_outputs = 2
 
-        ###################  From sure dataset
-        '''
-        if self.task == "classification":
-            targets = targets.long()
-        '''
-
         targets = df[self.output_names].to_numpy()
         seq = df.sequence.to_numpy()
         self.ds = {"targets" : targets, "seq" : seq}
         
-    def split_parse(self, split: list[int] | int | str) -> list[int]:
+    def split_parse(self, split: str) -> str:
         '''
-        Parses the input split and returns a list of folds.
-        '''
+        Parses the input split and returns a list of splits.
         
+        Parameters
+        ----------
+        split : str
+            Defines the data split, expected values: 'train', 'val', 'test'.
+            
+        Returns
+        -------
+        str
+            A string containing the parsed split.
+        '''
         split_default = ["train", 
                          "val", 
                          "test"
                          ] # default split of data
         
-        # Process string input
-        if isinstance(split, str):
-            if split not in split_default:
-                raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', or 'test'.")
-        else:
-            raise ValueError("Invalid split value")
+        # Default valid splits
+        valid_splits = {"train", "val", "test"}
         
+        # Process string input
+        if split not in valid_splits:
+            raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', or 'test'.")
+    
         return split
