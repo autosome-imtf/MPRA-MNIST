@@ -27,7 +27,7 @@ class MassiveStarrDataset(MpraDataset):
     def __init__(self,
                  task: str,
                  split: str | List[str] | List[int] | int,
-                 prom_or_enh: str = "promoter", # (optional), supportable only for binary promoter-enhancer experiment
+                 binary_class: str = None, # (optional), supportable only for binary promoter-enhancer experiment
                  length: int = 150, # length of cutted sequence for diff expression experiment
                  transform = None,
                  target_transform = None,
@@ -40,8 +40,8 @@ class MassiveStarrDataset(MpraDataset):
             "differentialexpression", "capturepromoter", "atacseq", "binary"].
         split : str | List[int] | int
             Specifies how to split the data (e.g., into training and testing sets).
-        prom_or_enh : str, optional
-            Specifies "promoter" or "enhancer" for binary promoter-enhancer experiments. Default is "promoter".
+        binary_class : str, optional
+            Specifies enhancer_from_input/promoter_from_input/enhancer_permutated. allowed only for train split. Defailt None
         length : int, optional
             Length of the sequence for the differential expression experiment. Default is 150.
         transform : callable, optional
@@ -59,10 +59,7 @@ class MassiveStarrDataset(MpraDataset):
             raise ValueError(f"Parameter 'length' must be natural integer, not {length}.")
         self.length = length
 
-        binary_train = ["promoter", "promoter_from_input", "enhancer", "enhancer_permutated", "enhancer_from_input"]
-        if prom_or_enh not in binary_train:
-            raise ValueError(f"'prom_or_enh' must be one of {binary_train} for training or 'promoter'/'enhancer' for validation/testing.")
-        self.prom_or_enh = prom_or_enh
+        self.binary_class = binary_class
 
         self.cell_types = None
         self._cell_type = None
@@ -92,9 +89,9 @@ class MassiveStarrDataset(MpraDataset):
         if task in ["randomenhancer", "genomicpromoter", "capturepromoter", "binary"]:
             is_split_default = True
             self.split = self.split_parse(split, is_split_default)
-    
+            
             if task == "binary":
-                ds = self.task_binary(self.tasks[task], self.prom_or_enh, self.split)
+                ds = self.task_binary(self.tasks[task], self.binary_class, self.split)
             else:
                 ds = self.task_with_default_split(self.tasks[task], self.split)
             
@@ -156,10 +153,39 @@ class MassiveStarrDataset(MpraDataset):
         data = data[data.chr.isin(split)].reset_index(drop=True)
         return {"targets": data.targets.to_numpy(), "seq": data.seq.to_numpy()}
 
-    def task_binary(self, task, prom_or_enh, split): 
-        file_path = f"{self._data_path}{task}{split}_{prom_or_enh}.fasta.gz"
-        seqs, labels = self.read_fasta(file_path)
-        return {"targets": labels, "seq": seqs}
+    def task_binary(self, task, binary_class, split): 
+        binary_train = ["promoter_from_input", "enhancer_permutated", "enhancer_from_input"]
+        if split == "train":
+            if binary_class is not None:
+                if binary_class not in binary_train:
+                    raise ValueError(f"'binary_class' must be one of {binary_train} for training")
+                else:
+                    if binary_class.split("_")[0] == "promoter":
+                        file_path_prom = f"{self._data_path}{task}{split}_{binary_class}.fasta.gz"
+                        file_path_enh = f"{self._data_path}{task}{split}_enhancer.fasta.gz"
+                    else: 
+                        file_path_prom = f"{self._data_path}{task}{split}_promoter.fasta.gz"
+                        file_path_enh = f"{self._data_path}{task}{split}_{binary_class}.fasta.gz"
+                                                
+                    seqs_prom, labels_prom = self.read_fasta(file_path_prom)
+                    seqs_enh, labels_enh = self.read_fasta(file_path_enh)
+                    
+                    print(f"using train {binary_class}")
+                    
+                    return {"targets": labels_prom, "seq": seqs_prom, "seq2": seqs_enh}
+                    
+            elif binary_class is None:
+                pass 
+                
+        file_path_prom = f"{self._data_path}{task}{split}_promoter.fasta.gz"
+        seqs_prom, labels_prom = self.read_fasta(file_path_prom)
+        
+        file_path_enh = f"{self._data_path}{task}{split}_enhancer.fasta.gz"
+        seqs_enh, labels_enh = self.read_fasta(file_path_enh)
+        
+        print(f"using {split}")
+        
+        return {"targets": labels_prom, "seq": seqs_prom, "seq2": seqs_enh}
         
 ############################### Task diff expr + Extract sequences for diff expression ###################################
     def task_diff_exp(self, task, split, length, bed_file="RNA-seq_diffExpr_GP5dvsHepG2_from_tpmMeanMin1_with_coords_ENSG.bed.gz"):

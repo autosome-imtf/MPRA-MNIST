@@ -93,6 +93,7 @@ class SeqObj:
     scalars: dict[str, ScalarFeature]
     vectors: dict[str, VectorFeature]
     split: str = ""
+    one_hot_encoded = False
     add_feature_channel = False
     is_flank_added = False
     reverse: bool = False

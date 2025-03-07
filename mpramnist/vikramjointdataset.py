@@ -16,7 +16,7 @@ class VikramJointDataset(MpraDataset):
     
     def __init__(self,
                  split: str | List[int] | int,
-                 cell_type: str,
+                 cell_type: str | List[str],
                  transform = None,
                  target_transform = None,
                 ):

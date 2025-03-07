@@ -7,11 +7,13 @@ import os
 
 from .mpradataset import MpraDataset
 
-ACTIVITY_COLUMNS = ['y1', 'y2', 'y3', 'y4', 'y5', 'y6', 'y7', 'y8', 'y9', 'y10',
-       'y11', 'y12']
+
 
 class SharpDataset(MpraDataset):
-    
+    ACTIVITY_COLUMNS  = ["k562_minp_rep1", "k562_minp_rep2", "k562_minp_avg", \
+                             "k562_sv40p_rep1", "k562_sv40p_rep1", "k562_sv40p_avg", \
+                             "hepg2_minp_rep1", "hepg2_minp_rep2", "hepg2_minp_avg", \
+                             "hepg2_sv40p_rep1", "hepg2_sv40p_rep2", "hepg2_sv40p_avg"]
     cell_types = []
     flag = "SharpDataset"
     
@@ -43,7 +45,7 @@ class SharpDataset(MpraDataset):
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
         
-        targets = df[ACTIVITY_COLUMNS].to_numpy()
+        targets = df[self.ACTIVITY_COLUMNS].to_numpy()
         seq = df.seq.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
         

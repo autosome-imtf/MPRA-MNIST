@@ -70,7 +70,7 @@ class Seq2Tensor(nn.Module):
             
         # Concatenate all channels
         Seq.seq = torch.cat(to_concat, dim=0) if len(to_concat) > 1 else X
-            
+        Seq.one_hot_encoded = True
         return Seq
         
     def __repr__(self):

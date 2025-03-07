@@ -33,12 +33,14 @@ class MpraDataset(Dataset):
                  split: str | List[int] | int | List[Union[int, str]],
                  cell_type: str | List[str] = None,
                  download: bool = False,
+                 permute = False,
                  root: str = DEFAULT_ROOT,
                  transform: Optional[Callable] = None,
                   target_transform: Optional[Callable] = None
                 ):
         self.split = split
         self._cell_type = cell_type
+        self.permute = permute
         self.transform = transform
         self.target_transform = target_transform
         self._scalars = {}
@@ -47,22 +49,34 @@ class MpraDataset(Dataset):
         self.info = INFO[self.flag]
 
 
-    def __getitem__(self, i):
-        
-        sequence = self.ds["seq"][i]
-        target = self.ds["targets"][i].astype(np.float32)
-        
-        scals = {name: sc[i] for name, sc in self.scalars.items()} if hasattr(self, 'scalars') else {}
-        vecs = {name: vec[i] for name, vec in self.vectors.items()} if hasattr(self, 'vectors') else {}
-
-        Seq = SeqObj(seq=sequence, scalars=scals, vectors=vecs, split = self.split)
-
-        if self.transform is not None:
-            Seq = self.transform(Seq)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
+    def __getitem__(self, idx):
+        count_of_datasets = len(self.ds) - 1 # one variable is targets, and the other is sequences
+        seqs_datasets = {}
+        for i in range(count_of_datasets):
             
-        return Seq.seq, target
+            sequence = self.ds["seq"][idx]
+            
+            scals = {name: sc[idx] for name, sc in self.scalars.items()} if hasattr(self, 'scalars') else {}
+            vecs = {name: vec[idx] for name, vec in self.vectors.items()} if hasattr(self, 'vectors') else {}
+    
+            Seq = SeqObj(seq=sequence, scalars=scals, vectors=vecs, split = self.split)
+    
+            if self.transform is not None:
+                Seq = self.transform(Seq)
+
+            if Seq.one_hot_encoded and self.permute: # permute
+                Seq.seq = Seq.seq.permute(1,0)
+                
+            seqs_datasets[f"seq{i+1}"] =  Seq.seq
+        
+        target = torch.tensor(self.ds["targets"][idx].astype(np.float32))
+        if self.target_transform is not None:
+                target = self.target_transform(target)
+
+        if len(seqs_datasets) > 1:
+            return seqs_datasets, target # {seq1 : set sequences 1, seq2 : set sequences 2 ... etc ..., targets}
+        else:
+            return seqs_datasets["seq1"], target # sequences, targets
         
     @property
     def scalars(self):
@@ -100,10 +114,10 @@ class MpraDataset(Dataset):
         body.append(f"Cell types: {self.cell_types}")
         body.append(f"Сell type used: {self._cell_type}")
         body.append(f"Target columns that can be used: {self.info['target_columns']}")
-        body.append(f"Number of channels: {len(self.__getitem__(0)[0])}")
-        body.append(f"Sequence size: {len(self.__getitem__(0)[0][0])}")
+        #body.append(f"Number of channels: {len(self.ds["seq"][0][0])}")
+        body.append(f"Sequence size: {len(self.ds["seq"][0])}")
         body.append(f"Number of samples: {self.info['n_samples']}")
-        body.append(f"Description: {self.info['description']}")
+        #body.append(f"Description: {self.info['description']}")
         lines = [head] + [" " * _repr_indent + line for line in body]
         return "\n".join(lines)
         
