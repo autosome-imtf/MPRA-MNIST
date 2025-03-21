@@ -20,7 +20,7 @@ We have such datasets:
 | ----------- | ----------- | ----------- | ----------- |
 | `EvfratovDataset` | [Application of sorting and next generation sequencing to study 5΄-UTR influence on translation efficiency in Escherichia coli](https://academic.oup.com/nar/article/45/6/3487/2605795) | 10.1093/nar/gkw1141 | Bacteria |
 | `TODO` | [Synthetic promoter design in Escherichia coli based on a deep generative network](https://academic.oup.com/nar/article/48/12/6403/5837049) | 10.1093/nar/gkaa325 | Bacteria |
-| <span style="color:yellow">`TODO`</span> | <span style="color:yellow">[Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract)</span> | <span style="color:yellow">10.1101/2024.12.17.629042</span> | <span style="color:yellow">Bacteria</span> |
+| <span style="color:yellow">`TODO`</span> | <span style="color:yellow">[Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract)</span>, this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308) | <span style="color:yellow">10.1101/2024.12.17.629042</span> | <span style="color:yellow">Bacteria</span> |
 | <span style="color:red">`TODO`</span> | <span style="color:red">[Structure and Evolution of Constitutive Bacterial Promoters](https://www.biorxiv.org/content/10.1101/2020.05.19.104232v1)</span> | <span style="color:red">10.1101/2020.05.19.104232</span> | <span style="color:red">Bacteria</span> |
 | ----------- | ----------- | ----------- | ----------- |
 | `DeepStarrDataset` | [DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers](https://www.nature.com/articles/s41588-022-01048-5) | 10.1038/s41588-022-01048-5 | Drosophila |
@@ -29,3 +29,48 @@ We have such datasets:
 | `TODO` | ----------- | ----------- | Yeast |
 | <span style="color:red">`TODO`</span> | <span style="color:red">[Deep learning of the regulatory grammar of yeast 5′ untranslated regions from 500,000 random sequences](https://genome.cshlp.org/content/27/12/2015)</span> | <span style="color:red">10.1101/gr.224964.117</span> | <span style="color:red">Yeast</span> |
 | ----------- | ----------- | ----------- | ----------- |
+
+# Is it better?
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Artcile and link</th>
+    <th>DOI</th>
+    <th>Cell context</th>
+  </tr>
+  <tr>
+    <td>`VikramDataset`</td>
+    <td>[Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9)</td>
+    <td>10.1038/s41586-024-08430-9</td>
+    <td>Human</td>
+  </tr>
+  <tr>
+    <td>`VikramJointDataset`</td>
+    <td>[Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9)</td>
+    <td>10.1038/s41586-024-08430-9</td>
+    <td>Human</td>
+  </tr>
+  <tr>
+    <td>Данные 1</td>
+    <td>Данные 2</td>
+    <td>Данные 3</td>
+    <td></td>
+  </tr>
+  <tr style="background-color: #ffcccc;">
+    <td>`TODO`</td>
+    <td>[Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract), this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308)</td>
+    <td>10.1101/2024.12.17.629042</td>
+    <td>Bacteria</td>
+  </tr>
+  <tr>
+    <td>-----------</td>
+    <td>-----------</td>
+    <td>-----------</td>
+    <td>-----------</td>
+  </tr>
+    <td>`DeepStarrDataset`</td>
+    <td>[DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers](https://www.nature.com/articles/s41588-022-01048-5)</td>
+    <td>10.1038/s41588-022-01048-5 ]</td>
+    <td>Drosophila</td>
+</table>
