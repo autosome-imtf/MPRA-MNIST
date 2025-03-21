@@ -46,16 +46,16 @@
     <td><a href="https://www.nature.com/articles/s41586-024-08430-9">Massively parallel characterization of transcriptional regulatory elements</a></td>
     <td>10.1038/s41586-024-08430-9</td>
     <td>Human</td>
-    <th>HepG2, K562, WTC11</th>
-    <th><a href="https://github.com/autosome-imtf/MpraDataset/blob/main/examples/VikramDataset_example.ipynb">example</a></th> 
+    <td>HepG2, K562, WTC11</td>
+    <td><a href="https://github.com/autosome-imtf/MpraDataset/blob/main/examples/VikramDataset_example.ipynb">example</a></td> 
   </tr>
   <tr>
     <td>VikramJointDataset</td>
     <td><a href="https://www.nature.com/articles/s41586-024-08430-9">Massively parallel characterization of transcriptional regulatory elements</a></td>
     <td>10.1038/s41586-024-08430-9</td>
     <td>Human</td>
-    <th>HepG2, K562, WTC11</th>
-    <th><a href="https://github.com/autosome-imtf/MpraDataset/blob/main/examples/VikramDataset_example.ipynb">example</a></th> 
+    <td>HepG2, K562, WTC11</td>
+    <td><a href="https://github.com/autosome-imtf/MpraDataset/blob/main/examples/VikramDataset_example.ipynb">example</a></td> 
   </tr>
   <tr>
     <td>Данные 1</td>
