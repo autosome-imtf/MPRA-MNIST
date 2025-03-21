@@ -8,8 +8,8 @@
 
 ## We have such datasets:
 
-| Name | Artcile and link | DOI | Cell context | Cell types | Case example link |
-| ----------- | ----------- | ----------- | ----------- | -----------| -----------|
+| Name | Artcile and link | DOI | Cell context | Cell types |
+| ----------- | ----------- | ----------- | ----------- | -----------|
 | `VikramDataset` | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | Human | HepG2, K562, WTC11 |
 | `VikramJointDataset` | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | Human | HepG2, K562, WTC11 |
 | `MalinoisDataset` | [Machine-guided design of synthetic cell type-specific cis-regulatory elements](https://pmc.ncbi.nlm.nih.gov/articles/PMC10441439/) | 10.1101/2023.08.08.552077 | Human | HepG2, K562, SK-N-SH |
