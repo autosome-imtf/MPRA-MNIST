@@ -116,4 +116,28 @@ INFO = {
         "folds": {
                  }
     },
+    "EvfratovDataset": {
+        "python_class": "EvfratovDataset",
+        "description": "EvfratovDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
+    "DeepStarrDataset": {
+        "python_class": "DeepStarrDataset",
+        "description": "DeepStarrDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
 }
