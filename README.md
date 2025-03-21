@@ -20,13 +20,13 @@ We have such datasets:
 | ----------- | ----------- | ----------- | ----------- |
 | `EvfratovDataset` | [Application of sorting and next generation sequencing to study 5΄-UTR influence on translation efficiency in Escherichia coli](https://academic.oup.com/nar/article/45/6/3487/2605795) | 10.1093/nar/gkw1141 | Bacteria |
 | `TODO` | [Synthetic promoter design in Escherichia coli based on a deep generative network](https://academic.oup.com/nar/article/48/12/6403/5837049) | 10.1093/nar/gkaa325 | Bacteria |
-|$${\color{yellow}`TODO` | [Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract), this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308) | 10.1101/2024.12.17.629042 | Bacteria}$$ |
-| $${\color{red}`TODO`}$$ | $${\color{red}[Structure and Evolution of Constitutive Bacterial Promoters](https://www.biorxiv.org/content/10.1101/2020.05.19.104232v1)}$$ | $${\color{red}10.1101/2020.05.19.104232}$$ | $${\color{red}Bacteria}$$ |
+|$${\color{yellow}{`TODO`}}$$ | $${\color{yellow}{[Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract), this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308)}}$$ | $${\color{yellow}10.1101/2024.12.17.629042}$$ | $${\color{yellow}Bacteria}$$ |
+| $${\color{red}TODO}$$ | $${\color{red}[Structure and Evolution of Constitutive Bacterial Promoters](https://www.biorxiv.org/content/10.1101/2020.05.19.104232v1)}$$ | $${\color{red}10.1101/2020.05.19.104232}$$ | $${\color{red}Bacteria}$$ |
 | ----------- | ----------- | ----------- | ----------- |
 | `DeepStarrDataset` | [DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers](https://www.nature.com/articles/s41588-022-01048-5) | 10.1038/s41588-022-01048-5 | Drosophila |
 | ----------- | ----------- | ----------- | ----------- |
 | `TODO` | ----------- | ----------- | Yeast |
 | `TODO` | ----------- | ----------- | Yeast |
-| $${\color{red}`TODO` | [Deep learning of the regulatory grammar of yeast 5′ untranslated regions from 500,000 random sequences](https://genome.cshlp.org/content/27/12/2015) | 10.1101/gr.224964.117 | Yeast}$$ |
+| $${\color{red}TODO}$$ | $${\color{red}[Deep learning of the regulatory grammar of yeast 5′ untranslated regions from 500,000 random sequences](https://genome.cshlp.org/content/27/12/2015)}$$ | $${\color{red}10.1101/gr.224964.117}$$ | $${\color{red}Yeast}$$ |
 | ----------- | ----------- | ----------- | ----------- |
 
