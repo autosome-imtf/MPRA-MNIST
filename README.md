@@ -61,6 +61,9 @@
     <td>Данные 1</td>
     <td>Данные 2</td>
     <td>Данные 3</td>
+    <td>-----------</td>
+    <td>-----------</td>
+    <td>-----------</td>
     <td></td>
   </tr>
   <tr style="background-color: red;">
@@ -68,8 +71,13 @@
     <td><a href="https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract">Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks</a>, this is pre-processed data from <a href="https://elifesciences.org/articles/55308">Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time</a></td>
     <td>10.1101/2024.12.17.629042</td>
     <td>Bacteria</td>
+    <td>-----------</td>
+    <td>-----------</td>
+    <td>-----------</td>
   </tr>
   <tr>
+    <td>-----------</td>
+    <td>-----------</td>
     <td>-----------</td>
     <td>-----------</td>
     <td>-----------</td>
