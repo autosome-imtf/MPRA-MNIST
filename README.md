@@ -64,7 +64,6 @@
     <td>-----------</td>
     <td>-----------</td>
     <td>-----------</td>
-    <td></td>
   </tr>
   <tr style="background-color: red;">
     <td>TODO</td>
