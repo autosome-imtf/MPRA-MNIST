@@ -19,8 +19,6 @@ class MassiveStarrDataset(MpraDataset):
              "genomicenhancer"          : "./genEnh/",  # Splitting is based on chromosomes, train/val/test available too.
              "atacseq"                  : "./ATACSeq/", # Splitting is based on chromosomes, train/val/test available too.
              
-             "differentialexpression"   : "./diffExpr/",# Can be split based on chromosomes, train/val/test available too.
-             
              "binary"                   : "./binary/"   # Splits are available for train, val, and test only.
             }
     
@@ -28,7 +26,6 @@ class MassiveStarrDataset(MpraDataset):
                  task: str,
                  split: str | List[str] | List[int] | int,
                  binary_class: str = None, # (optional), supportable only for binary promoter-enhancer experiment
-                 length: int = 150, # length of cutted sequence for diff expression experiment
                  transform = None,
                  target_transform = None,
                 ):
@@ -42,8 +39,6 @@ class MassiveStarrDataset(MpraDataset):
             Specifies how to split the data (e.g., into training and testing sets).
         binary_class : str, optional
             Specifies enhancer_from_input/promoter_from_input/enhancer_permutated. allowed only for train split. Defailt None
-        length : int, optional
-            Length of the sequence for the differential expression experiment. Default is 150.
         transform : callable, optional
             Function to apply transformations to the input sequences.
         target_transform : callable, optional
@@ -54,10 +49,6 @@ class MassiveStarrDataset(MpraDataset):
         if task.lower() not in self.tasks:
             raise ValueError(f"incorrect task '{task}'. Expected one of {list(self.tasks.keys())}.")
         self.task = task.lower()
-        
-        if not isinstance(length, int) or length <= 0:
-            raise ValueError(f"Parameter 'length' must be natural integer, not {length}.")
-        self.length = length
 
         self.binary_class = binary_class
 
@@ -96,14 +87,11 @@ class MassiveStarrDataset(MpraDataset):
                 ds = self.task_with_default_split(self.tasks[task], self.split)
             
         # Chromosome-based split tasks
-        elif task in ["genomicenhancer", "atacseq", "differentialexpression"]:
+        elif task in ["genomicenhancer", "atacseq"]:
             is_split_default = False
             self.split = self.split_parse(split, is_split_default)
     
-            if task == "differentialexpression":
-                ds = self.task_diff_exp(self.tasks[task], self.split, self.length)
-            else:
-                ds = self.task_with_various_split(self.tasks[task], self.split)
+            ds = self.task_with_various_split(self.tasks[task], self.split)
             
         return ds
 
@@ -188,6 +176,7 @@ class MassiveStarrDataset(MpraDataset):
         return {"targets": labels_prom, "seq": seqs_prom, "seq2": seqs_enh}
         
 ############################### Task diff expr + Extract sequences for diff expression ###################################
+    ########################### DEPRECATED #############################################################
     def task_diff_exp(self, task, split, length, bed_file="RNA-seq_diffExpr_GP5dvsHepG2_from_tpmMeanMin1_with_coords_ENSG.bed.gz"):
         file_path = os.path.join(self._data_path, task, bed_file)
         if not os.path.exists(file_path):

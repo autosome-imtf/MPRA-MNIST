@@ -29,7 +29,7 @@ class MalinoisDataset(MpraDataset):
                   up_cutoff_move: float = 3.0,
                   transform: Optional[Callable] = None,
                   target_transform: Optional[Callable] = None,
-                  use_original_reverse_complement = False
+                  use_original_reverse_complement:bool = False
                 ):
         """
         Initializes the dataset loader with specified filtering, duplication, and transformation settings.
@@ -58,6 +58,8 @@ class MalinoisDataset(MpraDataset):
             Transformation function applied to each sequence object.
         target_transform : Optional[Callable]
             Transformation function applied to the target data.
+        use_original_reverse_complement : bool
+            Determines whether to generate the reverse complement of sequences using the same approach as the original study
         """
         # Validate filtration parameter
         if filtration not in {"original", "own", "none"}:

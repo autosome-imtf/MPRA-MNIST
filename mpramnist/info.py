@@ -24,9 +24,9 @@ DEFAULT_ROOT = get_default_root()
 HOMEPAGE = "https://github.com/autosome-imtf/mpraMnist"
 
 INFO = {
-    "VikramDataset": {
-        "python_class": "VikramDataset",
-        "description": "The VikramDataset is based on lentiMPRA assay, which determines the regulatory activity of over 680,000 sequences, representing a nearly comprehensive set of all annotated CREs among three cell types (HepG2, K562, and WTC11). HepG2 is a human liver cancer cell line, K562 is myelogenous leukemia cell line, WTC11 is pluripotent stem cell line derived from adult skin ",
+    "AgarwalDataset": {
+        "python_class": "AgarwalDataset",
+        "description": "The AgarwalDataset is based on lentiMPRA assay, which determines the regulatory activity of over 680,000 sequences, representing a nearly comprehensive set of all annotated CREs among three cell types (HepG2, K562, and WTC11). HepG2 is a human liver cancer cell line, K562 is myelogenous leukemia cell line, WTC11 is pluripotent stem cell line derived from adult skin ",
         "url_HepG2": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_HepG2.tsv?download=1",
         "MD5_HepG2": "e34ead50382f11dbe3537bd66399548b",
         "url_K562": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_WTC11.tsv?download=1",
@@ -39,8 +39,8 @@ INFO = {
         "n_samples": {"train": 98336, "val": 12292, "test": 12292},
         "folds": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10}
     },
-    "VikramJointDataset": {
-        "python_class": "VikramJointDataset",
+    "AgarwalJointDataset": {
+        "python_class": "AgarwalJointDataset",
         "description": "",
         "url_HepG2": "",
         "MD5_HepG2": "",
@@ -128,9 +128,45 @@ INFO = {
         "folds": {
                  }
     },
+    "DeepPromoterDataset": {
+        "python_class": "DeepPromoterDataset",
+        "description": "DeepPromoterDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
     "DeepStarrDataset": {
         "python_class": "DeepStarrDataset",
         "description": "DeepStarrDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
+    "KircherDataset": {
+        "python_class": "KircherDataset",
+        "description": "KircherDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
+    "DreamDataset": {
+        "python_class": "DreeamDataset",
+        "description": "DreamDataset is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},

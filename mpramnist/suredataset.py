@@ -14,6 +14,7 @@ class SureDataset(MpraDataset):
              "SuRE44_HG01241",
              "SuRE45_HG03464"]
     tasks = ["classification", "regression"]
+    cell_types = ["K562", "HepG2"]
     
     def __init__(self,
                  split: str,
@@ -33,7 +34,6 @@ class SureDataset(MpraDataset):
         self.info = INFO[self.flag]
         
         self.genome_id = genome_id
-        self.cell_types = self.GENOME_IDS
         self._cell_type = genome_id
         if isinstance(genome_id, list):
             pass

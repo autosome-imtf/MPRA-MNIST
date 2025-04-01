@@ -410,7 +410,7 @@ class Padding(nn.Module):
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(output_size={self.output_size})"
         
-class Reverse(nn.Module):
+class ReverseComplement(nn.Module):
     """
     Applies reverse complement transformation to a sequence with a given probability.
 
