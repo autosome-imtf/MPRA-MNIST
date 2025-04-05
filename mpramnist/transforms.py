@@ -159,10 +159,10 @@ class LeftCrop(nn.Module):
     The length of the cropped sequence will be between `min_crop` and `max_crop` (both inclusive).
     
     For example, given the sequence 'ABCDEFGHKLMNOPQRSTUV' with length 20:
-        RightCrop(SeqObj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can result:
-        --> FGHKLMNOPQRSTUV (crop length 15)
-        --> EFGHKLMNOPQRSTUV (crop length 16)
-        --> DEFGHKLMNOPQRSTUV (crop length 17)
+        LeftCrop(SeqObj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can result:
+        -->    FGHKLMNOPQRSTUV (crop length 15)
+        -->   EFGHKLMNOPQRSTUV (crop length 16)
+        -->  DEFGHKLMNOPQRSTUV (crop length 17)
         --> CDEFGHKLMNOPQRSTUV (crop length 18)
         
     If `min_crop == max_crop`, the output will have a fixed length of `min_crop`.
@@ -177,7 +177,7 @@ class LeftCrop(nn.Module):
     Methods
     -------
     forward(Seq):
-        Modifies the input sequence object by cropping its right side.
+        Modifies the input sequence object by cropping its left side.
         
     Raises
     ------
