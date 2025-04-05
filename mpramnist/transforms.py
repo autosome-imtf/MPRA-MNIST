@@ -186,7 +186,7 @@ class LeftCrop(nn.Module):
     '''
     def __init__(self, min_crop: int, max_crop: int):
         super().__init__()
-        if min_crop < 0 or max_crop < 0:
+        if min_crop <= 0 or max_crop <= 0:
             raise ValueError("min_crop and max_crop must be non-negative integers.")
         if min_crop > max_crop:
             raise ValueError("min_crop cannot be greater than max_crop.")
@@ -255,7 +255,7 @@ class RightCrop(nn.Module):
         self.max = max_crop
         
     def forward(self, Seq: SeqObj) -> SeqObj:
-        """Modifies the input sequence by cropping from the left side."""
+        """Modifies the input sequence by cropping from the right side."""
         if len(Seq.seq) < self.min:
             raise ValueError(f"Sequence length {len(Seq.seq)} is smaller than the minimum crop size {self.min}.")
         

@@ -23,7 +23,6 @@ class KircherDataset(MpraDataset):
                  split: str = "test",
                  length: int = 230, # length of cutted sequence 
                  promoters: list[str] | str =  ["F9","LDLR.2","LDLR","PKLR-24h","PKLR-48h","SORT1.2","SORT1"],
-                 is_reference: bool = False,
                  transform = None,
                  target_transform = None,
                 ):
@@ -78,30 +77,29 @@ class KircherDataset(MpraDataset):
             raise IOError(f"Error loading FASTA file {fasta_file}: {str(e)}") from e
 
         # Extract sequences
-        if not is_reference:
-            self.ds["seq"] = self.ds.apply(
-                lambda row: self.get_sequence(
-                    file_pyfaidx=ref,
-                    chromosome=row.Chromosome,
-                    length=self.length,
-                    pos=row.Position,
-                    ref=row.Ref,
-                    alt=row.Alt
-                ),
-                axis=1
-            )
-        else:
-            self.ds["seq"] = self.ds.apply(
-                lambda row: self.get_sequence( # get reference sequence
-                    file_pyfaidx=ref,
-                    chromosome=row.Chromosome,
-                    length=self.length,
-                    pos=row.Position,
-                    ref=row.Ref,
-                    alt=row.Ref # here not alternative variant
-                ),
-                axis=1
-            )
+        self.ds["seq_alt"] = self.ds.apply(
+            lambda row: self.get_sequence(
+                file_pyfaidx=ref,
+                chromosome=row.Chromosome,
+                length=self.length,
+                pos=row.Position,
+                ref=row.Ref,
+                alt=row.Alt
+            ),
+            axis=1
+        )
+        
+        self.ds["seq_ref"] = self.ds.apply(
+            lambda row: self.get_sequence( # get reference sequence
+                file_pyfaidx=ref,
+                chromosome=row.Chromosome,
+                length=self.length,
+                pos=row.Position,
+                ref=row.Ref,
+                alt=row.Ref # here not alternative variant
+            ),
+            axis=1
+        )
             
         # Filter by promoters
         if isinstance(promoters, str) and promoters.lower() == "all":
@@ -112,8 +110,9 @@ class KircherDataset(MpraDataset):
         self.ds = self.ds.dropna().reset_index(drop=True)
         
         targets = self.ds[target_column].to_numpy()
-        seq = self.ds.seq.to_numpy()
-        self.ds = {"targets" : targets, "seq" : seq} 
+        seq_alt = self.ds.seq_alt.to_numpy()
+        seq_ref = self.ds.seq_ref.to_numpy()
+        self.ds = {"targets" : targets, "seq" : seq_ref, "seq_alt" : seq_alt} 
 
     def _setup_fasta_file(self) -> str:
         """Ensure FASTA file exists and is ready for use."""
@@ -128,7 +127,8 @@ class KircherDataset(MpraDataset):
             except subprocess.CalledProcessError as e:
                 raise IOError(f"Failed to download/decompress FASTA file: {str(e)}") from e
         else:
-            print("FASTA file already exists. Skipping download.")
+            #print("FASTA file already exists. Skipping download.")
+            pass
         
         return fasta_file
 

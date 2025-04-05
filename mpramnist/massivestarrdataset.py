@@ -8,6 +8,9 @@ import pyfaidx
 from .mpradataset import MpraDataset
 import os
 
+def get_recommended_transforms():
+    return {train:, valid:, test: []}
+
 class MassiveStarrDataset(MpraDataset):
     
     flag = "MassiveStarrSeqDataset"
@@ -160,7 +163,7 @@ class MassiveStarrDataset(MpraDataset):
                     
                     print(f"using train {binary_class}")
                     
-                    return {"targets": labels_prom, "seq": seqs_prom, "seq2": seqs_enh}
+                    return {"targets": labels_prom, "seq": seqs_prom, "seq1": seqs_enh}
                     
             elif binary_class is None:
                 pass 
@@ -173,7 +176,7 @@ class MassiveStarrDataset(MpraDataset):
         
         print(f"using {split}")
         
-        return {"targets": labels_prom, "seq": seqs_prom, "seq2": seqs_enh}
+        return {"targets": labels_prom, "seq": seqs_prom, "seq1": seqs_enh}
         
 ############################### Task diff expr + Extract sequences for diff expression ###################################
     ########################### DEPRECATED #############################################################
