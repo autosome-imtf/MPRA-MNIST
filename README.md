@@ -13,6 +13,7 @@
 | HUMAN | ----------- | ----------- | ----------- |
 | `VikramDataset` | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
 | `VikramJointDataset` | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
+| `KircherDataset` | [Saturation mutagenesis of twenty disease-associated regulatory elements at single base-pair resolution](https://www.nature.com/articles/s41467-019-11526-w) | 10.1038/s41467-019-11526-w | HepG2, K562, etc |
 | `MalinoisDataset` | [Machine-guided design of synthetic cell type-specific cis-regulatory elements](https://pmc.ncbi.nlm.nih.gov/articles/PMC10441439/) | 10.1101/2023.08.08.552077 | HepG2, K562, SK-N-SH |
 | `MassiveStarrSeqDataset` | [Sequence determinants of human gene regulatory elements](https://www.nature.com/articles/s41588-021-01009-4#citeas) | 10.1038/s41588-021-01009-4 | HepG2, GP5D, RPE1 |
 | `SureDataset` | [Genome-wide mapping of autonomous promoter activity in human cells](https://pubmed.ncbi.nlm.nih.gov/28024146/) | 0.1038/nbt.3754 | HepG2, K562 |
@@ -22,11 +23,10 @@
 | `EvfratovDataset` | [Application of sorting and next generation sequencing to study 5΄-UTR influence on translation efficiency in Escherichia coli](https://academic.oup.com/nar/article/45/6/3487/2605795) | 10.1093/nar/gkw1141 | ----------- |
 | `DeepPromoter` | [Synthetic promoter design in Escherichia coli based on a deep generative network](https://academic.oup.com/nar/article/48/12/6403/5837049) | 10.1093/nar/gkaa325 | ----------- |
 | YEAST | ----------- | ----------- | ----------- |
-| `DreamDataset | [Random Promoter DREAM Challenge Consortium. Evaluation and optimization of sequence-based gene regulatory deep learning models.](https://pubmed.ncbi.nlm.nih.gov/38405704/) | 10.1101/2023.04.26.538471 | ----------- |
+| `DreamDataset` | [Random Promoter DREAM Challenge Consortium. Evaluation and optimization of sequence-based gene regulatory deep learning models.](https://pubmed.ncbi.nlm.nih.gov/38405704/) | 10.1101/2023.04.26.538471 | ----------- |
 | `VaishnavDataset` | [The evolution, evolvability and engineering of gene regulatory DNA](https://www.nature.com/articles/s41586-022-04506-6) | 10.1038/s41586-022-04506-6 | ----------- |
 | DROSOPHILA | ----------- | ----------- | ----------- |
 | `DeepStarrDataset` | [DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers](https://www.nature.com/articles/s41588-022-01048-5) | 10.1038/s41588-022-01048-5 | ----------- |
-| ----------- | ----------- | ----------- | ----------- |
 
 ## Planned datasets
 
