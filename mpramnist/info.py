@@ -165,8 +165,20 @@ INFO = {
                  }
     },
     "DreamDataset": {
-        "python_class": "DreeamDataset",
+        "python_class": "DreamDataset",
         "description": "DreamDataset is based on ",
+        "url": "",
+        "MD5": "",
+        "target_columns": {},
+        "scalar_features": {},
+        "vector_features": {},
+        "n_samples": {},
+        "folds": {
+                 }
+    },
+    "VaishnavDataset": {
+        "python_class": "VaishnavDataset",
+        "description": "VaishnavDataset is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},

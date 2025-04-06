@@ -58,7 +58,6 @@ class LitModel(L.LightningModule):
             res_str += f"| Val Loss: {self.trainer.callback_metrics['val_loss']:.5f} "
             res_str += f'| Val Pearson: {val_pearson:.5f} '
     
-            res_str += f'| Train Loss: {self.trainer.callback_metrics['train_loss']:.5f} '
             res_str += f'| Train Pearson: {train_pearson:.5f} '
             border = '-'*len(res_str)
             print("\n".join(['', border, res_str, border, '']))
@@ -109,8 +108,39 @@ class LitModel(L.LightningModule):
             }
             
         return [self.optimizer], [lr_scheduler_config]
+
+class LitModel_Dream(LitModel):
+    def __init__(self, weight_decay, lr, 
+                 model = None, in_ch = 4, out_ch = 1, loss = nn.MSELoss(), print_each = 1):
         
-class LitModel_Kircher(LitModel):
+        super().__init__(model, loss, print_each, weight_decay, lr)
+    
+        
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        seqs, labels = batch
+        
+        if isinstance(seqs, dict):
+            seq_x = seqs.get("seq")
+            seq_alt_x = seqs.get("seq_alt")
+            
+            ref_pred = self.model(seq_x) 
+            
+            alt_pred = self.model(seq_alt_x) 
+        else:
+            ref_pred = self.model(seqs)
+            alt_pred = None
+    
+        result = {
+            "ref_predicted": ref_pred.cpu().detach().float(),
+            "target": labels.cpu().detach().float()
+        }
+        
+        if alt_pred is not None:
+            result["alt_predicted"] = alt_pred.cpu().detach().float()
+    
+        return result
+        
+class LitModel_Kircher(LitModel_Dream):
     def __init__(self, weight_decay, lr, 
                  model = None, in_ch = 4, out_ch = 1, loss = nn.MSELoss(), print_each = 1):
         super().__init__(model, loss, print_each, weight_decay, lr)
@@ -129,59 +159,33 @@ class LitModel_Kircher(LitModel):
             self.model.apply(initialize_weights)
         else:
             self.model = model
-
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
         
+class LitModel_Vaishnav(LitModel_Dream):
+        
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
         seqs, labels = batch
-        
+
         if isinstance(seqs, dict):
             seq_x = seqs.get("seq")
             seq_alt_x = seqs.get("seq_alt")
             
             ref_pred = self.model(seq_x) 
-            
             alt_pred = self.model(seq_alt_x) 
         else:
             ref_pred = self.model(seqs)
             alt_pred = None
-    
-        result = {
-            "ref_predicted": ref_pred.cpu().detach().float(),
-            "target": labels.cpu().detach().float()
-        }
+            
+        y_hat = ref_pred
         
         if alt_pred is not None:
-            result["alt_predicted"] = alt_pred.cpu().detach().float()
-    
-        return result
-
-class LitModel_Dream(LitModel):
-    def __init__(self, weight_decay, lr, 
-                 model = None, in_ch = 4, out_ch = 1, loss = nn.MSELoss(), print_each = 1):
+            y_hat = alt_pred - ref_pred
         
-        super().__init__(model, loss, print_each, weight_decay, lr)
+        loss = self.loss(y_hat, labels)
         
+        self.log('test_loss', 
+                 loss, 
+                 prog_bar=True, 
+                 on_step=False,
+                 on_epoch=True)
+        self.test_pearson.update(y_hat, labels)
         
-    def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        seqs, labels = batch
-        
-        if isinstance(seqs, dict):
-            seq_x = seqs.get("seq")
-            seq_alt_x = seqs.get("seq_alt")
-            
-            ref_pred = self.model(seq_x) 
-            
-            alt_pred = self.model(seq_alt_x) 
-        else:
-            ref_pred = self.model(seqs)
-            alt_pred = None
-    
-        result = {
-            "ref_predicted": ref_pred.cpu().detach().float(),
-            "target": labels.cpu().detach().float()
-        }
-        
-        if alt_pred is not None:
-            result["alt_predicted"] = alt_pred.cpu().detach().float()
-    
-        return result

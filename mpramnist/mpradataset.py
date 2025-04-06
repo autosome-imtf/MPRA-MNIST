@@ -31,15 +31,13 @@ class MpraDataset(Dataset):
     
     def __init__(self,
                  split: str | List[int] | int | List[Union[int, str]],
-                 cell_type: str | List[str] = None,
                  download: bool = False,
                  permute = False,
                  root: str = DEFAULT_ROOT,
                  transform: Optional[Callable] = None,
-                  target_transform: Optional[Callable] = None
+                 target_transform: Optional[Callable] = None
                 ):
         self.split = split
-        self._cell_type = cell_type
         self.permute = permute
         self.transform = transform
         self.target_transform = target_transform

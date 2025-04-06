@@ -5,6 +5,7 @@ from typing import List, T, Union
 import torch
 from .info import INFO
 import os
+import warnings
 
 from .mpradataset import MpraDataset
 
@@ -26,7 +27,6 @@ class DreamDataset(MpraDataset):
         "high", "low", "yeast", "challenging", "random", "all",  # single types
         "snv", "perturbation", "tiling"  # paired types
     ]
-    cell_types = None
     
     def __init__(self,
                  split: str,
@@ -54,9 +54,8 @@ class DreamDataset(MpraDataset):
         self.info = INFO[self.flag]  # Ensure INFO is defined elsewhere
         
         # Parse and validate inputs
-        self.split = self._parse_split(split)
+        self.split = self.split_parse(split)
         self.target_column = "label"
-        self._cell_type = None
 
         # Load and prepare dataset
         self.dataset, self.data_type = self._define_dataset(self.split, data_type)
@@ -123,7 +122,7 @@ class DreamDataset(MpraDataset):
             if dataset_type is not None:
                 warnings.warn(
                     "WARNING! The training set was selected, "
-                    "so the 'type' parameter is ignored.",
+                    "\nso the 'type' parameter is ignored.",
                     stacklevel=1
                 )
             return "train", None
@@ -168,7 +167,7 @@ class DreamDataset(MpraDataset):
             f"All types must be from {single_types} or {paired_types}"
         )
 
-    def _parse_split(self, split: str) -> str:
+    def split_parse(self, split: str) -> str:
         """Parse and validate the split parameter.
         
         Args:
