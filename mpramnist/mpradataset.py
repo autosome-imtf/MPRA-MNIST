@@ -19,14 +19,12 @@ class MpraDataset(Dataset):
         ----------
         split : str | List[int] | int
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        cell_type : str
-            Specifies the cell type for filtering the data.
         transform : callable, optional
             Transformation applied to each sequence object.
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-    Parent_flag = "MpraDaraset"
+    PARENT_FLAG = "MpraDaraset"
     
     
     def __init__(self,
@@ -43,8 +41,8 @@ class MpraDataset(Dataset):
         self.target_transform = target_transform
         self._scalars = {}
         self._vectors = {}
-        self._data_path = "./../datasets/" + self.flag + "/"
-        self.info = INFO[self.flag]
+        self._data_path = "./../datasets/" + self.FLAG + "/"
+        self.info = INFO[self.FLAG]
 
 
     def __getitem__(self, idx):
@@ -66,7 +64,7 @@ class MpraDataset(Dataset):
             if Seq.one_hot_encoded and self.permute:  # permute
                 Seq.seq = Seq.seq.permute(1, 0)
                 
-            # Using original key name (seq, seq1 и т.д.)
+            # Using original key name (seq, seq1, etc)
             seqs_datasets[seq_key] = Seq.seq
         
         target = torch.tensor(self.ds["targets"][idx].astype(np.float32))
@@ -105,7 +103,7 @@ class MpraDataset(Dataset):
     def __repr__(self):
         """Adapted from torchvision."""
         _repr_indent = 4
-        head = f"Dataset {self.__class__.__name__} of size {self.__len__()} ({self.Parent_flag})"
+        head = f"Dataset {self.__class__.__name__} of size {self.__len__()} ({self.PARENT_FLAG})"
         body = [f"Number of datapoints: {self.__len__()}"]
         body.append(f"Used split fold: {self.split}")
         lines = [head] + [" " * _repr_indent + line for line in body]

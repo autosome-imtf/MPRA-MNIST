@@ -8,21 +8,18 @@ import pyfaidx
 from .mpradataset import MpraDataset
 import os
 
-def get_recommended_transforms():
-    return {train:, valid:, test: []}
-
-class MassiveStarrDataset(MpraDataset):
+class StarrSeqDataset(MpraDataset):
     
-    flag = "MassiveStarrSeqDataset"
+    flag = "StarrSeq"
     tasks = {
-             "randomenhancer"           : "./ranEnh/",  # Splits are available for train, val, and test only.
-             "genomicpromoter"          : "./genProm/", # Splits are available for train, val, and test only.
-             "capturepromoter"          : "./CaptProm/",# Splits are available for train, val, and test only.
+             "randomenhancer"  : "./ranEnh/",  # Splits are available for train, val, and test only.
+             "genomicpromoter" : "./genProm/", # Splits are available for train, val, and test only.
+             "capturepromoter" : "./CaptProm/",# Splits are available for train, val, and test only.
              
-             "genomicenhancer"          : "./genEnh/",  # Splitting is based on chromosomes, train/val/test available too.
-             "atacseq"                  : "./ATACSeq/", # Splitting is based on chromosomes, train/val/test available too.
+             "genomicenhancer" : "./genEnh/",  # Splitting is based on chromosomes, train/val/test available too.
+             "atacseq"         : "./ATACSeq/", # Splitting is based on chromosomes, train/val/test available too.
              
-             "binary"                   : "./binary/"   # Splits are available for train, val, and test only.
+             "binary"          : "./binary/"   # Splits are available for train, val, and test only.
             }
     
     def __init__(self,
