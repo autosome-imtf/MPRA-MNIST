@@ -37,8 +37,6 @@ class AgarwalDataset(MpraDataset):
             Transformation applied to the target data.
         """
         super().__init__(split, root)
-
-        self._data_path = self._data_path + self.FLAG + "_" # for example: data/Agarwal/Agarwal_HepG2.tsv
         
         if cell_type not in self.CELL_TYPES:
             raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.CELL_TYPES}.")
@@ -46,10 +44,10 @@ class AgarwalDataset(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
-        self.info = INFO[self.FLAG]
+        self.prefix = self.FLAG + "_"
         
         try:
-            df = pd.read_csv(self._data_path + self._cell_type + '.tsv', sep='\t')
+            df = pd.read_csv(self._data_path + self.prefix + self._cell_type + '.tsv', sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {self._data_path + self._cell_type}.tsv")
             

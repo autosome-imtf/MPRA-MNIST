@@ -2,66 +2,50 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from .info import INFO
 import os
 
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 
-class FluorescenceDataset(MpraDataset):
-    
-    cell_types = ["JURKAT", "K562", "THP1"]
-    flag = "FluorescenceDataset"
+
+class SharprDataset(MpraDataset):
+    ACTIVITY_COLUMNS  = ["k562_minp_rep1", "k562_minp_rep2", "k562_minp_avg", \
+                             "k562_sv40p_rep1", "k562_sv40p_rep1", "k562_sv40p_avg", \
+                             "hepg2_minp_rep1", "hepg2_minp_rep2", "hepg2_minp_avg", \
+                             "hepg2_sv40p_rep1", "hepg2_sv40p_rep2", "hepg2_sv40p_avg"]
+    FLAG = "Sharpr"
     
     def __init__(self,
                  split: str,
-                 activity_columns: str | List[str] = ["JURKAT", "K562", "THP1"], # all three cell types is default
-                 task: str = "regression",
                  transform = None,
                  target_transform = None,
+                 root = None
                 ):
         """
         Attributes
         ----------
         split : str 
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        activity_columns : str | List[str]
-            Specifies the cell type for filtering the data.
-        task : str
-            Defines regression or classification task
         transform : callable, optional
             Transformation applied to each sequence object.
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
-        self._cell_type = activity_columns
+        super().__init__(split, root)
         
-        if isinstance(activity_columns, str):
-            if activity_columns not in self.cell_types:
-                raise ValueError(f"Invalid activity_columns: {activity_columns}. Must be one of {self.cell_types}.")
-            activity_columns = [activity_columns]
-        if isinstance(activity_columns, List):
-            for i in range(len(activity_columns)):
-                act = activity_columns[i]
-                if act not in self.cell_types:
-                    raise ValueError(f"Invalid activity_columns: {act}. Must be one of {self.cell_types}.")
-        
-        self.activity_columns = activity_columns
-        self.task = task
+        self._cell_type = None  # Should this be used or removed?
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
-        self.info = INFO[self.flag]  # Ensure INFO is defined elsewhere
+        self.prefix = self.FLAG + "_"
         try:
-            file_path = os.path.join(self._data_path, f'{self.split}.tsv')
+            file_path = os.path.join(self._data_path, self.prefix + f'{self.split}.tsv')
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
-        if task == "regression":
-            self.activity_columns = ["numerical_" + i for i in self.activity_columns]
-        targets = df[self.activity_columns].to_numpy()
-        seq = df.sequence.to_numpy()
+        
+        targets = df[self.ACTIVITY_COLUMNS].to_numpy()
+        seq = df.seq.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
         
     def split_parse(self, split: str) -> str:

@@ -2,35 +2,35 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from .info import INFO
 import os
 import warnings
 
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 
 class DeepStarrDataset(MpraDataset):
     
-    flag = "DeepStarrDataset"
-    task = "regression"
-    cell_types = ["Developmental", "HouseKeeping"]
-    list_of_chr = ['chr2L', 'chr2LHet', 'chr2RHet', 'chr3L', 'chr3LHet', 'chr3R',
+    FLAG = "DeepStarr"
+
+    CELL_TYPES = ["Developmental", "HouseKeeping"]
+    LIST_OF_CHR = ['chr2L', 'chr2LHet', 'chr2RHet', 'chr3L', 'chr3LHet', 'chr3R',
        'chr3RHet', 'chr4', 'chrX', 'chrXHet', 'chrYHet', 'chr2R']
-    activity_columns = ["Dev_log2", "Hk_log2"]
+    ACTIVITY_COLUMNS = ["Dev_log2", "Hk_log2"]
     
     def __init__(self,
                  split: str | List[str],
-                 activity_columns: str | List[str] = ["Dev_log2", "Hk_log2"],
+                 activity_column: str | List[str] = ["Dev_log2", "Hk_log2"],
                  use_original_reverse_complement: bool | None = None,
                  transform = None,
                  target_transform = None,
+                 root = None
                 ):
         """
         Attributes
         ----------
         split : str | List[str]
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        activity_columns : str | List[str]
+        activity_column : str | List[str]
             Specifies the cell type for filtering the data.
         use_original_reverse_complement : bool
             Determines whether to generate the reverse complement of sequences using the same approach as the original study
@@ -39,10 +39,9 @@ class DeepStarrDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
+        super().__init__(split, root)
         
-        self.activity_columns = activity_columns
-        self._cell_type = activity_columns
+        self.activity_column = activity_column
         if use_original_reverse_complement is None:
             if isinstance(split, list) or split != 'train':
                 use_original_reverse_complement = False
@@ -51,9 +50,9 @@ class DeepStarrDataset(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.split, column = self.split_parse(split)
-        self.info = INFO[self.flag]  # Ensure INFO is defined elsewhere
+        self.prefix = self.FLAG + "_"
         try:
-            file_path = os.path.join(self._data_path, f'all_chr.tsv')
+            file_path = os.path.join(self._data_path, self.prefix + f'all_chr.tsv')
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -82,7 +81,7 @@ class DeepStarrDataset(MpraDataset):
             rev_aug.sequence = rev_aug.sequence.apply(self.reverse_complement)
             df = pd.concat([df, rev_aug], ignore_index =True)
             
-        targets = df[self.activity_columns].to_numpy()
+        targets = df[self.activity_column].to_numpy()
         seq = df.sequence.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
         
@@ -119,20 +118,20 @@ class DeepStarrDataset(MpraDataset):
             if split in valid_splits:
                 column = "split"
                 return [split], column
-            elif split in self.list_of_chr:
+            elif split in self.LIST_OF_CHR:
                 column = "chr" 
                 return [split], column
             else:
-                raise ValueError(f"Invalid fold value: {split}. Must be one of {self.list_of_chr}.")
+                raise ValueError(f"Invalid fold value: {split}. Must be one of {self.LIST_OF_CHR}.")
         # Validate list of folds
         elif isinstance(split, list):
             result = []
             column = "chr" 
             for item in split:
-                if item in self.list_of_chr:
+                if item in self.LIST_OF_CHR:
                     result.append(item)
                 else:
-                    raise ValueError(f"Invalid fold value: {item}. Must be one of {self.list_of_chr}.")
+                    raise ValueError(f"Invalid fold value: {item}. Must be one of {self.LIST_OF_CHR}.")
             return result, column
         else:
-            raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', 'test' or {self.list_of_chr}.")
+            raise ValueError(f"Invalid split value: {split}. Expected 'train', 'val', 'test' or {self.LIST_OF_CHR}.")

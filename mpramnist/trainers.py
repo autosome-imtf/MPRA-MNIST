@@ -138,6 +138,11 @@ class LitModel_AgarwalJoint(LitModel):
         
         self.train_pearson.reset()
         self.val_pearson.reset()
+        
+    def on_test_epoch_end(self):
+        test_pearson = self.test_pearson.compute()
+        self.log('test_pearson', test_pearson.mean(), prog_bar=True)
+        self.test_pearson.reset()
 
 class LitModel_Dream(LitModel):
     def __init__(self, weight_decay, lr, 

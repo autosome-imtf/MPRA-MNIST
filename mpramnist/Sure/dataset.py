@@ -2,19 +2,17 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from .info import INFO
-from torch.nn.utils.rnn import pad_sequence
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 class SureDataset(MpraDataset):
-    flag = "SureDataset"
+    FLAG = "Sure"
     
     GENOME_IDS = ["SuRE42_HG02601",
              "SuRE43_GM18983",
              "SuRE44_HG01241",
              "SuRE45_HG03464"]
-    tasks = ["classification", "regression"]
-    cell_types = ["K562", "HepG2"]
+    TASKS = ["classification", "regression"]
+    CELL_TYPES = ["K562", "HepG2"]
     
     def __init__(self,
                  split: str,
@@ -23,16 +21,15 @@ class SureDataset(MpraDataset):
                  permute = True,
                  transform = None,
                  target_transform = None,
+                 root = None
                 ):
-        super().__init__(split, permute)
+        super().__init__(split, permute, root)
         self.split = self.split_parse(split)
         self.task = task
         self.permute = permute
         self.transform = transform
         self.target_transform = target_transform
-        
-        self.info = INFO[self.flag]
-        
+        self.prefix = self.FLAG + "_"
         self.genome_id = genome_id
         self._cell_type = genome_id
         if isinstance(genome_id, list):
@@ -45,7 +42,7 @@ class SureDataset(MpraDataset):
             if genome not in self.GENOME_IDS:
                 raise ValueError(f"genome_id value must be one of {self.GENOME_IDS}")
                 
-            path_data = self._data_path + f"{genome}_Prepocessed_data/{genome}/final_sets/combined_bins_{self.split}_set"
+            path_data = self._data_path + self.prefix + genome + "_" + self.split
             
             try:
                 df = pd.read_csv(path_data + '.tsv', sep='\t')

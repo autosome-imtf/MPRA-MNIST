@@ -3,23 +3,22 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, T, Union
 import torch
-from .info import INFO
+
 import os
 
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 
 class EvfratovDataset(MpraDataset):
     
-    flag = "EvfratovDataset"
-    task = "classification"
-    cell_types = None
+    FLAG = "Evfratov"
     def __init__(self,
                  split: str,
                  length_of_seq: Union[str, int] = "23",  # 23 or 33
                  merge_last_classes: bool = False,
                  transform = None,
                  target_transform = None,
+                 root = None
                 ):
         """
         Attributes
@@ -40,7 +39,7 @@ class EvfratovDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
+        super().__init__(split, root)
         
         self.activity_columns = "label"
         self._cell_type = None
@@ -48,10 +47,10 @@ class EvfratovDataset(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
-        self.info = INFO[self.flag]  # Ensure INFO is defined elsewhere
+        self.prefix = self.FLAG + "_"
         
         try:
-            file_path = os.path.join(self._data_path, f'{self.length_of_seq}_{self.split}.tsv')
+            file_path = os.path.join(self._data_path, self.prefix + f'{self.length_of_seq}_{self.split}.tsv')
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
