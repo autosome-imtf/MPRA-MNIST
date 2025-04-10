@@ -19,6 +19,8 @@ class MpraDataset(Dataset):
         ----------
         split : str | List[int] | int
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
+        root : (string, optional)
+            Root directory of dataset.
         transform : callable, optional
             Transformation applied to each sequence object.
         target_transform : callable, optional
@@ -29,9 +31,8 @@ class MpraDataset(Dataset):
     
     def __init__(self,
                  split: str | List[int] | int | List[Union[int, str]],
-                 root = None
                  permute = False,
-                 root: str = DEFAULT_ROOT,
+                 root = None,
                  transform: Optional[Callable] = None,
                  target_transform: Optional[Callable] = None
                 ):
@@ -41,8 +42,8 @@ class MpraDataset(Dataset):
         self.target_transform = target_transform
         self._scalars = {}
         self._vectors = {}
-        if root = None:
-            self._data_path = "./../data/" + self.FLAG + "/" + self.FLAG + "_" 
+        if root == None:
+            self._data_path = "./../data/" + self.FLAG + "/"
         else:
             self._data_path = root
         self.info = INFO[self.FLAG]

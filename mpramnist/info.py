@@ -7,7 +7,7 @@ import warnings
 
 def get_default_root():
     home = expanduser("~")
-    dirpath = os.path.join(home, ".mpradataset")
+    dirpath = os.path.join(home, ".mpramnist")
 
     try:
         if not os.path.exists(dirpath):
@@ -24,9 +24,8 @@ DEFAULT_ROOT = get_default_root()
 HOMEPAGE = "https://github.com/autosome-imtf/mpraMnist"
 
 INFO = {
-    "AgarwalDataset": {
-        "python_class": "AgarwalDataset",
-        "description": "The AgarwalDataset is based on lentiMPRA assay, which determines the regulatory activity of over 680,000 sequences, representing a nearly comprehensive set of all annotated CREs among three cell types (HepG2, K562, and WTC11). HepG2 is a human liver cancer cell line, K562 is myelogenous leukemia cell line, WTC11 is pluripotent stem cell line derived from adult skin ",
+    "Agarwal": {
+        "python_class": "Agarwal",
         "url_HepG2": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_HepG2.tsv?download=1",
         "MD5_HepG2": "e34ead50382f11dbe3537bd66399548b",
         "url_K562": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_WTC11.tsv?download=1",
@@ -39,8 +38,8 @@ INFO = {
         "n_samples": {"train": 98336, "val": 12292, "test": 12292},
         "folds": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10}
     },
-    "AgarwalJointDataset": {
-        "python_class": "AgarwalJointDataset",
+    "AgarwalJoint": {
+        "python_class": "AgarwalJoint",
         "description": "",
         "url_HepG2": "",
         "MD5_HepG2": "",
@@ -54,9 +53,8 @@ INFO = {
         "n_samples": {"train": 1, "val": 1, "test": 1},
         "folds": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10}
     },
-    "MalinoisDataset": {
-        "python_class": "MalinoisDataset",
-        "description": "MalinoisDataset is based on ",
+    "Malinois": {
+        "python_class": "Malinois",
         "url": "https://zenodo.org/api/records/14021416/draft/files/MalinoisDataset.tsv?download=1",
         "MD5": "f45e8658736b545f02d331cb61fc0978",
         "target_columns": {"K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"},
@@ -70,7 +68,6 @@ INFO = {
     },
     "StarrSeq": {
         "python_class": "StarrSeq",
-        "description": "StarrSeq is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -80,9 +77,8 @@ INFO = {
         "folds": {
                  }
     },
-    "SureDataset": {
-        "python_class": "SureDataset",
-        "description": "SureDataset is based on ",
+    "Sure": {
+        "python_class": "Sure",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -92,9 +88,8 @@ INFO = {
         "folds": {
                  }
     },
-    "SharpDataset": {
-        "python_class": "SharprDataset",
-        "description": "SharprDataset is based on ",
+    "Sharpr": {
+        "python_class": "Sharpr",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -104,9 +99,8 @@ INFO = {
         "folds": {
                  }
     },
-    "FluorescenceDataset": {
-        "python_class": "FluorescenceDataset",
-        "description": "FluorescenceDataset is based on ",
+    "Fluorescence": {
+        "python_class": "Fluorescence",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -116,9 +110,9 @@ INFO = {
         "folds": {
                  }
     },
-    "EvfratovDataset": {
-        "python_class": "EvfratovDataset",
-        "description": "EvfratovDataset is based on ",
+    "Evfratov": {
+        "python_class": "Evfratov",
+        "description": "Evfratov is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -128,9 +122,9 @@ INFO = {
         "folds": {
                  }
     },
-    "DeepPromoterDataset": {
-        "python_class": "DeepPromoterDataset",
-        "description": "DeepPromoterDataset is based on ",
+    "DeepPromoter": {
+        "python_class": "DeepPromoter",
+        "description": "DeepPromoter is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -140,9 +134,9 @@ INFO = {
         "folds": {
                  }
     },
-    "DeepStarrDataset": {
-        "python_class": "DeepStarrDataset",
-        "description": "DeepStarrDataset is based on ",
+    "DeepStarr": {
+        "python_class": "DeepStarr",
+        "description": "DeepStarr is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -152,9 +146,9 @@ INFO = {
         "folds": {
                  }
     },
-    "KircherDataset": {
-        "python_class": "KircherDataset",
-        "description": "KircherDataset is based on ",
+    "Kircher": {
+        "python_class": "Kircher",
+        "description": "Kircher is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -164,9 +158,9 @@ INFO = {
         "folds": {
                  }
     },
-    "DreamDataset": {
-        "python_class": "DreamDataset",
-        "description": "DreamDataset is based on ",
+    "Dream": {
+        "python_class": "Dream",
+        "description": "Dream is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},
@@ -176,9 +170,9 @@ INFO = {
         "folds": {
                  }
     },
-    "VaishnavDataset": {
-        "python_class": "VaishnavDataset",
-        "description": "VaishnavDataset is based on ",
+    "Vaishnav": {
+        "python_class": "Vaishnav",
+        "description": "Vaishnav is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},

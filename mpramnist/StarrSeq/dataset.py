@@ -26,7 +26,8 @@ class StarrSeqDataset(MpraDataset):
     def __init__(self,
                  task: str,
                  split: str | List[str] | List[int] | int,
-                 binary_class: Literal["enhancer_from_input", "promoter_from_input", "enhancer_permutated"] str = None, # (optional), supportable only for binary promoter-enhancer experiment
+                 binary_class: Literal["enhancer_from_input", "promoter_from_input", "enhancer_permutated"] = None, # (optional), supportable only for binary promoter-enhancer experiment
+                 root = None,
                  transform = None,
                  target_transform = None,
                 ):
@@ -45,7 +46,7 @@ class StarrSeqDataset(MpraDataset):
         target_transform : callable, optional
             Function to apply transformations to the target labels.
         """
-        super().__init__(split)
+        super().__init__(split, root)
 
         self._data_path = self._data_path + self.FLAG + "_" # for example: data/StarrSeq/StarrSeq_ATACSeq_all_chr_file.fasta.gz
         
