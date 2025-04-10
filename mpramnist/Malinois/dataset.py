@@ -5,16 +5,15 @@ from functools import partial
 import torch
 import os
 
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 class MalinoisDataset(MpraDataset):
     LEFT_FLANK = "ACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG" # from boda dataset
     RIGHT_FLANK = "CACTGCGGCTCCTGCGATCTAACTGGCCGGTACCTGAGCTCGCTAGCCTCGAGGATATCAAGATCTGGCCTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCT" # from boda dataset
     
-    cell_types = ['HepG2', 'K562', 'SKNSH']
-    project_column = 'data_project'
-    chr_column = 'chr'
-    flag = "MalinoisDataset"
+    CELL_TYPES = ['HepG2', 'K562', 'SKNSH']
+    
+    FLAG = "Malinois"
     
     def __init__(self,
                  split: str | List[Union[int, str]] | int,
@@ -29,7 +28,8 @@ class MalinoisDataset(MpraDataset):
                   up_cutoff_move: float = 3.0,
                   transform: Optional[Callable] = None,
                   target_transform: Optional[Callable] = None,
-                  use_original_reverse_complement:bool = False
+                  use_original_reverse_complement: bool = False,
+                 root = None
                 ):
         """
         Initializes the dataset loader with specified filtering, duplication, and transformation settings.
@@ -65,12 +65,14 @@ class MalinoisDataset(MpraDataset):
         if filtration not in {"original", "own", "none"}:
             raise ValueError("filtration must be one of {'original', 'own', 'none'}")
             
-        super().__init__(split)
+        super().__init__(split, root)
         
         # Assign attributes
         self.stderr_columns = stderr_columns
         self.sequence_column = sequence_column
         self.data_project = data_project
+        self.project_column = 'data_project'
+        self.chr_column = 'chr'
         self.duplication_cutoff = duplication_cutoff
         self.stderr_threshold = stderr_threshold
         self.std_multiple_cut = std_multiple_cut
@@ -79,6 +81,7 @@ class MalinoisDataset(MpraDataset):
         self.use_original_reverse_complement = use_original_reverse_complement
         self.transform = transform
         self.target_transform = target_transform
+        self.prefix = self.FLAG + "_"
         
         # Parse columns and split parameters
         activity_columns = self.activity_columns_parse(activity_columns)
@@ -114,7 +117,7 @@ class MalinoisDataset(MpraDataset):
         """
         
         #file_path = os.path.join(self._data_path, 'MPRA_ALL_HD_v2.tsv')
-        file_path = os.path.join(self._data_path, 'Table_S2__MPRA_dataset.txt')
+        file_path = os.path.join(self._data_path, self.prefix + 'Table_S2.tsv')
         try:
             #df = pd.read_csv(file_path, sep=' ', low_memory=False)
             df = pd.read_csv(file_path, sep='\t', low_memory=False)
