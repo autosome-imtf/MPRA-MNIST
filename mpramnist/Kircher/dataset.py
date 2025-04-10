@@ -2,18 +2,15 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from .info import INFO
 import os
 import pyfaidx
 import subprocess
 
-
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 class KircherDataset(MpraDataset):
     
-    cell_types = None
-    flag = "KircherDataset"
+    FLAG = "Kircher"
     ALL_PROMOTERS = ['BCL11A', 'F9', 'FOXE1', 'GP1BA', 'HBB', 'HBG1', 'HNF4A', 'IRF4',
        'IRF6', 'LDLR', 'LDLR.2', 'MSMB', 'MYCrs11986220', 'MYCrs6983267',
        'PKLR-24h', 'PKLR-48h', 'RET', 'SORT1', 'SORT1-flip', 'SORT1.2',
@@ -25,6 +22,7 @@ class KircherDataset(MpraDataset):
                  promoters: list[str] | str =  ["F9","LDLR.2","LDLR","PKLR-24h","PKLR-48h","SORT1.2","SORT1"],
                  transform = None,
                  target_transform = None,
+                 root = None,
                 ):
         """
         Attributes
@@ -40,11 +38,11 @@ class KircherDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
+        super().__init__(split, root)
         
         self.transform = transform
         self.target_transform = target_transform
-        self.info = INFO[self.flag]
+        self.prefix = self.FLAG + "_"
 
         if (isinstance(promoters, str) and promoters.lower() != "all") or \
            (isinstance(promoters, list) and not all(p in self.ALL_PROMOTERS for p in promoters)):
@@ -55,7 +53,7 @@ class KircherDataset(MpraDataset):
         self.length = length
         
         file_name = "GRCh38_ALL.tsv"
-        data_path = os.path.join(self._data_path, file_name)
+        data_path = os.path.join(self._data_path, prefix, file_name)
         try:
             df = pd.read_csv(data_path, sep='\t')
         except FileNotFoundError as e:
