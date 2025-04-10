@@ -169,7 +169,7 @@ class StarrSeqDataset(MpraDataset):
                     
                     print(f"using train {binary_class}")
                     
-                    return {"targets": labels_prom, "seq": seqs_prom, "seq1": seqs_enh}
+                    return {"targets": labels_prom, "seq": seqs_prom, "seq_enh": seqs_enh}
                     
             elif binary_class is None:
                 pass 
@@ -182,7 +182,7 @@ class StarrSeqDataset(MpraDataset):
         
         print(f"using {split}")
         
-        return {"targets": labels_prom, "seq": seqs_prom, "seq1": seqs_enh}
+        return {"targets": labels_prom, "seq": seqs_prom, "seq_enh": seqs_enh}
         
 ############################### Task diff expr + Extract sequences for diff expression ###################################
     ########################### DEPRECATED #############################################################

@@ -185,3 +185,69 @@ class HumanLegNet(nn.Module):
         x = self.head(x)
         x = x.squeeze(-1)
         return x
+
+class Simple_Classification_Net(nn.Module):
+    
+    def __init__(self, seq_len, block_sizes=[16, 24, 32, 40, 48], kernel_size=3):
+        
+        super().__init__()
+        self.seq_len = seq_len
+        out_ch = 64
+        nn_blocks = []
+      
+        for in_bs, out_bs in zip([4] + block_sizes, block_sizes):
+            
+            block = nn.Sequential(
+                nn.Conv1d(in_bs, out_bs, kernel_size=kernel_size, padding=kernel_size // 2), 
+                nn.SiLU(),
+                nn.BatchNorm1d(out_bs)
+            )
+            nn_blocks.append(block)
+
+        final_feature_size = seq_len  
+        
+        self.conv_net = nn.Sequential(
+            *nn_blocks,
+            nn.Flatten(),
+            nn.Linear(block_sizes[-1] * final_feature_size, out_ch),
+            nn.SiLU(),
+        )
+        
+        self.head = nn.Sequential(nn.Linear(out_ch, out_ch),
+                                  nn.SiLU(),
+                                   nn.BatchNorm1d(out_ch),
+                                   nn.Linear(out_ch, 1))
+        
+        self.output_activation = nn.Sigmoid().cuda()
+
+    def forward(self, x):
+        out = self.conv_net(x)
+        out = self.head(out)
+        return out
+
+class Simple_Classification_for_binary_Net(nn.Module):
+    
+    def __init__(self, block_sizes=[16, 32, 64, 96, 126, 64], kernel_size=5):
+        
+        super().__init__()
+        nn_blocks = []
+        self.block_sizes = block_sizes
+        for in_bs, out_bs in zip([4] + block_sizes, block_sizes):
+            
+            block = nn.Sequential(
+                nn.Conv1d(in_bs, out_bs, kernel_size=kernel_size, padding = kernel_size // 2),
+                nn.BatchNorm1d(out_bs),
+                nn.SiLU(),
+                nn.Dropout(0.3)
+            )
+            nn_blocks.append(block)
+        
+        self.conv_net = nn.Sequential(
+            *nn_blocks,
+            nn.Flatten()
+        )
+        
+    def forward(self, x):
+        out = self.conv_net(x)
+
+        return out

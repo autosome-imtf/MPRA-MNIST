@@ -2,22 +2,23 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from .info import INFO
+from mpramnist.info import INFO
 
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 class AgarwalDataset(MpraDataset):
 
     LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG" # from human_legnet
     RIGHT_FLANK = "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT" # from human_legnet
     
-    cell_types = ['HepG2', 'K562', 'WTC11']
-    flag = "AgarwalDataset"
+    CELL_TYPES = ['HepG2', 'K562', 'WTC11']
+    FLAG = "Agarwal"
     
     def __init__(self,
                  split: str | List[int] | int,
                  cell_type: str,
                  averaged_target: bool = False,
+                 root = None,
                  transform = None,
                  target_transform = None,
                 ):
@@ -35,14 +36,17 @@ class AgarwalDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
-        if cell_type not in self.cell_types:
-            raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.cell_types}.")
+        super().__init__(split, root)
+
+        self._data_path = self._data_path + self.FLAG + "_" # for example: data/Agarwal/Agarwal_HepG2.tsv
+        
+        if cell_type not in self.CELL_TYPES:
+            raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.CELL_TYPES}.")
         self._cell_type = cell_type
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
-        self.info = INFO[self.flag]
+        self.info = INFO[self.FLAG]
         
         try:
             df = pd.read_csv(self._data_path + self._cell_type + '.tsv', sep='\t')
