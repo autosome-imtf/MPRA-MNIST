@@ -86,7 +86,7 @@ class LitModel(L.LightningModule):
         x, y = batch 
         pred = self.model(x)
         
-        return {"pred": y_pred.cpu().detach().float(),"y": labels.cpu().detach().float()}
+        return {"predicted": pred.cpu().detach().float(),"target": y.cpu().detach().float()}
     
     def configure_optimizers(self):
         
@@ -108,6 +108,36 @@ class LitModel(L.LightningModule):
             }
             
         return [self.optimizer], [lr_scheduler_config]
+
+class LitModel_AgarwalJoint(LitModel):
+    def __init__(self, weight_decay, lr, 
+                 num_outputs = 3,
+                 model = None, loss = nn.MSELoss(), print_each = 1):
+        
+        super().__init__(model, loss, print_each, weight_decay, lr)
+
+        self.train_pearson = PearsonCorrCoef(num_outputs = num_outputs)
+        self.val_pearson = PearsonCorrCoef(num_outputs = num_outputs)
+        self.test_pearson = PearsonCorrCoef(num_outputs = num_outputs)
+
+    def on_validation_epoch_end(self):
+        train_pearson = self.train_pearson.compute()
+        val_pearson = self.val_pearson.compute()
+        
+        self.log("val_pearson", val_pearson.mean(), prog_bar=True)
+        self.log("train_pearson", train_pearson.mean())
+        
+        if (self.current_epoch + 1) % self.print_each == 0:
+            res_str = f"| Epoch: {self.current_epoch} "
+            res_str += f"| Val Loss: {self.trainer.callback_metrics['val_loss']:.5f} "
+            res_str += f'| Val Pearson: {val_pearson.mean():.5f} '
+    
+            res_str += f'| Train Pearson: {train_pearson.mean():.5f} '
+            border = '-'*len(res_str)
+            print("\n".join(['', border, res_str, border, '']))
+        
+        self.train_pearson.reset()
+        self.val_pearson.reset()
 
 class LitModel_Dream(LitModel):
     def __init__(self, weight_decay, lr, 

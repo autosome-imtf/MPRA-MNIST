@@ -2,21 +2,22 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from .info import INFO
+from mpramnist.info import INFO
 
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 class AgarwalJointDataset(MpraDataset):
 
     LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG" # from human_legnet
     RIGHT_FLANK = "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT" # from human_legnet
     
-    cell_types = ['HepG2', 'K562', 'WTC11']
-    flag = "AgarwalJointDataset"
+    CELL_TYPES = ['HepG2', 'K562', 'WTC11']
+    FLAG = "AgarwalJoint"
     
     def __init__(self,
                  split: str | List[int] | int,
                  cell_type: str | List[str],
+                 root = None,
                  transform = None,
                  target_transform = None,
                 ):
@@ -32,25 +33,27 @@ class AgarwalJointDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
+        super().__init__(split, root)
         
         if isinstance(cell_type, str):
-            if cell_type not in self.cell_types:
-                raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.cell_types}.")
+            if cell_type not in self.CELL_TYPES:
+                raise ValueError(f"Invalid cell_type: {cell_type}. Must be one of {self.CELL_TYPES}.")
             cell_type = [cell_type]
         if isinstance(cell_type, List):
             for i in range(len(cell_type)):
                 act = cell_type[i]
-                if act not in self.cell_types:
-                    raise ValueError(f"Invalid cell_type: {act}. Must be one of {self.cell_types}.")
+                if act not in self.CELL_TYPES:
+                    raise ValueError(f"Invalid cell_type: {act}. Must be one of {self.CELL_TYPES}.")
         self._cell_type = cell_type
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
-        self.info = INFO[self.flag]
+        self.info = INFO[self.FLAG]
+
+        self.prefix = self.FLAG + "_"
         
         try:
-            df = pd.read_csv(self._data_path + 'joint_data.tsv', sep='\t')
+            df = pd.read_csv(self._data_path + self.prefix + 'joint_data.tsv', sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {self._data_path + 'joint_data'}.tsv")
             
