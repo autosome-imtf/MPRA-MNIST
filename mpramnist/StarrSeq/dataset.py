@@ -1,31 +1,32 @@
 import pandas as pd
 import numpy as np
-from typing import List, T, Union
+from typing import List, T, Union, Literal
 import torch
-from .info import INFO
+from mpramnist.info import INFO
 import pyfastx
 import pyfaidx
-from .mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 import os
+import warnings
 
 class StarrSeqDataset(MpraDataset):
     
-    flag = "StarrSeq"
-    tasks = {
-             "randomenhancer"  : "./ranEnh/",  # Splits are available for train, val, and test only.
-             "genomicpromoter" : "./genProm/", # Splits are available for train, val, and test only.
-             "capturepromoter" : "./CaptProm/",# Splits are available for train, val, and test only.
+    FLAG = "StarrSeq"
+    TASKS = {
+             "randomenhancer"  : "ranEnh_",  # Splits are available for train, val, and test only.
+             "genomicpromoter" : "genProm_", # Splits are available for train, val, and test only.
+             "capturepromoter" : "CaptProm_",# Splits are available for train, val, and test only.
              
-             "genomicenhancer" : "./genEnh/",  # Splitting is based on chromosomes, train/val/test available too.
-             "atacseq"         : "./ATACSeq/", # Splitting is based on chromosomes, train/val/test available too.
+             "genomicenhancer" : "genEnh_",  # Splitting is based on chromosomes, train/val/test available too.
+             "atacseq"         : "ATACSeq_", # Splitting is based on chromosomes, train/val/test available too.
              
-             "binary"          : "./binary/"   # Splits are available for train, val, and test only.
+             "binary"          : "binary_"   # Splits are available for train, val, and test only.
             }
     
     def __init__(self,
                  task: str,
                  split: str | List[str] | List[int] | int,
-                 binary_class: str = None, # (optional), supportable only for binary promoter-enhancer experiment
+                 binary_class: Literal["enhancer_from_input", "promoter_from_input", "enhancer_permutated"] str = None, # (optional), supportable only for binary promoter-enhancer experiment
                  transform = None,
                  target_transform = None,
                 ):
@@ -34,7 +35,7 @@ class StarrSeqDataset(MpraDataset):
         ----------
         task : str
             The name of the task, one of ["randomenhancer", "genomicenhancer", "genomicpromoter", 
-            "differentialexpression", "capturepromoter", "atacseq", "binary"].
+            "capturepromoter", "atacseq", "binary"].
         split : str | List[int] | int
             Specifies how to split the data (e.g., into training and testing sets).
         binary_class : str, optional
@@ -45,9 +46,11 @@ class StarrSeqDataset(MpraDataset):
             Function to apply transformations to the target labels.
         """
         super().__init__(split)
+
+        self._data_path = self._data_path + self.FLAG + "_" # for example: data/StarrSeq/StarrSeq_ATACSeq_all_chr_file.fasta.gz
         
-        if task.lower() not in self.tasks:
-            raise ValueError(f"incorrect task '{task}'. Expected one of {list(self.tasks.keys())}.")
+        if task.lower() not in self.TASKS:
+            raise ValueError(f"incorrect task '{task}'. Expected one of {list(self.TASKS.keys())}.")
         self.task = task.lower()
 
         self.binary_class = binary_class
@@ -56,7 +59,7 @@ class StarrSeqDataset(MpraDataset):
         self._cell_type = None
         self.transform = transform
         self.target_transform = target_transform
-        self.info = INFO[self.flag]
+        self.info = INFO[self.FLAG]
 
         self.ds = self.load_data(split, self.task)
 
@@ -69,7 +72,7 @@ class StarrSeqDataset(MpraDataset):
         split : str | List[str] | List[int] | int
             Defines how to split the dataset (e.g., train/val/test or chromosome-based).
         task : str
-            The name of the task (e.g., "randomenhancer", "binary", "differentialexpression").
+            The name of the task (e.g., "randomenhancer", "binary").
     
         Returns
         -------
@@ -80,18 +83,23 @@ class StarrSeqDataset(MpraDataset):
         if task in ["randomenhancer", "genomicpromoter", "capturepromoter", "binary"]:
             is_split_default = True
             self.split = self.split_parse(split, is_split_default)
-            
+            if task == "genomicpromoter" and split in ["val", "test"]:
+                warnings.warn(
+                    "WARNING! The test dataset released by the authors of the study contains an error causing positive sequences to duplicate negative ones."
+                    "We suggest using the validation dataset as the test instead.",
+                    stacklevel=1
+                )
             if task == "binary":
-                ds = self.task_binary(self.tasks[task], self.binary_class, self.split)
+                ds = self.task_binary(self.TASKS[task], self.binary_class, self.split)
             else:
-                ds = self.task_with_default_split(self.tasks[task], self.split)
+                ds = self.task_with_default_split(self.TASKS[task], self.split)
             
         # Chromosome-based split tasks
         elif task in ["genomicenhancer", "atacseq"]:
             is_split_default = False
             self.split = self.split_parse(split, is_split_default)
     
-            ds = self.task_with_various_split(self.tasks[task], self.split)
+            ds = self.task_with_various_split(self.TASKS[task], self.split)
             
         return ds
 

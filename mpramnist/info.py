@@ -68,9 +68,9 @@ INFO = {
                   "test": "7, 13"
                  }
     },
-    "MassiveStarrSeqDataset": {
-        "python_class": "MassiveStarrDataset",
-        "description": "MassiveStarrDataset is based on ",
+    "StarrSeq": {
+        "python_class": "StarrSeq",
+        "description": "StarrSeq is based on ",
         "url": "",
         "MD5": "",
         "target_columns": {},

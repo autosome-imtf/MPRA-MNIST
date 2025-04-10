@@ -29,7 +29,7 @@ class MpraDataset(Dataset):
     
     def __init__(self,
                  split: str | List[int] | int | List[Union[int, str]],
-                 download: bool = False,
+                 root = None
                  permute = False,
                  root: str = DEFAULT_ROOT,
                  transform: Optional[Callable] = None,
@@ -41,12 +41,15 @@ class MpraDataset(Dataset):
         self.target_transform = target_transform
         self._scalars = {}
         self._vectors = {}
-        self._data_path = "./../datasets/" + self.FLAG + "/"
+        if root = None:
+            self._data_path = "./../data/" + self.FLAG + "/" + self.FLAG + "_" 
+        else:
+            self._data_path = root
         self.info = INFO[self.FLAG]
 
 
     def __getitem__(self, idx):
-        # Find all names start with 'seq' (e.g, 'seq', 'seq1', 'seq2' и т.д.)
+        # Find all names start with 'seq' (e.g, 'seq', 'seq1', 'seq2', etc)
         seq_keys = [key for key in self.ds.keys() if key.startswith('seq')]
         
         seqs_datasets = {}
