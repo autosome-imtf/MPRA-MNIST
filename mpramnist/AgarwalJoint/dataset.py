@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from mpramnist.info import INFO
+import os
 
 from mpramnist.mpradataset import MpraDataset
 
@@ -48,14 +48,16 @@ class AgarwalJointDataset(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
-        self.info = INFO[self.FLAG]
 
         self.prefix = self.FLAG + "_"
         
         try:
-            df = pd.read_csv(self._data_path + self.prefix + 'joint_data.tsv', sep='\t')
+            file_name = self.prefix + 'joint_data' + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
+            df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
-            raise FileNotFoundError(f"File not found: {self._data_path + 'joint_data'}.tsv")
+            raise FileNotFoundError(f"File not found: {file_path}")
             
         target_column = self._cell_type
             

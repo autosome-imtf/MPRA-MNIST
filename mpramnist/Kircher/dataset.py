@@ -52,12 +52,13 @@ class KircherDataset(MpraDataset):
             raise ValueError(f"Parameter 'length' must be natural integer, not {length}.")
         self.length = length
         
-        file_name = "GRCh38_ALL.tsv"
-        data_path = os.path.join(self._data_path, prefix, file_name)
         try:
-            df = pd.read_csv(data_path, sep='\t')
-        except FileNotFoundError as e:
-            raise FileNotFoundError(f"Data file not found at {data_path}") from e
+            file_name = self.prefix + "GRCh38_ALL" + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
+            df = pd.read_csv(file_path, sep='\t')
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {file_path}")
         
         # Process data
         df.Chromosome = 'chr' + df.Chromosome.astype(str)

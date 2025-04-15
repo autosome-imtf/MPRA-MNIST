@@ -38,7 +38,7 @@ class VaishnavDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split)
+        super().__init__(split, root)
 
         # Initialize transformations
         self.transform = transform
@@ -72,12 +72,13 @@ class VaishnavDataset(MpraDataset):
         
     def _load_and_prepare_data(self, dataset: str ) -> pd.DataFrame:
         """Load data from file and prepare the dataset."""
-        try: 
-            file_path = os.path.join(self._data_path, self.prefix + f'{dataset}.tsv')
+        try:
+            file_name = self.prefix + dataset + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
-            
         return df
 
     def _prepare_data_structure(self, test_dataset_type):

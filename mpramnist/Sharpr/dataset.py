@@ -6,11 +6,9 @@ import os
 
 from mpramnist.mpradataset import MpraDataset
 
-
-
 class SharprDataset(MpraDataset):
     ACTIVITY_COLUMNS  = ["k562_minp_rep1", "k562_minp_rep2", "k562_minp_avg", \
-                             "k562_sv40p_rep1", "k562_sv40p_rep1", "k562_sv40p_avg", \
+                             "k562_sv40p_rep1", "k562_sv40p_rep2", "k562_sv40p_avg", \
                              "hepg2_minp_rep1", "hepg2_minp_rep2", "hepg2_minp_avg", \
                              "hepg2_sv40p_rep1", "hepg2_sv40p_rep2", "hepg2_sv40p_avg"]
     FLAG = "Sharpr"
@@ -38,8 +36,11 @@ class SharprDataset(MpraDataset):
         self.target_transform = target_transform
         self.split = self.split_parse(split)
         self.prefix = self.FLAG + "_"
+        
         try:
-            file_path = os.path.join(self._data_path, self.prefix + f'{self.split}.tsv')
+            file_name = self.prefix + self.split + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")

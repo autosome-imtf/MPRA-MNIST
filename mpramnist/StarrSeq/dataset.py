@@ -80,13 +80,15 @@ class StarrSeqDataset(MpraDataset):
         # Default split tasks
         if task in ["randomenhancer", "genomicpromoter", "capturepromoter", "binary"]:
             is_split_default = True
-            self.split = self.split_parse(split, is_split_default)
-            if task == "genomicpromoter" and split in ["val", "test"]:
+            
+            if task == "genomicpromoter" and split == "test":
                 warnings.warn(
-                    "WARNING! The test dataset released by the authors of the study contains an error causing positive sequences to duplicate negative ones."
-                    "We suggest using the validation dataset as the test instead.",
+                    "WARNING! The test dataset released by the authors of the study contains an error."
+                    "You selected 'split = train', the system automatically changes it to 'val' for this operation.",
                     stacklevel=1
                 )
+                split = "val"
+                self.split = self.split_parse(split, is_split_default)
             if task == "binary":
                 ds = self.task_binary(self.TASKS[task], self.binary_class, self.split)
             else:
@@ -102,7 +104,7 @@ class StarrSeqDataset(MpraDataset):
         return ds
 
 ###################### Task data preparation ##############################
-    def read_fasta(self, file_path, return_names = False):
+    def read_fasta(self, file_path, file_name, return_names = False):
         """
         Read sequences and labels from a FASTA file.
     
@@ -110,6 +112,8 @@ class StarrSeqDataset(MpraDataset):
         ----------
         file_path : str
             Path to the FASTA file.
+        file_name: str
+            Name of the processing file
         return_names : bool, optional
             If True, returns sequence names along with sequences and labels.
     
@@ -121,7 +125,13 @@ class StarrSeqDataset(MpraDataset):
             - labels (list of float): Corresponding labels.
             - names (list of str, optional): Names of sequences (if return_names is True).
         """
-        fa = pyfastx.Fastx(file_path, comment=True)
+        try:
+            self.download(file_path, file_name)
+            file_path = os.path.join(file_path, file_name)
+            fa = pyfastx.Fastx(file_path, comment=True)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
         names, seqs, labels = [], [], []
         for name, seq, label in fa:
             seqs.append(seq)
@@ -135,14 +145,14 @@ class StarrSeqDataset(MpraDataset):
         
     #for random enhancer, genomic promoter and capture promoter data
     def task_with_default_split(self, task, split):
-        file_path = f"{self._data_path}{self.prefix}{task}{split}.fasta.gz"
-        seqs, labels = self.read_fasta(file_path)
+        file_name = f"{self.prefix}{task}{split}.fasta.gz"
+        seqs, labels = self.read_fasta(self._data_path, file_name)
         return {"targets": labels, "seq": seqs}
 
     # for genomic Enhancer and ATACseq data
     def task_with_various_split(self, task, split):
-        file_path = f"{self._data_path}{self.prefix}{task}all_chr_file.fasta.gz"
-        names, seqs, labels = self.read_fasta(file_path, True)
+        file_name = f"{self.prefix}{task}all_chr_file.fasta.gz"
+        names, seqs, labels = self.read_fasta(self._data_path, file_name, True)
         data = pd.DataFrame({"chr": names, "seq": seqs, "targets": labels})
         data = data[data.chr.isin(split)].reset_index(drop=True)
         return {"targets": data.targets.to_numpy(), "seq": data.seq.to_numpy()}
@@ -155,14 +165,14 @@ class StarrSeqDataset(MpraDataset):
                     raise ValueError(f"'binary_class' must be one of {binary_train} for training")
                 else:
                     if binary_class.split("_")[0] == "promoter":
-                        file_path_prom = f"{self._data_path}{self.prefix}{task}{split}_{binary_class}.fasta.gz"
-                        file_path_enh = f"{self._data_path}{task}{split}_enhancer.fasta.gz"
+                        file_name_prom = f"{self.prefix}{task}{split}_{binary_class}.fasta.gz"
+                        file_name_enh = f"{task}{split}_enhancer.fasta.gz"
                     else: 
-                        file_path_prom = f"{self._data_path}{self.prefix}{task}{split}_promoter.fasta.gz"
-                        file_path_enh = f"{self._data_path}{task}{split}_{binary_class}.fasta.gz"
+                        file_name_prom = f"{self.prefix}{task}{split}_promoter.fasta.gz"
+                        file_name_enh = f"{task}{split}_{binary_class}.fasta.gz"
                                                 
-                    seqs_prom, labels_prom = self.read_fasta(file_path_prom)
-                    seqs_enh, labels_enh = self.read_fasta(file_path_enh)
+                    seqs_prom, labels_prom = self.read_fasta(self._data_path, file_name_prom)
+                    seqs_enh, labels_enh = self.read_fasta(self._data_path, file_name_enh)
                     
                     print(f"using train {binary_class}")
                     
@@ -171,11 +181,11 @@ class StarrSeqDataset(MpraDataset):
             elif binary_class is None:
                 pass 
                 
-        file_path_prom = f"{self._data_path}{self.prefix}{task}{split}_promoter.fasta.gz"
-        seqs_prom, labels_prom = self.read_fasta(file_path_prom)
+        file_name_prom = f"{self.prefix}{task}{split}_promoter.fasta.gz"
+        seqs_prom, labels_prom = self.read_fasta(self._data_path, file_name_prom)
         
-        file_path_enh = f"{self._data_path}{self.prefix}{task}{split}_enhancer.fasta.gz"
-        seqs_enh, labels_enh = self.read_fasta(file_path_enh)
+        file_name_enh = f"{self.prefix}{task}{split}_enhancer.fasta.gz"
+        seqs_enh, labels_enh = self.read_fasta(self._data_path, file_name_enh)
         
         print(f"using {split}")
         

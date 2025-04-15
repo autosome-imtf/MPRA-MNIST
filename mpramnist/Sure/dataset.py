@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
+import os
 from mpramnist.mpradataset import MpraDataset
 
 class SureDataset(MpraDataset):
@@ -23,7 +24,7 @@ class SureDataset(MpraDataset):
                  target_transform = None,
                  root = None
                 ):
-        super().__init__(split, permute, root)
+        super().__init__(split = split, permute = permute,  root = root)
         self.split = self.split_parse(split)
         self.task = task
         self.permute = permute
@@ -42,13 +43,13 @@ class SureDataset(MpraDataset):
             if genome not in self.GENOME_IDS:
                 raise ValueError(f"genome_id value must be one of {self.GENOME_IDS}")
                 
-            path_data = self._data_path + self.prefix + genome + "_" + self.split
-            
             try:
-                df = pd.read_csv(path_data + '.tsv', sep='\t')
+                file_name = self.prefix + genome + "_" + self.split + '.tsv'
+                self.download(self._data_path, file_name)
+                file_path = os.path.join(self._data_path, file_name)
+                df = pd.read_csv(file_path, sep='\t')
             except FileNotFoundError:
-                raise FileNotFoundError(f"File not found: {path_data}.tsv")
-
+                raise FileNotFoundError(f"File not found: {file_path}")
             def compute_classification_label(k562, hepg2):
                 return 5* int(k562) + int(hepg2)
                 

@@ -7,7 +7,7 @@ import warnings
 
 def get_default_root():
     home = expanduser("~")
-    dirpath = os.path.join(home, ".mpramnist")
+    dirpath = os.path.join(home, ".mpramnist", "data", "")
 
     try:
         if not os.path.exists(dirpath):
@@ -21,17 +21,17 @@ def get_default_root():
 
 DEFAULT_ROOT = get_default_root()
 
-HOMEPAGE = "https://github.com/autosome-imtf/mpraMnist"
+HOMEPAGE = "https://github.com/autosome-imtf/MPRA-MNIST"
 
 INFO = {
     "Agarwal": {
         "python_class": "Agarwal",
-        "url_HepG2": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_HepG2.tsv?download=1",
-        "MD5_HepG2": "e34ead50382f11dbe3537bd66399548b",
-        "url_K562": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_WTC11.tsv?download=1",
-        "MD5_K562": "4792c240248fd7cd69ed9e1575610fe4",
-        "url_WTC11": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_K562.tsv?download=1",
-        "MD5_WTC11": "4b4235ef795a41f95adbb267d651b43e",
+        "url_Agarwal_HepG2.tsv": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_HepG2.tsv?download=1",
+        "MD5_Agarwal_HepG2.tsv": "e34ead50382f11dbe3537bd66399548b",
+        "url_Agarwal_K562.tsv": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_WTC11.tsv?download=1",
+        "MD5_Agarwal_K562.tsv": "4792c240248fd7cd69ed9e1575610fe4",
+        "url_Agarwal_WTC11.tsv": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_K562.tsv?download=1",
+        "MD5_Agarwal_WTC11.tsv": "4b4235ef795a41f95adbb267d651b43e",
         "target_columns": {"expression", "averaged_expression"},
         "scalar_features": {},
         "vector_features": {},

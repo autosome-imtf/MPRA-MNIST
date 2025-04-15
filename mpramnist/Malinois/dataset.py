@@ -8,8 +8,9 @@ import os
 from mpramnist.mpradataset import MpraDataset
 
 class MalinoisDataset(MpraDataset):
-    LEFT_FLANK = "ACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG" # from boda dataset
-    RIGHT_FLANK = "CACTGCGGCTCCTGCGATCTAACTGGCCGGTACCTGAGCTCGCTAGCCTCGAGGATATCAAGATCTGGCCTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCT" # from boda dataset
+    # from boda dataset
+    LEFT_FLANK = "ACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG" 
+    RIGHT_FLANK = "CACTGCGGCTCCTGCGATCTAACTGGCCGGTACCTGAGCTCGCTAGCCTCGAGGATATCAAGATCTGGCCTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCT" 
     
     CELL_TYPES = ['HepG2', 'K562', 'SKNSH']
     
@@ -29,7 +30,7 @@ class MalinoisDataset(MpraDataset):
                   transform: Optional[Callable] = None,
                   target_transform: Optional[Callable] = None,
                   use_original_reverse_complement: bool = False,
-                 root = None
+                  root = None
                 ):
         """
         Initializes the dataset loader with specified filtering, duplication, and transformation settings.
@@ -116,10 +117,10 @@ class MalinoisDataset(MpraDataset):
             If `filtration` is not one of ['original', 'own', 'none'].
         """
         
-        #file_path = os.path.join(self._data_path, 'MPRA_ALL_HD_v2.tsv')
-        file_path = os.path.join(self._data_path, self.prefix + 'Table_S2.tsv')
         try:
-            #df = pd.read_csv(file_path, sep=' ', low_memory=False)
+            file_name = self.prefix + 'Table_S2' + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t', low_memory=False)
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
@@ -150,7 +151,7 @@ class MalinoisDataset(MpraDataset):
             
         # Split data by chromosome
         df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
-        
+
         # Handle duplication if specified
         if self.duplication_cutoff is not None:
             df = self.duplicate_high_activity_rows(df, activity_columns)
@@ -293,9 +294,9 @@ class MalinoisDataset(MpraDataset):
         Parses the input split and returns a list of folds.
         '''
         
-        split_default = {"train" : [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 14, 15, 16, 17, 18, 20, 22, "Y"], 
-                         "val" : [19, 21, "X"], 
-                         "test" : [7, 13]
+        split_default = {"train" : ["1", "2", "3", "4", "5", "6", "8", "9", "10", "11", "12", "14", "15", "16", "17", "18", "20", "22", "Y"], 
+                         "val" : ["19", "21", "X"], 
+                         "test" : ["7", "13"]
                         } # default split of data
 
         list_of_chr = [str(i) for i in range(23)] + ["X", "Y"]

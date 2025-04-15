@@ -6,7 +6,6 @@ import os
 
 from mpramnist.mpradataset import MpraDataset
 
-
 class FluorescenceDataset(MpraDataset):
     
     CELL_TYPES = ["JURKAT", "K562", "THP1"]
@@ -53,11 +52,15 @@ class FluorescenceDataset(MpraDataset):
         self.target_transform = target_transform
         self.split = self.split_parse(split)
         self.prefix = self.FLAG + "_"
+
         try:
-            file_path = os.path.join(self._data_path, self.prefix + f'{self.split}.tsv')
+            file_name = self.prefix + self.split + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
+            
         if task == "regression":
             self.activity_columns = ["numerical_" + i for i in self.activity_columns]
         targets = df[self.activity_columns].to_numpy()

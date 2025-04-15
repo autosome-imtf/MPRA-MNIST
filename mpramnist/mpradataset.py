@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union, Optional, Callable
 import torch
+import os
 
 from torch.utils.data import  Dataset
 from .dataclass import SeqObj, VectorDsFeature, ScalarDsFeature
@@ -31,8 +32,8 @@ class MpraDataset(Dataset):
     
     def __init__(self,
                  split: str | List[int] | int | List[Union[int, str]],
-                 permute = False,
-                 root = None,
+                 root,
+                 permute: bool = False,
                  transform: Optional[Callable] = None,
                  target_transform: Optional[Callable] = None
                 ):
@@ -42,12 +43,16 @@ class MpraDataset(Dataset):
         self.target_transform = target_transform
         self._scalars = {}
         self._vectors = {}
-        if root == None:
-            self._data_path = "./../data/" + self.FLAG + "/"
+        
+        if root is not None:
+            root = os.path.join(root, self.FLAG)
+            self._data_path = os.path.abspath(root)
+            if not os.path.exists(self._data_path):
+                os.makedirs(self._data_path)
         else:
-            self._data_path = root
+            self._data_path = os.path.join(DEFAULT_ROOT, self.FLAG)
+            
         self.info = INFO[self.FLAG]
-
 
     def __getitem__(self, idx):
         # Find all names start with 'seq' (e.g, 'seq', 'seq1', 'seq2', etc)
@@ -112,4 +117,30 @@ class MpraDataset(Dataset):
         body.append(f"Used split fold: {self.split}")
         lines = [head] + [" " * _repr_indent + line for line in body]
         return "\n".join(lines)
+        
+    def download(self, file_path, file_name):
+        if not os.path.exists(os.path.join(file_path, file_name)):
+            try:
+                from torchvision.datasets.utils import download_url
+    
+                download_url(
+                    url = self.info[f"url_{file_name}"],
+                    root = file_path,
+                    filename = file_name,
+                    md5 = self.info[f"MD5_{file_name}"],
+                )
+            except:
+                raise RuntimeError(
+                    f"""
+                    Automatic download failed! Please download {file_name} manually.
+                    1. [Optional] Check your network connection: 
+                        Go to {HOMEPAGE} and find the Zenodo repository
+                    2. Download the file from the Zenodo repository or its Zenodo data link: 
+                        {self.info[f"url_{file_name}"]}
+                    3. [Optional] Verify the MD5: 
+                        {self.info[f"MD5_{file_name}"]}
+                    4. Put the npz file under your MedMNIST root folder: 
+                        {file_path}
+                    """
+                )
         

@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from typing import List, T, Union
 import torch
-from mpramnist.info import INFO
+import os
 
 from mpramnist.mpradataset import MpraDataset
 
@@ -47,9 +47,12 @@ class AgarwalDataset(MpraDataset):
         self.prefix = self.FLAG + "_"
         
         try:
-            df = pd.read_csv(self._data_path + self.prefix + self._cell_type + '.tsv', sep='\t')
+            file_name = self.prefix + self._cell_type + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
+            df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
-            raise FileNotFoundError(f"File not found: {self._data_path + self._cell_type}.tsv")
+            raise FileNotFoundError(f"File not found: {file_path}")
             
         target_column = "averaged_expression" if averaged_target else "expression"
         #df["target"] = df[target_column].astype(np.float32)

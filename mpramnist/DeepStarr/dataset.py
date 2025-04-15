@@ -47,12 +47,16 @@ class DeepStarrDataset(MpraDataset):
                 use_original_reverse_complement = False
             else:
                 use_original_reverse_complement = True
+
         self.transform = transform
         self.target_transform = target_transform
         self.split, column = self.split_parse(split)
         self.prefix = self.FLAG + "_"
+        
         try:
-            file_path = os.path.join(self._data_path, self.prefix + f'all_chr.tsv')
+            file_name = self.prefix + 'all_chr' + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")

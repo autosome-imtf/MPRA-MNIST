@@ -66,7 +66,9 @@ class DreamDataset(MpraDataset):
     def _load_and_prepare_data(self, dataset: str) -> pd.DataFrame:
         """Load data from file and prepare the dataset."""
         try:
-            file_path = os.path.join(self._data_path, self.prefix + f'{dataset}.tsv')
+            file_name = self.prefix + dataset + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")

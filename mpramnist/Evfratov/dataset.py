@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, T, Union
 import torch
-
 import os
 
 from mpramnist.mpradataset import MpraDataset
@@ -48,9 +47,11 @@ class EvfratovDataset(MpraDataset):
         self.target_transform = target_transform
         self.split = self.split_parse(split)
         self.prefix = self.FLAG + "_"
-        
+    
         try:
-            file_path = os.path.join(self._data_path, self.prefix + f'{self.length_of_seq}_{self.split}.tsv')
+            file_name = self.prefix + self.length_of_seq + "_" + self.split + '.tsv'
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
