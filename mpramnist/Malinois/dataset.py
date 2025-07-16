@@ -12,7 +12,7 @@ class MalinoisDataset(MpraDataset):
     LEFT_FLANK = "ACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG" 
     RIGHT_FLANK = "CACTGCGGCTCCTGCGATCTAACTGGCCGGTACCTGAGCTCGCTAGCCTCGAGGATATCAAGATCTGGCCTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCT" 
     
-    CELL_TYPES = ['HepG2', 'K562', 'SKNSH']
+    CELL_TYPES = ['K562', 'HepG2', 'SKNSH']
     
     FLAG = "Malinois"
     
@@ -138,36 +138,16 @@ class MalinoisDataset(MpraDataset):
 
         # Apply filtration
         filters = {
-            "original": lambda df: self._filter_data(df, activity_columns, self.stderr_columns),
+            "original": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, is_padding = True),
             "own": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, 
                                                 self.data_project, self.duplication_cutoff, 
                                                 self.stderr_threshold, self.std_multiple_cut, self.up_cutoff_move),
-            "none": lambda df: df
+            "none": lambda df: df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
         }
         if self.filtration in filters:
             df = filters[self.filtration](df)
         else:
             raise ValueError("filtration value must be 'original', 'own' or 'none'")
-            
-        # Split data by chromosome
-        df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
-
-        # Handle duplication if specified
-        if self.duplication_cutoff is not None:
-            df = self.duplicate_high_activity_rows(df, activity_columns)
-
-        if self.use_original_reverse_complement:
-            
-            #padding
-            fn_padding = partial(self.original_pad_seq,
-                                  in_column_name=self.sequence_column,
-                                  padded_seq_len=600)
-            df[self.sequence_column] = df.apply(fn_padding, axis = 1)
-            
-            # reverse_complement
-            rev_aug = df.copy()
-            rev_aug.seq = rev_aug.seq.apply(self.reverse_complement)
-            df = pd.concat([df, rev_aug], ignore_index =True)
             
         targets = df[activity_columns].to_numpy()
         seq = df.seq.to_numpy()
@@ -208,7 +188,9 @@ class MalinoisDataset(MpraDataset):
                      duplication_cutoff = 0.5,
                      stderr_threshold = 1.0,
                      std_multiple_cut = 6.0,
-                     up_cutoff_move = 3.0) -> pd.DataFrame:
+                     up_cutoff_move = 3.0,
+                     is_padding = False 
+                     ) -> pd.DataFrame:
         '''
         Filters the DataFrame based on specified thresholds for standard error and activity metrics.
     
@@ -230,6 +212,8 @@ class MalinoisDataset(MpraDataset):
             Multiplier for the standard deviation used to set upper and lower activity thresholds.
         up_cutoff_move : float, optional
             Value added to the upper cutoff threshold to allow further adjustment.
+        is_padding : bool
+            Determines whether filtration is original and need to padding sequences using the same approach as the original study
     
         Returns:
         --------
@@ -257,6 +241,28 @@ class MalinoisDataset(MpraDataset):
         # Apply combined filtering for non-extreme values
         non_extremes_filter = ((df[activity_columns] < up_cut) & (df[activity_columns] > down_cut)).all(axis=1)
         df = df[non_extremes_filter].reset_index(drop=True)
+
+        # Split data by chromosome
+        df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
+
+        # Handle duplication if specified
+        if self.duplication_cutoff is not None:
+            df = self.duplicate_high_activity_rows(df, activity_columns)
+            
+        if is_padding:
+            
+            #padding
+            fn_padding = partial(self.original_pad_seq,
+                                  in_column_name=self.sequence_column,
+                                  padded_seq_len=600)
+            df[self.sequence_column] = df.apply(fn_padding, axis = 1)
+            
+        if self.use_original_reverse_complement:
+            
+            # reverse_complement
+            rev_aug = df.copy()
+            rev_aug.seq = rev_aug.seq.apply(self.reverse_complement)
+            df = pd.concat([df, rev_aug], ignore_index =True)
         
         return df  
 
@@ -299,7 +305,8 @@ class MalinoisDataset(MpraDataset):
                          "test" : ["7", "13"]
                         } # default split of data
 
-        list_of_chr = [str(i) for i in range(23)] + ["X", "Y"]
+        list_of_chr = [str(i) for i in range(1, 23)] + ["X", "Y"]
+        
         # Process string input for specific keys or fold names ("X", "Y")
         if isinstance(split, str):
             

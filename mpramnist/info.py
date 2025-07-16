@@ -26,12 +26,12 @@ HOMEPAGE = "https://github.com/autosome-imtf/MPRA-MNIST"
 INFO = {
     "Agarwal": {
         "python_class": "Agarwal",
-        "url_Agarwal_HepG2.tsv": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_HepG2.tsv?download=1",
+        "url_Agarwal_HepG2.tsv": "https://zenodo.org/records/15228546/files/Agarwal_HepG2.tsv?download=1",
         "MD5_Agarwal_HepG2.tsv": "e34ead50382f11dbe3537bd66399548b",
-        "url_Agarwal_K562.tsv": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_WTC11.tsv?download=1",
-        "MD5_Agarwal_K562.tsv": "4792c240248fd7cd69ed9e1575610fe4",
-        "url_Agarwal_WTC11.tsv": "https://zenodo.org/api/records/14021416/draft/files/VikramDataset_K562.tsv?download=1",
-        "MD5_Agarwal_WTC11.tsv": "4b4235ef795a41f95adbb267d651b43e",
+        "url_Agarwal_K562.tsv": "https://zenodo.org/records/15228546/files/Agarwal_K562.tsv?download=1",
+        "MD5_Agarwal_K562.tsv": "4b4235ef795a41f95adbb267d651b43e",
+        "url_Agarwal_WTC11.tsv": "https://zenodo.org/records/15228546/files/Agarwal_WTC11.tsv?download=1",
+        "MD5_Agarwal_WTC11.tsv": "4792c240248fd7cd69ed9e1575610fe4",
         "target_columns": {"expression", "averaged_expression"},
         "scalar_features": {},
         "vector_features": {},

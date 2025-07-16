@@ -30,16 +30,18 @@ from itertools import cycle
 
 from mpramnist.models import HumanLegNet
 from mpramnist.models import initialize_weights
+from mpramnist.models import LinearNorm
 
 
 class LitModel(L.LightningModule):
-    def __init__(self, model, loss, print_each, weight_decay = 1e-2, lr = 3e-4):
+    def __init__(self, model, loss, print_each, weight_decay = 1e-2, lr = 3e-4, print_file = None):
         super().__init__()
         
         self.model = model
         
         self.loss = loss
         self.print_each = print_each
+        self.print_file = print_file
         self.weight_decay = weight_decay
         
         self.lr = lr
@@ -52,7 +54,7 @@ class LitModel(L.LightningModule):
 
     def training_step(self, batch, batch_nb):
         X, y = batch
-        y_hat = self.model(X)
+        y_hat = self.forward(X)
         loss = self.loss(y_hat, y)
         
         self.log("train_loss", loss, prog_bar=True,  on_step=False, on_epoch=True, logger = True)
@@ -61,7 +63,7 @@ class LitModel(L.LightningModule):
         
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self.model(x)
+        y_hat = self.forward(x)
         loss = self.loss(y_hat, y)
 
         self.log('val_loss', loss, on_step=False, on_epoch=True, prog_bar=True)
@@ -88,7 +90,7 @@ class LitModel(L.LightningModule):
         
     def test_step(self, batch, _):
         x, y = batch
-        y_hat = self.model(x)
+        y_hat = self.forward(x)
         loss = self.loss(y_hat, y)
         
         self.log('test_loss', 
@@ -105,7 +107,7 @@ class LitModel(L.LightningModule):
         
     def predict_step(self, batch, _):
         x, y = batch 
-        pred = self.model(x)
+        pred = self.forward(x)
         
         return {"predicted": pred.cpu().detach().float(),"target": y.cpu().detach().float()}
     
@@ -484,9 +486,279 @@ class LitModel_Fluorescence_Reg(LitModel_AgarwalJoint):
 class LitModel_Fluorescence_Clas(LitModel_Evfratov):
     ...
 
-class LitModel_Malinois(LitModel_AgarwalJoint):
-    ...
+import os
+import sys
+import tempfile
+import subprocess
 
+def filter_state_dict(model, stashed_dict):
+
+    results_dict = { 
+        'filtered_state_dict': {},
+        'passed_keys'  : [],
+        'removed_keys' : [],
+        'missing_keys' : [],
+        'unloaded_keys': []
+                   }
+    old_dict = model.state_dict()
+
+    for m_key, m_value in old_dict.items():
+        try:
+            
+            if old_dict[m_key].shape == stashed_dict[m_key].shape:
+                results_dict['filtered_state_dict'][m_key] = stashed_dict[m_key]
+                results_dict['passed_keys'].append(m_key)
+                print(f'Key {m_key} successfully matched', file=sys.stderr)
+                
+            else:
+                check_str = 'Size mismatch for key: {}, expected size {}, got {}' \
+                              .format(m_key, old_dict[m_key].shape, stashed_dict[m_key].shape)
+                results_dict['removed_keys'].append(m_key)
+                print(check_str, file=sys.stderr)
+                
+        except KeyError:
+            results_dict['missing_keys'].append(m_key)
+            print(f'Missing key in dict: {m_key}', file=sys.stderr)
+            
+    for m_key, m_value in stashed_dict.items():
+        if m_key not in old_dict.keys():
+            check_str = 'Skipped loading key: {} of size {}' \
+                           .format(m_key, m_value.shape)
+            results_dict['unloaded_keys'].append(m_key)
+            print(check_str, file=sys.stderr)
+            
+    return results_dict
+    
+def pearson_correlation(x, y):
+
+    vx = x - torch.mean(x, dim=0)
+    vy = y - torch.mean(y, dim=0)
+    pearsons = torch.sum(vx * vy, dim=0) / (torch.sqrt(torch.sum(vx ** 2, dim=0)) * torch.sqrt(torch.sum(vy ** 2, dim=0)) + 1e-10)
+    return pearsons, torch.mean(pearsons)
+    
+def shannon_entropy(x):
+
+    p_c = nn.Softmax(dim=1)(x)    
+    return torch.sum(- p_c * torch.log(p_c), axis=1)
+
+def _get_ranks(x):
+
+    tmp = x.argsort(dim=0)
+    ranks = torch.zeros_like(tmp)
+    if len(x.shape) > 1:
+        dims = x.shape[1]
+        for dim in range(dims):
+            ranks[tmp[:,dim], dim] = torch.arange(x.shape[0], layout=x.layout, device=x.device)
+    else:
+        ranks[tmp] = torch.arange(x.shape[0], layout=x.layout, device=x.device)
+    return ranks
+
+def spearman_correlation(x, y):
+
+    x_rank = _get_ranks(x).float()
+    y_rank = _get_ranks(y).float()
+    return pearson_correlation(x_rank, y_rank)
+
+
+class LitModel_Malinois(LitModel):
+    def __init__(self, 
+                 weight_decay, lr, 
+                 num_outputs = 3,
+                 activity_columns = ['K562', 'HepG2', 'SKNSH'],
+                 model = None, loss = nn.MSELoss(), print_each = 1,
+                 print_file = None
+                ):
+        
+        super().__init__(model, loss, print_each, weight_decay, lr, print_file)
+
+        self.num_outputs = num_outputs
+        self.activity_columns = activity_columns
+        self.validation_step_outputs = []
+        self.parent_weights = "gs://tewhey-public-data/CODA_resources/my-model.epoch_5-step_19885.pkl"
+
+        self.metrics = {}
+        stages = ["train", "val", "test"]
+
+        for i in range(len(stages)):
+            for ii in self.activity_columns:
+                name_of_metric = stages[i] + "_" + ii + "_pearson"
+                self.metrics[name_of_metric] = PearsonCorrCoef(num_outputs = 1)
+
+    def forward(self, x):
+        return self.model(x)
+
+    def attach_parent_weights(self, my_weights):
+        """
+        Attach parent weights to the model.
+
+        Args:
+            my_weights (str): Path to the pre-trained model weights.
+
+        Returns:
+            list: List of parameter names that were transferred.
+        """
+        parent_state_dict = torch.load(my_weights)
+        if 'model_state_dict' in parent_state_dict.keys():
+            parent_state_dict = parent_state_dict['model_state_dict']
+            
+        mod_state_dict = filter_state_dict(self.model, parent_state_dict)
+        self.model.load_state_dict( mod_state_dict['filtered_state_dict'], strict=False )
+        return mod_state_dict['passed_keys']
+
+    def setup(self, stage='training'):
+
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            if 'gs://' in self.parent_weights:
+                subprocess.call(['gsutil','cp',self.parent_weights,tmpdirname])
+                the_weights = os.path.join( tmpdirname, os.path.basename(self.parent_weights) )
+            else:
+                the_weights = self.parent_weights
+            self.transferred_keys = self.attach_parent_weights(the_weights)
+            
+    def pearson_epoch_calculation(self, y, y_hat, stage, activity_columns):
+        device = y.device
+            
+        for i in range(len(activity_columns)):
+            name_of_metric = stage + "_" + activity_columns[i] + "_pearson"
+
+            self.metrics[name_of_metric] = self.metrics[name_of_metric].to(device)
+            
+            self.metrics[name_of_metric].update(y[:, i], y_hat[:, i])
+
+    def categorical_mse(self, x, y):
+        return (x - y).pow(2).mean(dim=0)
+        
+    def training_step(self, batch, batch_nb):
+        X, y = batch
+        y_hat = self.forward(X)
+
+        loss = self.loss(y_hat, y)
+        self.log("train_loss", loss, prog_bar=True,  on_step=True, on_epoch=True, logger = True)
+        
+        self.pearson_epoch_calculation(y, y_hat, "train", self.activity_columns)
+
+        return loss
+        
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.forward(x)
+    
+        loss = self.loss(y_hat, y)
+        metric = self.categorical_mse(y_hat, y)
+        
+        self.validation_step_outputs.append({
+            'loss': loss,
+            'metric': metric,
+            'preds': y_hat,
+            'labels': y
+        })
+        
+        self.log("val_loss", loss, prog_bar=True, on_step=False, on_epoch=True, logger=True)
+        self.pearson_epoch_calculation(y, y_hat, "val", self.activity_columns)
+        
+
+    def on_validation_epoch_end(self):
+        
+        val_pearsons = []
+        val_str = ""
+        train_str = ""
+
+        for i in self.activity_columns:
+            name_train_metric = "train_" + i + "_pearson"
+            name_val_metric = "val_" + i + "_pearson"
+            
+            train_pearson = self.metrics[name_train_metric].compute()
+            val_pearson = self.metrics[name_val_metric].compute()
+
+            val_pearsons.append(val_pearson)
+            
+            self.log(name_train_metric, train_pearson, prog_bar=False, on_epoch=True, logger=True)
+            self.log(name_val_metric, val_pearson, prog_bar=True, on_epoch=True, logger=True)
+            
+            self.metrics[name_train_metric].reset()
+            self.metrics[name_val_metric].reset()   
+
+            val_str += f'| Val Pearson {i}: {val_pearson:.5f} '
+            train_str += f'| Train Pearson {i}: {train_pearson:.5f} '
+        
+        mean_val_pearson = torch.mean(torch.stack(val_pearsons))
+        self.log("val_mean_pearson", mean_val_pearson, prog_bar=True, on_epoch=True, logger=True)
+
+        arit_mean = torch.stack([ batch['loss'] for batch in self.validation_step_outputs ], dim=0) \
+                      .mean()
+        harm_mean = torch.stack([ batch['metric'] for batch in self.validation_step_outputs ], dim=0) \
+                      .mean(dim=0).pow(-1).mean().pow(-1)
+
+        
+
+        epoch_preds = torch.cat([batch['preds'] for batch in self.validation_step_outputs], dim=0)
+        epoch_labels  = torch.cat([batch['labels'] for batch in self.validation_step_outputs], dim=0)
+        
+        spearman, mean_spearman = spearman_correlation(epoch_preds, epoch_labels)
+        shannon_pred, shannon_label = shannon_entropy(epoch_preds), shannon_entropy(epoch_labels)
+        specificity_spearman, specificity_mean_spearman = spearman_correlation(shannon_pred, shannon_label)
+
+        self.log("entropy_spearman", specificity_mean_spearman.item(), prog_bar=True, on_epoch=True, logger=True)
+
+        self.validation_step_outputs.clear()
+        
+        if (self.current_epoch + 1) % self.print_each == 0:
+            res_str = f"| Epoch: {self.current_epoch} "
+            res_str += f"| Val Loss: {self.trainer.callback_metrics['val_loss']:.5f} "
+            res_str += f"| Harm Mean Loss: {harm_mean:.5f} "
+            res_str += f"| Enthropy Spearman: {specificity_mean_spearman.item():.5f} "
+            res_str += f"| Val Mean Pearson: {mean_val_pearson:.5f} |"
+            
+            border = '-'*len(max(res_str, val_str, train_str))
+            if self.print_file is not None:
+                with open(self.print_file, 'a') as f:
+                    f.write("\n".join(['', border, res_str, val_str, train_str, border, '']))
+            else:
+                print("\n".join(['', border, res_str, val_str, train_str, border, '']))
+        
+    def test_step(self, batch, _):
+        x, y = batch
+        y_hat = self.forward(x)
+
+        loss = self.loss(y_hat, y)
+        self.log("train_loss", loss, prog_bar=True,  on_step=False, on_epoch=True, logger = True)
+        
+        self.pearson_epoch_calculation(y, y_hat, "test", self.activity_columns)
+
+    def on_test_epoch_end(self):
+        for i in self.activity_columns:
+            name_of_metric = "test_" + i + "_pearson"
+            test_pearson = self.metrics[name_of_metric].compute()
+            self.log(name_of_metric, test_pearson, prog_bar=True)
+            self.metrics[name_of_metric].reset()
+            
+    def predict_step(self, batch, _):
+        x, y = batch 
+        pred = self.forward(x)
+        y = self.y_parse(y)
+        
+        return {"predicted": pred.cpu().detach().float(),"target": y.cpu().detach().float()}
+    
+    def configure_optimizers(self):
+        
+        self.optimizer = torch.optim.Adam(self.parameters(),
+                                          betas = (0.8661062881299633,0.879223105336538), eps=1e-08,
+                                          weight_decay = self.weight_decay,
+                                          lr = self.lr,
+                                          amsgrad = True)
+        
+        lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer = self.optimizer,
+                                                                            T_0 = 4096,
+                                                                            T_mult=1,
+                                                                            eta_min=0.0,
+                                                                            last_epoch=-1)
+        lr_scheduler_config = {
+                    "scheduler": lr_scheduler,
+                    "interval": "step",
+                    "name": 'learning_rate'
+            }
+        return [self.optimizer], [lr_scheduler_config]
+    
 class LitModel_Sure_Clas(LitModel):
     def __init__(self, 
                  weight_decay, lr, 
@@ -762,9 +1034,9 @@ class LitModel_StarrSeq(LitModel):
         self.test_f1 = F1Score(task="binary")
 
         self.is_binary = is_binary
-        if self.is_binary or model.is_binary:
+        if self.is_binary or self.model.is_binary:
         # Initialize last block for binary task
-            final_feature_size = model.seq_len
+            final_feature_size = self.model.seq_len
             
             self.last_block = nn.Sequential(
                 nn.Linear(model.block_sizes[-1] * final_feature_size * 2, out_bs),
@@ -786,7 +1058,7 @@ class LitModel_StarrSeq(LitModel):
         return out, labels
 
     def training_step(self, batch, batch_nb):
-        if self.is_binary or model.is_binary:
+        if self.is_binary or self.model.is_binary:
             y_hat, y = self._process_batch(batch)
         else:
             X, y = batch
@@ -796,7 +1068,7 @@ class LitModel_StarrSeq(LitModel):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        if self.is_binary or model.is_binary:
+        if self.is_binary or self.model.is_binary:
             y_hat, y = self._process_batch(batch)
         else:
             X, y = batch
@@ -832,7 +1104,7 @@ class LitModel_StarrSeq(LitModel):
         self.val_f1.reset()
 
     def test_step(self, batch, batch_idx):
-        if self.is_binary or model.is_binary:
+        if self.is_binary or self.model.is_binary:
             y_hat, y = self._process_batch(batch)
         else:
             X, y = batch
@@ -868,7 +1140,7 @@ class LitModel_StarrSeq(LitModel):
         self.test_f1.reset()
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        if self.is_binary or model.is_binary:
+        if self.is_binary or self.model.is_binary:
             y_hat, y = self._process_batch(batch)
         else:
             x, y = batch
