@@ -4,10 +4,12 @@ from typing import List, T, Union
 import torch
 import os
 
-from mpramnist.mpradataset import MpraDataset
+from mpradataset import MpraDataset
 
 class AgarwalJointDataset(MpraDataset):
 
+    CONSTANT_LEFT_FLANK = "AGGACCGGATCAACT" # required for each sequence
+    CONSTANT_RIGHT_FLANK = "CATTGCGTGAACCGA" # required for each sequence
     LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG" # from human_legnet
     RIGHT_FLANK = "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT" # from human_legnet
     

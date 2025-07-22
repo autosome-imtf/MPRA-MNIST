@@ -8,6 +8,8 @@ from mpramnist.mpradataset import MpraDataset
 
 class AgarwalDataset(MpraDataset):
 
+    CONSTANT_LEFT_FLANK = "AGGACCGGATCAACT" # required for each sequence
+    CONSTANT_RIGHT_FLANK = "CATTGCGTGAACCGA" # required for each sequence
     LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG" # from human_legnet
     RIGHT_FLANK = "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT" # from human_legnet
     
