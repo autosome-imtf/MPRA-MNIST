@@ -138,7 +138,7 @@ class MalinoisDataset(MpraDataset):
 
         # Apply filtration
         filters = {
-            "original": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, is_padding = True),
+            "original": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, duplication_cutoff = self.duplication_cutoff, is_padding = True),
             "own": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, 
                                                 self.data_project, self.duplication_cutoff, 
                                                 self.stderr_threshold, self.std_multiple_cut, self.up_cutoff_move),
@@ -185,7 +185,7 @@ class MalinoisDataset(MpraDataset):
                      activity_columns: List[str],
                      stderr_columns = None,
                      data_project = None,
-                     duplication_cutoff = 0.5,
+                     duplication_cutoff = None,
                      stderr_threshold = 1.0,
                      std_multiple_cut = 6.0,
                      up_cutoff_move = 3.0,
@@ -205,7 +205,7 @@ class MalinoisDataset(MpraDataset):
         data_project : List[str], optional
             List of projects to filter by, though not directly used here; can be customized further if needed.
         duplication_cutoff : float, optional
-            The cutoff threshold for handling duplicates. Unused in this function but provided for extensibility.
+            The cutoff threshold for handling duplicates.
         stderr_threshold : float, optional
             Threshold for standard error filtering; rows with max `stderr_columns` values above this are removed.
         std_multiple_cut : float, optional
@@ -246,8 +246,8 @@ class MalinoisDataset(MpraDataset):
         df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
 
         # Handle duplication if specified
-        if self.duplication_cutoff is not None:
-            df = self.duplicate_high_activity_rows(df, activity_columns)
+        if duplication_cutoff is not None:
+            df = self.duplicate_high_activity_rows(df, activity_columns, duplication_cutoff)
             
         if is_padding:
             
@@ -266,10 +266,11 @@ class MalinoisDataset(MpraDataset):
         
         return df  
 
-    def duplicate_high_activity_rows(self, df: pd.DataFrame, activity_columns: List[str]) -> pd.DataFrame:
+    def duplicate_high_activity_rows(self, df: pd.DataFrame, activity_columns: List[str], duplication_cutoff: float) -> pd.DataFrame:
         """
         Duplicates rows in the DataFrame where the maximum value across specified activity columns 
-        exceeds a defined threshold.
+        exceeds a defined threshold. The original DataFrame is first sorted in descending order 
+        based on the maximum activity values.
     
         Parameters:
         -----------
@@ -283,11 +284,11 @@ class MalinoisDataset(MpraDataset):
         pd.DataFrame
             DataFrame with specified rows duplicated based on the maximum activity value.
         """
-         # Calculate the maximum activity value across specified columns for each row
+
         max_values = df[activity_columns].max(axis=1)
 
         # Filter rows where the maximum activity value exceeds the duplication cutoff
-        duplication_filter = max_values > self.duplication_cutoff
+        duplication_filter = max_values > duplication_cutoff
         duplicated_rows = df[duplication_filter].reset_index(drop=True)
 
         # Concatenate the duplicated rows with the original DataFrame
