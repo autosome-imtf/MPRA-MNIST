@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from typing import List, T, Union, Optional, Callable
+from typing import List, T, Union, Optional, Callable, Dict
 import torch
 import os
 
@@ -96,17 +96,16 @@ class MpraDataset(Dataset):
     def add_numeric_scalar(self, name: str, val: List[T]):
         self._scalars[name] = ScalarDsFeature.numeric(val=val)
 
-    def add_categorial_scalar(self, name: str, val: List[T], levels: dict[T, int] | None = None):
+    def add_categorial_scalar(self, name: str, val: List[T], levels: Dict[T, int] | None = None):
         self._scalars[name] = ScalarDsFeature.categorial(val=val, levels=levels)
 
     def add_numeric_vector(self, name: str, val: List[List[T]], pad_value: T):
         self._vectors[name] = VectorDsFeature.numeric(val=val, pad_value=pad_value)
 
-    def add_categorial_vector(self, name: str, val: List[List[T]], pad_value: T, levels: dict[T, int] | None = None):
+    def add_categorial_vector(self, name: str, val: List[List[T]], pad_value: T, levels: Dict[T, int] | None = None):
         self._vectors[name] = VectorDsFeature.categorial(val=val, pad_value=pad_value, levels=levels)
     
     def __len__(self):
-        #return len(self.ds) if self.ds is not None else 0
         return len(self.ds["seq"])
 
     def __repr__(self):
@@ -139,7 +138,7 @@ class MpraDataset(Dataset):
                         {self.info[f"url_{file_name}"]}
                     3. [Optional] Verify the MD5: 
                         {self.info[f"MD5_{file_name}"]}
-                    4. Put the npz file under your MedMNIST root folder: 
+                    4. Put the npz file under your MPRA-MNIST root folder: 
                         {file_path}
                     """
                 )

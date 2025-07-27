@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List, T
+from typing import List, T, Dict
 
 class FeatureType:
     pass
@@ -10,7 +10,7 @@ class Numeric(FeatureType):
 
 @dataclass
 class Categorial(FeatureType):
-    levels: dict[T, int] # category levels
+    levels: Dict[T, int] # category levels
 
     def __repr__(self):
         return f'<categorial feature(levels=[{", ".join(map(str, self.levels))}])>'
@@ -32,7 +32,7 @@ class VectorDsFeature:
         return cls(val=val, tp=Numeric(), pad_value=pad_value)
 
     @classmethod
-    def categorial(cls, val: List[List[T]], pad_value: T, levels: dict[T, int] | None = None):
+    def categorial(cls, val: List[List[T]], pad_value: T, levels: Dict[T, int] | None = None):
         if levels is None:
           # infer levels
             levels = dict()
@@ -67,7 +67,7 @@ class ScalarDsFeature:
         return cls(val=val, tp=Numeric())
 
     @classmethod
-    def categorial(cls, val: List[T], levels: dict[T, int] | None = None):
+    def categorial(cls, val: List[T], levels: Dict[T, int] | None = None):
         if levels is None:
             # infer levels
             levels = dict()
@@ -90,8 +90,8 @@ class SeqObj:
     
     seq: str
     
-    scalars: dict[str, ScalarFeature]
-    vectors: dict[str, VectorFeature]
+    scalars: Dict[str, ScalarFeature]
+    vectors: Dict[str, VectorFeature]
     split: str = ""
     one_hot_encoded = False
     add_feature_channel = False
