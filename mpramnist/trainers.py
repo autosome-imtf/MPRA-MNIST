@@ -280,40 +280,17 @@ class LitModel_AgarwalJoint(LitModel):
         return {"predicted": pred.cpu().detach().float(),"target": y.cpu().detach().float()}
     
 
-class LitModel_DeepStarr(LitModel):
+class LitModel_DeepStarr(LitModel_AgarwalJoint):
     def __init__(self, weight_decay, lr, 
                  num_outputs = 3,
+                 activity_columns = ["Developmental", "HouseKeeping"],
                  model = None, loss = nn.MSELoss(), print_each = 1):
         
-        super().__init__(model, loss, print_each, weight_decay, lr)
-
-        self.train_pearson = PearsonCorrCoef(num_outputs = num_outputs)
-        self.val_pearson = PearsonCorrCoef(num_outputs = num_outputs)
-        self.test_pearson = PearsonCorrCoef(num_outputs = num_outputs)
-
-    def on_validation_epoch_end(self):
-        train_pearson = self.train_pearson.compute()
-        val_pearson = self.val_pearson.compute()
-        
-        self.log("val_pearson", val_pearson.mean(), prog_bar=True)
-        self.log("train_pearson", train_pearson.mean())
-        
-        if (self.current_epoch + 1) % self.print_each == 0:
-            res_str = f"| Epoch: {self.current_epoch} "
-            res_str += f"| Val Loss: {self.trainer.callback_metrics['val_loss']:.5f} "
-            res_str += f'| Val Pearson: {val_pearson.mean():.5f} '
-    
-            res_str += f'| Train Pearson: {train_pearson.mean():.5f} '
-            border = '-'*len(res_str)
-            print("\n".join(['', border, res_str, border, '']))
-        
-        self.train_pearson.reset()
-        self.val_pearson.reset()
-        
-    def on_test_epoch_end(self):
-        test_pearson = self.test_pearson.compute()
-        self.log('test_pearson', test_pearson.mean(), prog_bar=True)
-        self.test_pearson.reset()
+        super().__init__(model = model, loss = loss, 
+                         num_outputs = num_outputs,
+                         activity_columns = activity_columns,
+                         print_each = print_each,
+                         weight_decay = weight_decay, lr = lr)
 
 class LitModel_Sharpr(LitModel):
     
@@ -601,11 +578,195 @@ class LitModel_Evfratov(LitModel):
         y_hat = self.model(x)
         return {"y": y.squeeze().long().cpu().detach().float(), "pred": y_hat.cpu().detach().float()}
 
-class LitModel_Fluorescence_Reg(LitModel_DeepStarr):
+class LitModel_Fluorescence_Reg(LitModel_AgarwalJoint):
     ...
 
-class LitModel_Fluorescence_Clas(LitModel_Evfratov):
-    ...
+class LitModel_Fluorescence_Clas(LitModel):
+
+    def __init__(self, 
+                 weight_decay, lr, 
+                 n_labels = 3, 
+                 show_figure = True,
+                 model = None, loss = nn.BCEWithLogitsLoss(), print_each = 1):
+        
+        super().__init__(model, loss, print_each, weight_decay, lr)
+
+        self.val_acc = Accuracy(task="multilabel", num_labels=n_labels)
+        self.val_auroc = AUROC(task="multilabel", num_labels=n_labels)
+        self.val_aupr = AveragePrecision(task="multilabel", num_labels=n_labels)
+        self.val_precision = Precision(task="multilabel", num_labels=n_labels, average="macro")
+        self.val_recall = Recall(task="multilabel", num_labels=n_labels, average="macro")
+        self.val_f1 = F1Score(task="multilabel", num_labels=n_labels, average="macro")
+
+        self.test_acc = Accuracy(task="multilabel", num_labels=n_labels)
+        self.test_auroc = AUROC(task="multilabel", num_labels=n_labels)
+        self.test_aupr = AveragePrecision(task="multilabel", num_labels=n_labels)
+        self.test_precision = Precision(task="multilabel", num_labels=n_labels, average="macro")
+        self.test_recall = Recall(task="multilabel", num_labels=n_labels, average="macro")
+        self.test_f1 = F1Score(task="multilabel", num_labels=n_labels, average="macro")
+
+        #for plotting
+        self.n_labels = n_labels
+        self.show_figure = show_figure
+        self.y_score = torch.tensor([])
+        self.y_true = torch.tensor([])
+
+    def setup(self, stage=None):
+        self.y_score = self.y_score.to(self.device)  
+        self.y_true = self.y_true.to(self.device) 
+
+    def training_step(self, batch, batch_nb):
+        X, y = batch
+        y_hat = self.model(X)
+        y = y.float() 
+
+        loss = self.loss(y_hat, y)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.model(x)
+        y = y.float()
+
+        loss = self.loss(y_hat, y)
+
+        y_metrics = y.long()
+        
+        self.val_acc(y_hat, y_metrics)
+        self.val_auroc(y_hat, y_metrics)
+        self.val_aupr(y_hat, y_metrics)
+        self.val_precision(y_hat, y_metrics)
+        self.val_recall(y_hat, y_metrics)
+        self.val_f1(y_hat, y_metrics)
+
+        self.log("val_loss", loss, on_epoch=True, prog_bar=True)
+
+    def on_validation_epoch_end(self):
+        if (self.current_epoch + 1) % self.print_each == 0:
+            res_str = f"| Epoch: {self.current_epoch} "
+            res_str += f"| Val Acc: {self.val_acc.compute()} "
+            res_str += f'| Val AUROC: {self.val_auroc.compute()} '
+            res_str += f'| Val AUPR: {self.val_aupr.compute()} |'
+            res_str += f'\n| Val Precision: {self.val_precision.compute()} '
+            res_str += f'| Val Recall: {self.val_recall.compute()} '
+            res_str += f'| Val F1: {self.val_f1.compute()} '
+            border = '-'*100
+            print("\n".join(['', border, res_str, border, '']))
+        
+        self.val_acc.reset()
+        self.val_auroc.reset()
+        self.val_aupr.reset()
+        self.val_precision.reset()
+        self.val_recall.reset()
+        self.val_f1.reset()
+
+    def test_step(self, batch, batch_idx):
+        x, y = batch
+        y_hat = self.model(x)
+        y = y.float()
+
+        loss = self.loss(y_hat, y)
+
+        y_metrics = y.long()
+        
+        self.test_acc(y_hat, y_metrics)
+        self.test_auroc(y_hat, y_metrics)
+        self.test_aupr(y_hat, y_metrics)
+        self.test_precision(y_hat, y_metrics)
+        self.test_recall(y_hat, y_metrics)
+        self.test_f1(y_hat, y_metrics)
+
+        self.log("test_loss", loss, on_epoch=True, prog_bar=True)
+
+        # for plotting
+        self.y_score = torch.cat([self.y_score, y_hat])
+        self.y_true = torch.cat([self.y_true, y])
+
+    def on_test_epoch_end(self):
+        res_str = f"| Test Acc: {self.test_acc.compute()} "
+        res_str += f'| Test AUROC: {self.test_auroc.compute()} '
+        res_str += f'| Test AUPR: {self.test_aupr.compute()} |'
+        res_str += f'\n| Test Precision: {self.test_precision.compute()} '
+        res_str += f'| Test Recall: {self.test_recall.compute()} '
+        res_str += f'| Test F1: {self.test_f1.compute()} '
+        border = '-'*100
+        print("\n".join(['', border, res_str, border, '']))
+        
+        if self.show_figure:
+            fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+        self.calculate_auroc(self.y_score, self.y_true, self.n_labels, ax1 if self.show_figure else None) 
+        self.plot_hist(self.y_score, self.y_true, self.n_labels, ax2 if self.show_figure else None) 
+        
+        if self.show_figure:
+            plt.tight_layout()
+            plt.show()
+            
+        self.test_acc.reset()
+        self.test_auroc.reset()
+        self.test_aupr.reset()
+        self.test_precision.reset()
+        self.test_recall.reset()
+        self.test_f1.reset()
+        self.y_score = torch.tensor([], device=self.device)
+        self.y_true = torch.tensor([], device=self.device)
+
+    def calculate_auroc(self, y_score, y_true, n_labels, ax=None):
+        y_score = torch.sigmoid(y_score.float()).cpu().numpy()
+        y_true = y_true.cpu().numpy()
+        
+        fpr, tpr, roc_auc = dict(), dict(), dict()
+        
+        # Compute ROC curve and AUC for each label
+        for i in range(n_labels):
+            fpr[i], tpr[i], _ = roc_curve(y_true[:, i], y_score[:, i])
+            roc_auc[i] = auc(fpr[i], tpr[i])
+        
+        if ax is not None:
+            colors = cycle(['orange', 'green', 'red', 'purple', 'blue', 'yellow', 'cyan', 'brown'])
+            
+            # Plot ROC curves for each label
+            for i, color in zip(range(n_labels), colors):
+                ax.plot(
+                    fpr[i], tpr[i], 
+                    color=color, 
+                    lw=1,
+                    label=f'Label {i} (AUC = {roc_auc[i]:0.2f})'
+                )
+            
+            ax.plot([0, 1], [0, 1], 'k--', lw=1, label='Random (AUC = 0.5)')
+            ax.set_xlim([-0.05, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel('False Positive Rate')
+            ax.set_ylabel('True Positive Rate')
+            ax.set_title('ROC Curves for each label')
+            ax.legend(loc="lower right")
+
+    def plot_hist(self, y_score, y_true, n_labels, ax=None):
+        y_score = torch.sigmoid(y_score.float()).cpu().numpy()
+        y_pred = (y_score > 0.5).astype(int)
+        y_true = y_true.cpu().numpy()
+        
+        # Plot histogram if axis is provided
+        if ax is not None:
+
+            pos_counts = np.sum(y_pred, axis=0)
+            
+            ax.bar(np.arange(n_labels), pos_counts, color='skyblue', edgecolor='black')
+            
+            for i, count in enumerate(pos_counts):
+                ax.text(i, count, str(count), ha='center', va='bottom', 
+                       fontsize=10, fontweight='bold')
+            
+            ax.set_xlabel('Label')
+            ax.set_ylabel('Positive predictions count')
+            ax.set_title('Positive predictions per label')
+            ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+    def predict_step(self, batch, batch_idx, dataloader_idx=0):
+        x, y = batch
+        y_hat = self.model(x)
+        return {"y": y.squeeze().float().cpu().detach(), "pred": y_hat.cpu().detach()}
     
 def shannon_entropy(x):
     p_c = nn.Softmax(dim=1)(x)    
@@ -814,7 +975,7 @@ class LitModel_Sure_Clas(LitModel):
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self.model(x.permute(0,2,1).permute(0,2,1))
+        y_hat = self.model(x.permute(0,2,1))
         y = y.long()
 
         loss = self.loss(y_hat[:, 0:5], y[:,0])
@@ -827,7 +988,7 @@ class LitModel_Sure_Clas(LitModel):
         
     def on_validation_epoch_end(self):
         if (self.current_epoch + 1) % self.print_each == 0:
-            print('| {}: {:.5f} |\n'.format("Current_epoch", self.current_epoch))
+            print('\n| {}: {:.5f} |\n'.format("Current_epoch", self.current_epoch))
             self.shared_test_val_epoch_end()
         self.y_score = torch.tensor([], device = self.device)
         self.y_true = torch.tensor([], device = self.device)
@@ -855,40 +1016,48 @@ class LitModel_Sure_Clas(LitModel):
         self.y_score = torch.tensor([], device = self.device)
         self.y_true = torch.tensor([], device = self.device)
 
-    def shared_test_val_epoch_end(self, show_figure = False):
-        border = '-'*100
+    def shared_test_val_epoch_end(self, show_figure=False):
+        border = '-' * 100
+        plt_index = 0
         
         if show_figure:
             fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
             fig.suptitle('ROC Curves Comparison', fontsize=14)
-            plt_index = 0
-            
+        else:
+            fig, ax1, ax2 = None, None, None
+        
         for i in range(len(self.activity_columns)):
-
-            # i*5 : i*5 + 5 will create intervals like [0:5] and [5:10]
-            auroc = self.calculate_auroc(y_score=self.y_score[:, i*5:i*5 + 5], y_true=self.y_true[:,i],
-                                         n_classes=self.n_classes//2, 
-                                         show_figure = show_figure, 
-                                         name = self.activity_columns[i],
-                                         ax=ax1 if plt_index == 0 else ax2 if show_figure else None)
-            precision, recall, accuracy, f1, aupr = self.calculate_aupr(y_score=self.y_score[:, i*5:i*5 + 5], y_true=self.y_true[:,i], n_classes=self.n_classes//2) 
+            auroc = self.calculate_auroc(
+                y_score=self.y_score[:, i*5:i*5 + 5], 
+                y_true=self.y_true[:, i],
+                n_classes=self.n_classes // 2, 
+                show_figure=show_figure, 
+                name=self.activity_columns[i],
+                ax=ax1 if plt_index == 0 else ax2 if show_figure else None
+            )
+            precision, recall, accuracy, f1, aupr = self.calculate_aupr(
+                y_score=self.y_score[:, i*5:i*5 + 5], 
+                y_true=self.y_true[:, i], 
+                n_classes=self.n_classes // 2
+            )
             
             class_str = f"| {self.activity_columns[i]}: |"
-            class_str += '| {}: {:.5f} |'.format("Precision", precision)
-            class_str += ' {}: {:.5f} |'.format("Recall", recall)
-            class_str += ' {}: {:.5f} |'.format("Accuracy", accuracy)
-            class_str += ' {}: {:.5f} |'.format("F1", f1)
-            class_str += ' {}: {:.5f} |'.format("Val_AUCROC", auroc)
-            class_str += ' {}: {:.5f} |'.format("Val_AUPR", aupr)
+            class_str += f"| Precision: {precision:.5f} |"
+            class_str += f" Recall: {recall:.5f} |"
+            class_str += f" Accuracy: {accuracy:.5f} |"
+            class_str += f" F1: {f1:.5f} |"
+            class_str += f" Val_AUCROC: {auroc:.5f} |"
+            class_str += f" Val_AUPR: {aupr:.5f} |"
             
             print("\n".join(['', border, class_str, border, '']))
             
-            if show_figure:
+            if show_figure and plt_index == 1:
+                plt.tight_layout()
+                plt.show()
+                plt.close(fig) 
+                plt_index = 0
+            elif show_figure:
                 plt_index += 1
-                if plt_index == 2: 
-                    plt.tight_layout()
-                    plt.show()
-                    plt_index = 0
 
     def calculate_auroc(self, y_score, y_true, n_classes, name, show_figure = False, ax = None):
         y_score = F.softmax(y_score.float(), dim=1).cpu().numpy()
@@ -903,26 +1072,25 @@ class LitModel_Sure_Clas(LitModel):
             fpr[i], tpr[i], _ = roc_curve(y_true_bin[:, i], y_score[:, i])
             roc_auc[i] = auc(fpr[i], tpr[i])
         
-        if ax is None:
-            fig, ax = plt.subplots(figsize=(6, 5))
-        colors = cycle(['orange', 'green', 'red', 'purple', 'blue'])
+        if show_figure and ax is not None:
+            colors = cycle(['orange', 'green', 'red', 'purple', 'blue'])
         
-        # Plot ROC curves for each class
-        for i, color in zip(range(n_classes), colors):
-            ax.plot(
-                fpr[i], tpr[i], 
-                color=color, 
-                lw=1,
-                label=f'Class {i} (AUC = {roc_auc[i]:0.2f})'
-            )
-        
-        ax.plot([0, 1], [0, 1], 'k--', lw=1, label='Random (AUC = 0.5)')
-        ax.set_xlim([-0.05, 1.0])
-        ax.set_ylim([0.0, 1.05])
-        ax.set_xlabel('False Positive Rate')
-        ax.set_ylabel('True Positive Rate')
-        ax.set_title(f'{name} multi-class ROC Curves')
-        ax.legend(loc="lower right")
+            # Plot ROC curves for each class
+            for i, color in zip(range(n_classes), colors):
+                ax.plot(
+                    fpr[i], tpr[i], 
+                    color=color, 
+                    lw=1,
+                    label=f'Class {i} (AUC = {roc_auc[i]:0.2f})'
+                )
+            
+            ax.plot([0, 1], [0, 1], 'k--', lw=1, label='Random (AUC = 0.5)')
+            ax.set_xlim([-0.05, 1.0])
+            ax.set_ylim([0.0, 1.05])
+            ax.set_xlabel('False Positive Rate')
+            ax.set_ylabel('True Positive Rate')
+            ax.set_title(f'{name} multi-class ROC Curves')
+            ax.legend(loc="lower right")
 
         return roc_auc_score(y_true_bin, y_score, multi_class="ovr", average="macro")
 
@@ -1022,6 +1190,12 @@ class LitModel_Sure_Reg(LitModel):
             self.log(f'test_pearson {self.activity_columns[i]}', test_pearson[i], prog_bar=True)
         self.y_score = torch.tensor([], device = self.device)
         self.y_true = torch.tensor([], device = self.device)
+
+    def predict_step(self, batch, _):
+        x, y = batch
+        y_hat = self.model(x.permute(0,2,1))
+        
+        return {"predicted": y_hat.cpu().detach().float(),"target": y.cpu().detach().float()}
 
 class LitModel_StarrSeq(LitModel):
     
