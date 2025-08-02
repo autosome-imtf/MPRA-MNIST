@@ -1,5 +1,5 @@
 
-# MpraDataset Repository
+# MPRA-MNIST Repository
 
 We present **MPRA-MNIST**: a standardized dataset and toolkit. This resource integrates rigorously preprocessed MPRA data from seminal studies, preserving experimental fidelity while providing:
 
