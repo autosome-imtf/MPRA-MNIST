@@ -81,14 +81,6 @@ class StarrSeqDataset(MpraDataset):
         if task in ["randomenhancer", "genomicpromoter", "capturepromoter", "binary"]:
             is_split_default = True
             
-            if task == "genomicpromoter" and split == "test":
-                warnings.warn(
-                    "WARNING! The test dataset released by the authors of the study contains an error."
-                    "You selected 'split = train', the system automatically changes it to 'val' for this operation.",
-                    stacklevel=1
-                )
-                split = "val"
-                self.split = self.split_parse(split, is_split_default)
             if task == "binary":
                 ds = self.task_binary(self.TASKS[task], self.binary_class, self.split)
             else:
