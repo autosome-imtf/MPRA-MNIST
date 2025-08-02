@@ -4,7 +4,7 @@ from typing import List, T, Union
 import torch
 import os
 
-from mpradataset import MpraDataset
+from mpramnist.mpradataset import MpraDataset
 
 class AgarwalJointDataset(MpraDataset):
 
