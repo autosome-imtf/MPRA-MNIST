@@ -1,11 +1,46 @@
 
-## Installation Guide
+# MpraDataset Repository
 
-    clone https://github.com/autosome-imtf/MpraDataset.git
-    cd MpraDataset
-    pip install setuptools wheel
-    python setup.py sdist bdist_wheel
-    pip install -e .
+We present **MPRA-MNIST**: a standardized dataset and toolkit. This resource integrates rigorously preprocessed MPRA data from seminal studies, preserving experimental fidelity while providing:
+
+ - Consistent Formats: Ready-to-use sequences, activity scores, and metadata (CSV, FASTA, PyTorch).
+
+ - Reproducible Pipelines: Transparent preprocessing code with version-controlled dependencies.
+
+ - ML Compatibility: Structured for classification/regression tasks in frameworks like scikit-learn.
+
+By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm validation—shifting focus from technical debt to biological discovery.
+
+## Software Requirements
+
+- OS: Ubuntu 20.04.6 LTS x86_64 
+- CUDA: 12.6
+- Python: 3.12.7
+- PyTorch: 2.7.1+cu126
+
+## **Installation**  
+1. Clone the repository:  
+   ```bash
+   git clone https://github.com/autosome-imtf/MPRA-MNIST
+   cd MPRA-MNIST
+   ```
+2. Create a Virtual Environment
+   ```bash
+   conda create -n mpramnist python=3.12.7
+   conda activate mpramnist
+   pip install torch
+   ```
+3. Install dependencies:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt 
+   ```
+4. Install the package in editable mode (for development):
+   ```bash
+   pip install setuptools wheel
+   python setup.py sdist bdist_wheel
+   pip install -e .
+   ```
 
 ## We have such datasets:
 
@@ -36,6 +71,7 @@
 | HUMAN | ----------- | ----------- |
 | 1 | [Fine-tuning sequence-to-expression models on personal genome and transcriptome data](https://www.biorxiv.org/content/10.1101/2024.09.23.614632v1) | 10.1101/2024.09.23.614632 |
 | 1 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://pubmed.ncbi.nlm.nih.gov/38781390/) | 10.1126/science.adh0559 |
+| 1 | [Iterative deep learning-design of human enhancers exploits condensed sequence grammar to achieve cell type-specificity](https://pubmed.ncbi.nlm.nih.gov/38915713/) | 10.1101/2024.06.14.599076 |
 | 2 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
 | 2 | [Uncovering the whole genome silencers of human cells via Ss-STARR-seq](https://www.nature.com/articles/s41467-025-55852-8) | 10.1038/s41467-025-55852-8 |
 | BACTERIA | ----------- | ----------- |
