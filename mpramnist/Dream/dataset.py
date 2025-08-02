@@ -54,10 +54,10 @@ class DreamDataset(MpraDataset):
         
         # Parse and validate inputs
         self.split = self.split_parse(split)
-        self.target_column = "label"
 
         # Load and prepare dataset
         self.dataset, self.data_type = self._define_dataset(self.split, data_type)
+        self.target_column = "label" if self.dataset in ["train", "single"] else "delta_measured"
         self.df = self._load_and_prepare_data(self.dataset)
         
         # Prepare data structure based on split type
