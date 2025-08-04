@@ -132,6 +132,7 @@ threadpoolctl==3.6.0
 tinycss2==1.4.0
 torch==2.7.1
 torchmetrics==1.8.0
+torchvision==0.22.1
 tornado==6.5.1
 tqdm==4.67.1
 traitlets==5.14.3
