@@ -319,6 +319,7 @@ class LitModel_Sharpr(LitModel):
             res_str += f'| Val Pearson: '
             for i in range(self.num_outputs):
                 res_str += f'{self.activity_columns[i]} : {val_pearson[i]}, '
+                self.log(f'{self.activity_columns[i]}', val_pearson[i])
             res_str += f'| Train Pearson: {train_pearson.mean():.5f} '
             border = '-'*100
             print("\n".join(['', border, res_str, border, '']))

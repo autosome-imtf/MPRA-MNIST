@@ -15,6 +15,7 @@ class SharprDataset(MpraDataset):
     
     def __init__(self,
                  split: str,
+                 activity_columns: List[str],
                  transform = None,
                  target_transform = None,
                  root = None
@@ -24,6 +25,8 @@ class SharprDataset(MpraDataset):
         ----------
         split : str 
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
+        activity_columns : List[str]
+            List of column names with activity data to be used.
         transform : callable, optional
             Transformation applied to each sequence object.
         target_transform : callable, optional
@@ -34,6 +37,7 @@ class SharprDataset(MpraDataset):
         self._cell_type = None  # Should this be used or removed?
         self.transform = transform
         self.target_transform = target_transform
+        self.activity_columns = activity_columns
         self.split = self.split_parse(split)
         self.prefix = self.FLAG + "_"
         
@@ -45,7 +49,7 @@ class SharprDataset(MpraDataset):
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
         
-        targets = df[self.ACTIVITY_COLUMNS].to_numpy()
+        targets = df[self.activity_columns].to_numpy()
         seq = df.seq.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
         
