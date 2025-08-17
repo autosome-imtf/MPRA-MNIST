@@ -85,20 +85,19 @@ class ScalarDsFeature:
 '''
 
 @dataclass
-class SeqObj:
+class seqobj:
     """Class for keeping track of a seq in df"""
     
     seq: str
     
-    scalars: Dict[str, ScalarFeature]
-    vectors: Dict[str, VectorFeature]
+    scalars: Dict[str, ScalarFeature] = field(default_factory=dict)
+    vectors: Dict[str, VectorFeature] = field(default_factory=dict)
     split: str = ""
-    one_hot_encoded = False
-    add_feature_channel = False
-    is_flank_added = False
+    one_hot_encoded: bool = False
+    add_feature_channel: bool = False
+    is_flank_added: bool = False
     reverse: bool = False
     use_reverse_channel: bool = False
-    rev: float = 0.0
     feature_channels: list[str] = field(default_factory=list) # names of scalar and vector features to be included as a channel
     
     @property 

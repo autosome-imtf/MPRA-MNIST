@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, T, Optional
-from .dataclass import SeqObj
+from .dataclass import seqobj
 
 CODES = {
     "A": 0,
@@ -36,7 +36,7 @@ class Seq2Tensor(nn.Module):
     def __init__(self):
         super().__init__()
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
 
         if isinstance(Seq.seq, torch.FloatTensor):
             return Seq # Sequence is already a tensor, no further processing required.
@@ -55,7 +55,7 @@ class Seq2Tensor(nn.Module):
         
         # Add reverse channel if enabled
         if getattr(Seq, 'use_reverse_channel', False):
-            rev = torch.full( (1, Seq.seqsize), Seq.rev, dtype=torch.float32)
+            rev = torch.full( (1, Seq.seqsize), float(Seq.reverse), dtype=torch.float32)
             to_concat.append(rev)
             
         # Add additional feature channels
@@ -92,14 +92,9 @@ class Compose:
         self.Totensor = totensor_cls()
 
     def __call__(self, Seq):
-        transforms = [t for t in self.transforms if not isinstance(t, Seq2Tensor)]
-        totensor = any(isinstance(t, Seq2Tensor) for t in self.transforms)
-    
-        for transformation in transforms:
-            Seq = transformation(Seq)
-            
-        if totensor:
-            Seq = self.Totensor(Seq)
+
+        for t in self.transforms:
+            Seq = t(Seq)
     
         return Seq
             
@@ -130,7 +125,7 @@ class AddFlanks(nn.Module):
         self.left_side = left_flank.upper()
         self.right_side = right_flank.upper()
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         # Validate that flanks contain only valid DNA characters
         if not set(self.left_side).issubset(CODES):
             raise ValueError(f"Left flank contains invalid DNA characters: {self.left_side}")
@@ -159,7 +154,7 @@ class LeftCrop(nn.Module):
     The length of the cropped sequence will be between `min_crop` and `max_crop` (both inclusive).
     
     For example, given the sequence 'ABCDEFGHKLMNOPQRSTUV' with length 20:
-        LeftCrop(SeqObj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can result:
+        LeftCrop(seqobj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can result:
         -->    FGHKLMNOPQRSTUV (crop length 15)
         -->   EFGHKLMNOPQRSTUV (crop length 16)
         -->  DEFGHKLMNOPQRSTUV (crop length 17)
@@ -194,7 +189,7 @@ class LeftCrop(nn.Module):
         self.min = min_crop
         self.max = max_crop
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         """Modifies the input sequence by cropping from the left side."""
         if len(Seq.seq) < self.min:
             raise ValueError(f"Sequence length ({len(Seq.seq)}) is shorter than min_crop ({self.min}).")
@@ -219,7 +214,7 @@ class RightCrop(nn.Module):
     
     The length of the cropped sequence will be between `min_crop` and `max_crop` (both inclusive).
     For example, given the sequence 'ABCDEFGHKLMNOPQRSTUV' with length 20:
-        RightCrop(SeqObj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can produce:
+        RightCrop(seqobj("ABCDEFGHKLMNOPQRSTUV"), min_crop = 15, max_crop = 18) can produce:
         --> ABCDEFGHKLMNOPQ (crop length 15)
         --> ABCDEFGHKLMNOPQR (crop length 16)
         --> ABCDEFGHKLMNOPQRS (crop length 17)
@@ -254,12 +249,14 @@ class RightCrop(nn.Module):
         self.min = min_crop
         self.max = max_crop
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         """Modifies the input sequence by cropping from the right side."""
         if len(Seq.seq) < self.min:
             raise ValueError(f"Sequence length {len(Seq.seq)} is smaller than the minimum crop size {self.min}.")
         
         crop_coordinate = torch.randint(size=(1,), low = self.min, high = self.max + 1).item()
+
+        crop_coordinate = self.max - crop_coordinate + self.min
         
         # Crop the sequence
         Seq.seq = Seq.seq[ : crop_coordinate]
@@ -284,7 +281,7 @@ class CenterCrop(nn.Module):
         
     Methods
     -------
-    forward(Seq: SeqObj) -> SeqObj:
+    forward(Seq: seqobj) -> seqobj:
         Applies a center crop to the sequence and its vector features, reducing its length to `output_size`.
     """
     def __init__(self, 
@@ -295,7 +292,7 @@ class CenterCrop(nn.Module):
             raise ValueError("Output size must be a positive integer.")
         self.output_size = output_size
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         if Seq.seqsize < self.output_size:
             raise ValueError(
                 f"Sequence size ({Seq.seqsize}) must be greater than or equal to output_size ({self.output_size})."
@@ -343,7 +340,7 @@ class RandomCrop(nn.Module):
             raise ValueError("Output size must be a positive integer.")
         self.output_size = output_size
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         if Seq.seqsize < self.output_size:
             raise ValueError(
                 f"Sequence size ({Seq.seqsize}) must be greater than or equal to output_size ({self.output_size})."
@@ -373,7 +370,7 @@ class Padding(nn.Module):
         
     Methods
     -------
-    forward(Seq: SeqObj) -> SeqObj:
+    forward(Seq: seqobj) -> seqobj:
         Pads the sequence and its vector features according to `output_size`.
     """
     def __init__(self, 
@@ -387,7 +384,7 @@ class Padding(nn.Module):
         
         self.output_size = output_size
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         if isinstance(self.output_size, int) and self.output_size - Seq.seqsize > 0:
             pad_len = self.output_size - Seq.seqsize
             Seq.seq = "N"*(pad_len//2) + Seq.seq
@@ -422,7 +419,7 @@ class ReverseComplement(nn.Module):
         if prob = 0, sequence will not be reversed
     Methods
     -------
-    forward(Seq: SeqObj) -> SeqObj:
+    forward(Seq: seqobj) -> seqobj:
         Modifies the input sequence if the transformation is applied.
 
     Example
@@ -435,12 +432,11 @@ class ReverseComplement(nn.Module):
             raise ValueError("Probability must be between 0 and 1.")
         self.prob = prob
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         
         if torch.rand((1,)).item() < self.prob:
             Seq.reverse = True
             Seq.seq = reverse_complement(Seq.seq)
-            Seq.rev = 1.0
         return Seq
     
     def __repr__(self) -> str:
@@ -465,7 +461,7 @@ class AddFeatureChannels(nn.Module):
 
     Methods
     -------
-    forward(Seq: SeqObj) -> SeqObj:
+    forward(Seq: seqobj) -> seqobj:
         Adds the specified feature channels to the sequence object.
     """
     
@@ -475,7 +471,7 @@ class AddFeatureChannels(nn.Module):
             raise ValueError("All channels must be strings.")
         self.channels = channels
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         Seq.add_feature_channel = True
         
         #user must know scalar and vector features of dataframe
@@ -493,13 +489,13 @@ class AddReverseChannel(nn.Module):
 
     Methods
     -------
-    forward(Seq: SeqObj) -> SeqObj:
+    forward(Seq: seqobj) -> seqobj:
         Marks the sequence as using a reverse channel.
     """
     def __init__(self):
         super().__init__()
         
-    def forward(self, Seq: SeqObj) -> SeqObj:
+    def forward(self, Seq: seqobj) -> seqobj:
         Seq.use_reverse_channel = True
         return Seq
         

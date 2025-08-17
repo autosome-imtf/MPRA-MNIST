@@ -5,7 +5,7 @@ import torch
 import os
 
 from torch.utils.data import  Dataset
-from .dataclass import SeqObj, VectorDsFeature, ScalarDsFeature
+from .dataclass import seqobj, VectorDsFeature, ScalarDsFeature
 from .info import INFO, HOMEPAGE, DEFAULT_ROOT
 
 class MpraDataset(Dataset):
@@ -65,7 +65,7 @@ class MpraDataset(Dataset):
             scals = {name: sc[idx] for name, sc in self.scalars.items()} if hasattr(self, 'scalars') else {}
             vecs = {name: vec[idx] for name, vec in self.vectors.items()} if hasattr(self, 'vectors') else {}
     
-            Seq = SeqObj(seq=sequence, scalars=scals, vectors=vecs, split=self.split)
+            Seq = seqobj(seq=sequence, scalars=scals, vectors=vecs, split=self.split)
     
             if self.transform is not None:
                 Seq = self.transform(Seq)
