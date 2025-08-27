@@ -71,6 +71,7 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | HUMAN | ----------- | ----------- |
 | 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
 | 1 | [Design principles of cell-state-specific enhancers in hematopoiesis](https://pmc.ncbi.nlm.nih.gov/articles/PMC12173716/) | 10.1016/j.cell.2025.04.017 |
+| 2 | [Fine-tuning sequence-to-expression models on personal genome and transcriptome data](https://www.biorxiv.org/content/10.1101/2024.09.23.614632v1) | 10.1101/2024.09.23.614632 |
 | 2 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://pubmed.ncbi.nlm.nih.gov/38781390/) | 10.1126/science.adh0559 |
 | 2 | [Iterative deep learning-design of human enhancers exploits condensed sequence grammar to achieve cell type-specificity](https://pubmed.ncbi.nlm.nih.gov/38915713/) | 10.1101/2024.06.14.599076 |
 | 3 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
