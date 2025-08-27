@@ -69,10 +69,12 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | Priority | Artcile and link | DOI |
 | ----------- | ----------- | ----------- |
 | HUMAN | ----------- | ----------- |
-| 1 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://pubmed.ncbi.nlm.nih.gov/38781390/) | 10.1126/science.adh0559 |
-| 1 | [Iterative deep learning-design of human enhancers exploits condensed sequence grammar to achieve cell type-specificity](https://pubmed.ncbi.nlm.nih.gov/38915713/) | 10.1101/2024.06.14.599076 |
-| 2 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
-| 2 | [Uncovering the whole genome silencers of human cells via Ss-STARR-seq](https://www.nature.com/articles/s41467-025-55852-8) | 10.1038/s41467-025-55852-8 |
+| 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
+| 1 | [Design principles of cell-state-specific enhancers in hematopoiesis](https://pmc.ncbi.nlm.nih.gov/articles/PMC12173716/) | 10.1016/j.cell.2025.04.017 |
+| 2 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://pubmed.ncbi.nlm.nih.gov/38781390/) | 10.1126/science.adh0559 |
+| 2 | [Iterative deep learning-design of human enhancers exploits condensed sequence grammar to achieve cell type-specificity](https://pubmed.ncbi.nlm.nih.gov/38915713/) | 10.1101/2024.06.14.599076 |
+| 3 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
+| 3 | [Uncovering the whole genome silencers of human cells via Ss-STARR-seq](https://www.nature.com/articles/s41467-025-55852-8) | 10.1038/s41467-025-55852-8 |
 | BACTERIA | ----------- | ----------- |
 | 2 | [Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract), this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308) | 10.1101/2024.12.17.629042 |
 | 3 | [Structure and Evolution of Constitutive Bacterial Promoters](https://www.biorxiv.org/content/10.1101/2020.05.19.104232v1) | 10.1101/2020.05.19.104232 |
