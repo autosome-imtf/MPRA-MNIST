@@ -66,10 +66,10 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 
 ## Planned datasets
 
-| Prioritet | Artcile and link | DOI |
+| Priority | Artcile and link | DOI |
 | ----------- | ----------- | ----------- |
 | HUMAN | ----------- | ----------- |
-| 1 | [Fine-tuning sequence-to-expression models on personal genome and transcriptome data](https://www.biorxiv.org/content/10.1101/2024.09.23.614632v1) | 10.1101/2024.09.23.614632 |
+
 | 1 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://pubmed.ncbi.nlm.nih.gov/38781390/) | 10.1126/science.adh0559 |
 | 1 | [Iterative deep learning-design of human enhancers exploits condensed sequence grammar to achieve cell type-specificity](https://pubmed.ncbi.nlm.nih.gov/38915713/) | 10.1101/2024.06.14.599076 |
 | 2 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
