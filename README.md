@@ -77,7 +77,9 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | 3 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
 | 3 | [Uncovering the whole genome silencers of human cells via Ss-STARR-seq](https://www.nature.com/articles/s41467-025-55852-8) | 10.1038/s41467-025-55852-8 |
 | BACTERIA | ----------- | ----------- |
+| 1 | [De-novo promoters emerge more readily from random DNA than from genomic DNA](https://www.biorxiv.org/content/10.1101/2025.08.25.672121v1) | 10.1101/2025.08.25.672121 |
 | 2 | [Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract), this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308) | 10.1101/2024.12.17.629042 |
 | 3 | [Structure and Evolution of Constitutive Bacterial Promoters](https://www.biorxiv.org/content/10.1101/2020.05.19.104232v1) | 10.1101/2020.05.19.104232 |
+| 3 | [The emergence and evolution of gene expression in genome regions replete with regulatory motifs](https://elifesciences.org/articles/98654) | 10.7554/eLife.98654.3 |
 | YEAST | ----------- | ----------- |
 | 3 | [Deep learning of the regulatory grammar of yeast 5′ untranslated regions from 500,000 random sequences](https://genome.cshlp.org/content/27/12/2015) | 10.1101/gr.224964.117 |
