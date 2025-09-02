@@ -192,14 +192,13 @@ class HumanLegNet(nn.Module):
 
 class CNN_cls(nn.Module):
     
-    def __init__(self, seq_len, is_binary = False, block_sizes=[16, 24, 32, 40, 48], kernel_size=3):
+    def __init__(self, seq_len, block_sizes=[16, 24, 32, 40, 48], out_ch = 64, kernel_size=3):
         
         super().__init__()
         self.block_sizes = block_sizes
         self.seq_len = seq_len
-        out_ch = 64
+        self.out_ch = out_ch
         nn_blocks = []
-        self.is_binary = is_binary
       
         for in_bs, out_bs in zip([4] + block_sizes, block_sizes):
             
@@ -215,27 +214,23 @@ class CNN_cls(nn.Module):
         self.conv_net = nn.Sequential(
             *nn_blocks,
             nn.Flatten(),
-            nn.Linear(block_sizes[-1] * final_feature_size, out_ch),
+        )
+        self.after_conv = nn.Sequential(
+            nn.Linear(block_sizes[-1] * final_feature_size, self.out_ch),
             nn.SiLU(),
         )
         
-        self.head = nn.Sequential(nn.Linear(out_ch, out_ch),
+        self.head = nn.Sequential(nn.Linear(self.out_ch, self.out_ch),
                                   nn.SiLU(),
                                   nn.Dropout(0.3),
-                                   nn.BatchNorm1d(out_ch),
-                                   nn.Linear(out_ch, 1))
-        
-        self.conv_binary_net = nn.Sequential(
-                                        *nn_blocks,
-                                        nn.Flatten()
-                                    )
+                                   nn.BatchNorm1d(self.out_ch),
+                                   nn.Linear(self.out_ch, 1))
 
     def forward(self, x):
-        if self.is_binary:
-            out = self.conv_binary_net(x)
-        else:
-            out = self.conv_net(x)
-            out = self.head(out)
+
+        x = self.conv_net(x)
+        x = self.after_conv(x)
+        out = self.head(x).squeeze()
         
         return out
 

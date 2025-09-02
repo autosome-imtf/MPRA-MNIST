@@ -39,7 +39,7 @@ class StarrSeqDataset(MpraDataset):
         split : str | List[int] | int
             Specifies how to split the data (e.g., into training and testing sets).
         binary_class : str, optional
-            Specifies enhancer_from_input/promoter_from_input/enhancer_permutated. allowed only for train split. Defailt None
+            Specifies enhancer_from_input/promoter_from_input/enhancer_permutated. allowed only for train split. Default None. if None defines StarrSeq_binary_train_promoter.fasta and StarrSeq_binary_train_enhancer.fasta
         transform : callable, optional
             Function to apply transformations to the input sequences.
         target_transform : callable, optional
@@ -158,10 +158,10 @@ class StarrSeqDataset(MpraDataset):
                 else:
                     if binary_class.split("_")[0] == "promoter":
                         file_name_prom = f"{self.prefix}{task}{split}_{binary_class}.fasta.gz"
-                        file_name_enh = f"{task}{split}_enhancer.fasta.gz"
+                        file_name_enh = f"{self.prefix}{task}{split}_enhancer.fasta.gz"
                     else: 
                         file_name_prom = f"{self.prefix}{task}{split}_promoter.fasta.gz"
-                        file_name_enh = f"{task}{split}_{binary_class}.fasta.gz"
+                        file_name_enh = f"{self.prefix}{task}{split}_{binary_class}.fasta.gz"
                                                 
                     seqs_prom, labels_prom = self.read_fasta(self._data_path, file_name_prom)
                     seqs_enh, labels_enh = self.read_fasta(self._data_path, file_name_enh)

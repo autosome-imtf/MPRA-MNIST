@@ -1202,10 +1202,7 @@ class LitModel_StarrSeq(LitModel):
     
     def __init__(self, 
                  weight_decay, lr, 
-                 out_bs=32,
-                 dropout=0.3,
-                 is_binary = False,
-                 model = None, loss = nn.CrossEntropyLoss(), print_each = 1
+                 model = None, loss = nn.BCEWithLogitsLoss(), print_each = 1
                 ):
         
         super().__init__(model, loss, print_each, weight_decay, lr)
@@ -1226,46 +1223,20 @@ class LitModel_StarrSeq(LitModel):
         self.test_recall = Recall(task="binary")
         self.test_f1 = F1Score(task="binary")
 
-        self.is_binary = is_binary
-        if self.is_binary or self.model.is_binary:
-        # Initialize last block for binary task
-            final_feature_size = self.model.seq_len
-            
-            self.last_block = nn.Sequential(
-                nn.Linear(model.block_sizes[-1] * final_feature_size * 2, out_bs),
-                nn.BatchNorm1d(out_bs),
-                nn.SiLU(),
-                nn.Linear(out_bs, out_bs),
-                nn.SiLU(),
-                nn.Dropout(dropout),
-                nn.BatchNorm1d(out_bs),
-                nn.Linear(out_bs, 1)
-            )
-
-    def _process_batch(self, batch):
-        seqs, labels = batch
-        enhancer = self(seqs["seq_enh"])
-        promoter = self(seqs["seq"])
-        concat = torch.cat([enhancer, promoter], dim=1)
-        out = self.last_block(concat).squeeze()
-        return out, labels
-
     def training_step(self, batch, batch_nb):
-        if self.is_binary or self.model.is_binary:
-            y_hat, y = self._process_batch(batch)
-        else:
-            X, y = batch
-            y_hat = self.model(X).squeeze()
+        
+        X, y = batch
+        y_hat = self.model(X)
 
         loss = self.loss(y_hat, y)
+        self.log("train_loss", loss, on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
-        if self.is_binary or self.model.is_binary:
-            y_hat, y = self._process_batch(batch)
-        else:
-            X, y = batch
-            y_hat = self.model(X).squeeze()
+        
+        X, y = batch
+        y_hat = self.model(X)
+        
         loss = self.loss(y_hat, y)
 
         self.val_acc(y_hat, y)
@@ -1278,14 +1249,24 @@ class LitModel_StarrSeq(LitModel):
         self.log("val_loss", loss, on_epoch=True, prog_bar=True)
 
     def on_validation_epoch_end(self):
+        val_acc = self.val_acc.compute()
+        val_auroc = self.val_auroc.compute()
+        val_aupr = self.val_aupr.compute()
+        val_prec = self.val_precision.compute()
+        val_rec = self.val_recall.compute()
+        val_f1 = self.val_f1.compute()
+        
+        self.log("val_aupr", val_aupr, on_epoch=True, prog_bar=True)
+        self.log("val_auroc", val_auroc, on_epoch=True, prog_bar=True)
+        
         if (self.current_epoch + 1) % self.print_each == 0:
             res_str = f"| Epoch: {self.current_epoch} "
-            res_str += f"| Val Acc: {self.val_acc.compute()} "
-            res_str += f'| Val AUROC: {self.val_auroc.compute()} '
-            res_str += f'| Val AUPR: {self.val_aupr.compute()} |'
-            res_str += f'\n| Val Precision: {self.val_precision.compute()} '
-            res_str += f'| Val Recall: {self.val_recall.compute()} '
-            res_str += f'| Val F1: {self.val_f1.compute()} '
+            res_str += f"| Val Acc: {val_acc} "
+            res_str += f'| Val AUROC: {val_auroc} '
+            res_str += f'| Val AUPR: {val_aupr} |'
+            res_str += f'\n| Val Precision: {val_prec} '
+            res_str += f'| Val Recall: {val_rec} '
+            res_str += f'| Val F1: {val_f1} '
             border = '-'*100
             print("\n".join(['', border, res_str, border, '']))
         
@@ -1297,11 +1278,9 @@ class LitModel_StarrSeq(LitModel):
         self.val_f1.reset()
 
     def test_step(self, batch, batch_idx):
-        if self.is_binary or self.model.is_binary:
-            y_hat, y = self._process_batch(batch)
-        else:
-            X, y = batch
-            y_hat = self.model(X).squeeze()
+        
+        X, y = batch
+        y_hat = self.model(X)
 
         loss = self.loss(y_hat, y)
 
@@ -1315,10 +1294,15 @@ class LitModel_StarrSeq(LitModel):
         self.log("test_loss", loss, on_epoch=True, prog_bar=True)
 
     def on_test_epoch_end(self):
+        test_aupr = self.test_aupr.compute()
+        test_auroc = self.test_auroc.compute()
+
+        self.log("test_aupr", test_aupr, on_epoch=True, prog_bar=True)
+        self.log("test_auroc", test_auroc, on_epoch=True, prog_bar=True)
         
         res_str = f"| Test Acc: {self.test_acc.compute()} "
-        res_str += f'| Test AUROC: {self.test_auroc.compute()} '
-        res_str += f'| Test AUPR: {self.test_aupr.compute()} |'
+        res_str += f'| Test AUROC: {test_auroc} '
+        res_str += f'| Test AUPR: {test_aupr} |'
         res_str += f'\n| Test Precision: {self.test_precision.compute()} '
         res_str += f'| Test Recall: {self.test_recall.compute()} '
         res_str += f'| Test F1: {self.test_f1.compute()} '
@@ -1333,9 +1317,11 @@ class LitModel_StarrSeq(LitModel):
         self.test_f1.reset()
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
-        if self.is_binary or self.model.is_binary:
-            y_hat, y = self._process_batch(batch)
-        else:
-            x, y = batch
-            y_hat = self.model(x)
-        return {"predicted": y_hat.squeeze().long().cpu().detach().float(), "target" : y.cpu().detach().float()}
+        x, y = batch
+        y_hat = self.model(x)
+        
+        return {
+        "predicted": y_hat.squeeze().cpu().detach(),  
+        "target": y.cpu().detach().float()
+                }
+
