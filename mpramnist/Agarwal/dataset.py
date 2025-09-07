@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-from typing import List, T, Union
+from typing import List, Union, Optional, Dict
 import torch
 import os
-
+import bioframe as bf
 from mpramnist.mpradataset import MpraDataset
 
 class AgarwalDataset(MpraDataset):
@@ -17,8 +17,10 @@ class AgarwalDataset(MpraDataset):
     FLAG = "Agarwal"
     
     def __init__(self,
-                 split: str | List[int] | int,
+                 split: Union[str, List[int], int],
                  cell_type: str,
+                 genomic_regions: Optional[Union[str, List[Dict]]] = None,
+                 exclude_regions: bool = False,
                  averaged_target: bool = False,
                  root = None,
                  transform = None,
@@ -31,6 +33,12 @@ class AgarwalDataset(MpraDataset):
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
         cell_type : str
             Specifies the cell type for filtering the data.
+        genomic_regions : str | List[Dict], optional
+            Genomic regions to include/exclude. Can be:
+            - Path to BED file
+            - List of dictionaries with 'chrom', 'start', 'end' keys
+        exclude_regions : bool
+            If True, exclude the specified regions instead of including them.
         averaged_target : bool
             Use target column with averaged expression or not
         transform : callable, optional
@@ -47,6 +55,8 @@ class AgarwalDataset(MpraDataset):
         self.target_transform = target_transform
         self.split = self.split_parse(split)
         self.prefix = self.FLAG + "_"
+        self.genomic_regions = genomic_regions
+        self.exclude_regions = exclude_regions
         
         try:
             file_name = self.prefix + self._cell_type + '.tsv'
@@ -55,18 +65,66 @@ class AgarwalDataset(MpraDataset):
             df = pd.read_csv(file_path, sep='\t')
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Apply genomic region filtering
+        df = self.filter_by_genomic_regions(df)
             
         target_column = "averaged_expression" if averaged_target else "expression"
-        #df["target"] = df[target_column].astype(np.float32)
-        #self.target = target_column
-            
-        self.ds = df[df.fold.isin(self.split)].reset_index(drop=True)
+
+        if self.genomic_regions is None:
+            self.ds = df[df.fold.isin(self.split)].reset_index(drop=True)
+        else:
+            self.ds = df
+            self.split = "genomic region"
         
         targets = self.ds[target_column].to_numpy()
         seq = self.ds.seq.to_numpy()
         self.ds = {"targets" : targets, "seq" : seq}
+
+    def filter_by_genomic_regions(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Filter dataframe based on genomic regions using bioframe.
         
-    def split_parse(self, split: list[int] | int | str) -> list[int]:
+        """
+        if self.genomic_regions is None:
+            return df
+        
+        # Prepare the genomic regions for bioframe
+        if isinstance(self.genomic_regions, str):
+            # Load from BED file
+            regions_df = bf.read_table(self.genomic_regions, schema='bed')
+            regions_df['chrom'] = regions_df['chrom'].astype(str)
+        else:
+            # Convert list of dicts to DataFrame
+            regions_df = pd.DataFrame(self.genomic_regions)
+        
+        # Prepare our data for bioframe intersection
+        # Rename columns to match bioframe schema
+        data_df = df.copy()
+        data_df = data_df.rename(columns={
+            'chr.hg38': 'chrom',
+            'start.hg38': 'start',
+            'stop.hg38': 'end'
+        })
+        
+        # Convert to integer if possible
+        for col in ['start', 'end']:
+            if col in data_df.columns:
+                data_df[col] = pd.to_numeric(data_df[col], errors='coerce').astype('Int64')
+        
+        # Find intersections
+        intersections = bf.overlap(data_df, regions_df, how='inner', return_index=True)
+        
+        if self.exclude_regions:
+            # Exclude sequences that overlap with specified regions
+            filtered_df = df[~df.index.isin(intersections['index'])]
+        else:
+            # Include only sequences that overlap with specified regions
+            filtered_df = df[df.index.isin(intersections['index'])]
+        
+        return filtered_df
+        
+    def split_parse(self, split: Union[str, List[int], int]) -> list[int]:
         '''
         Parses the input split and returns a list of folds.
         '''

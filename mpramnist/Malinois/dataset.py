@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from typing import List, T, Union, Optional, Callable
+from typing import List, T, Union, Optional, Callable, Dict
 from functools import partial
 import torch
 import os
-
+import bioframe as bf
 from mpramnist.mpradataset import MpraDataset
 
 class MalinoisDataset(MpraDataset):
@@ -18,6 +18,9 @@ class MalinoisDataset(MpraDataset):
     
     def __init__(self,
                  split: str | List[Union[int, str]] | int,
+                 genomic_regions: Optional[Union[str, List[Dict]]] = None,
+                 exclude_regions: bool = False,
+                 genomic_regions_column: str = ['start.hg19', 'stop.hg19'],
                  filtration: str = "original", # 'original', 'own' or 'none'
                  activity_columns: List[str] = ['K562_log2FC', 'HepG2_log2FC', 'SKNSH_log2FC'],
                   stderr_columns: List[str] = ['K562_lfcSE', 'HepG2_lfcSE', 'SKNSH_lfcSE'],
@@ -39,6 +42,12 @@ class MalinoisDataset(MpraDataset):
         ----------
         split : Union[str, List[Union[int, str]], int]
             Specifies the data split to use (e.g., 'train', 'val', 'test', or list of indices).
+        genomic_regions : str | List[Dict], optional
+            Genomic regions to include/exclude. Can be:
+            - Path to BED file
+            - List of dictionaries with 'chrom', 'start', 'end' keys
+        exclude_regions : bool
+            If True, exclude the specified regions instead of including them.
         filtration : str
             Specifies the filtering method. Options are 'original', 'own', or 'none'.
         activity_columns : List[str]
@@ -71,6 +80,7 @@ class MalinoisDataset(MpraDataset):
         # Assign attributes
         self.stderr_columns = stderr_columns
         self.sequence_column = sequence_column
+        self.genomic_regions_column = genomic_regions_column
         self.data_project = data_project
         self.project_column = 'data_project'
         self.chr_column = 'chr'
@@ -83,6 +93,8 @@ class MalinoisDataset(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.prefix = self.FLAG + "_"
+        self.genomic_regions = genomic_regions
+        self.exclude_regions = exclude_regions
         
         # Parse columns and split parameters
         activity_columns = self.activity_columns_parse(activity_columns)
@@ -126,7 +138,7 @@ class MalinoisDataset(MpraDataset):
             raise FileNotFoundError(f"File not found: {file_path}")
 
         # Select columns and drop rows with NaN in critical columns
-        columns = [self.sequence_column, *activity_columns, self.chr_column, self.project_column, *self.stderr_columns]
+        columns = [self.sequence_column, *activity_columns, self.chr_column, self.project_column, *self.stderr_columns, *self.genomic_regions_column]
         df = df[columns].dropna()
         
         # Rename sequence column
@@ -142,7 +154,7 @@ class MalinoisDataset(MpraDataset):
             "own": lambda df: self._filter_data(df, activity_columns, self.stderr_columns, 
                                                 self.data_project, self.duplication_cutoff, 
                                                 self.stderr_threshold, self.std_multiple_cut, self.up_cutoff_move),
-            "none": lambda df: df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
+            "none": lambda df: self._apply_none_filtration(df)
         }
         if self.filtration in filters:
             df = filters[self.filtration](df)
@@ -152,6 +164,20 @@ class MalinoisDataset(MpraDataset):
         targets = df[activity_columns].to_numpy()
         seq = df.seq.to_numpy()
         df = {"targets" : targets, "seq" : seq}
+        
+        return df
+
+    def _apply_none_filtration(self, df):
+        """
+        Apply filtration for the 'none' case with chromosome/genomic region splitting logic.
+        """
+        # Apply genomic region filtering if specified
+        if self.genomic_regions is None:
+            # Split data by chromosome if no genomic regions specified
+            df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
+        else:
+            df = self.filter_by_genomic_regions(df)
+            self.split = "genomic region"
         
         return df
 
@@ -241,9 +267,15 @@ class MalinoisDataset(MpraDataset):
         # Apply combined filtering for non-extreme values
         non_extremes_filter = ((df[activity_columns] < up_cut) & (df[activity_columns] > down_cut)).all(axis=1)
         df = df[non_extremes_filter].reset_index(drop=True)
+        
+        # Apply genomic region filtering
+        df = self.filter_by_genomic_regions(df)
 
         # Split data by chromosome
-        df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
+        if self.genomic_regions is None:
+            df = df[df[self.chr_column].isin(self.split)].reset_index(drop=True)
+        else:
+            self.split = "genomic region"
 
         # Handle duplication if specified
         if duplication_cutoff is not None:
@@ -295,6 +327,49 @@ class MalinoisDataset(MpraDataset):
         df_with_duplicates = pd.concat([df, duplicated_rows], ignore_index=True)
         
         return df_with_duplicates
+
+    def filter_by_genomic_regions(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Filter dataframe based on genomic regions using bioframe.
+        
+        """
+        if self.genomic_regions is None:
+            return df
+        
+        # Prepare the genomic regions for bioframe
+        if isinstance(self.genomic_regions, str):
+            # Load from BED file
+            regions_df = bf.read_table(self.genomic_regions, schema='bed')
+            regions_df['chrom'] = regions_df['chrom'].astype(str)
+        else:
+            # Convert list of dicts to DataFrame
+            regions_df = pd.DataFrame(self.genomic_regions)
+        
+        # Prepare our data for bioframe intersection
+        # Rename columns to match bioframe schema
+        data_df = df.copy()
+        data_df = data_df.rename(columns={
+            'chr': 'chrom',
+            'start.hg19': 'start',
+            'stop.hg19': 'end'
+        })
+        
+        # Convert to integer if possible
+        for col in ['start', 'end']:
+            if col in data_df.columns:
+                data_df[col] = pd.to_numeric(data_df[col], errors='coerce').astype('Int64')
+        
+        # Find intersections
+        intersections = bf.overlap(data_df, regions_df, how='inner', return_index=True)
+        
+        if self.exclude_regions:
+            # Exclude sequences that overlap with specified regions
+            filtered_df = df[~df.index.isin(intersections['index'])]
+        else:
+            # Include only sequences that overlap with specified regions
+            filtered_df = df[df.index.isin(intersections['index'])]
+        
+        return filtered_df
         
     def split_parse(self, split: list[Union[int, str]] | int | str) -> list[str]:
         '''
@@ -336,7 +411,7 @@ class MalinoisDataset(MpraDataset):
             split = result  # Ensure final result is clean and validated
         
         return split
-
+        
     def activity_columns_parse(self, activity_columns: str | List[str], 
                                default_activity_columns = ['K562', 'HepG2', 'SKNSH']) -> List[str]:
         '''
