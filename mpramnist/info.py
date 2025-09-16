@@ -397,9 +397,9 @@ INFO = {
         "target_columns": {"Dev_log2", "Hk_log2"},
         "task": "Regression",
         "split": {
-            "train": "chr2L, chr2LHet, chr2RHet, chr3L, chr3LHet, chr3R, chr3RHet, chr4, chrX, chrXHet, chrYHet",
-            "val": "chr2R first half",
-            "test": "chr2R second half",
+            "train": "2L, 2LHet, 2RHet, 3L, 3LHet, 3R, 3RHet, 4, X, XHet, YHet",
+            "val": "2R first half",
+            "test": "2R second half",
         },
         "DeepStarr_split": {"train": 201139, "val": 40570, "test": 3978},
         "version": "1.0",

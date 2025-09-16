@@ -12,18 +12,18 @@ class DeepStarrDataset(MpraDataset):
 
     CELL_TYPES = ["Developmental", "HouseKeeping"]
     LIST_OF_CHR = [
-        "chr2L",
-        "chr2LHet",
-        "chr2RHet",
-        "chr3L",
-        "chr3LHet",
-        "chr3R",
-        "chr3RHet",
-        "chr4",
-        "chrX",
-        "chrXHet",
-        "chrYHet",
-        "chr2R",
+        "2L",
+        "2LHet",
+        "2RHet",
+        "3L",
+        "3LHet",
+        "3R",
+        "3RHet",
+        "4",
+        "X",
+        "XHet",
+        "YHet",
+        "2R",
     ]
     ACTIVITY_COLUMNS = ["Dev_log2", "Hk_log2"]
 
