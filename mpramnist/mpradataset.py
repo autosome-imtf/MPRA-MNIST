@@ -1,16 +1,16 @@
-import pandas as pd
 import numpy as np
 from typing import List, T, Union, Optional, Callable, Dict
 import torch
 import os
 
-from torch.utils.data import  Dataset
+from torch.utils.data import Dataset
 from .dataclass import seqobj, VectorDsFeature, ScalarDsFeature
 from .info import INFO, HOMEPAGE, DEFAULT_ROOT
 
+
 class MpraDataset(Dataset):
-    
-    """ SEQUENCE DATASET. """
+    """SEQUENCE DATASET."""
+
     """
         Dataset for working with sequences and their associated features.
         This dataset provides functionality to split the data, apply transformations, and 
@@ -28,63 +28,71 @@ class MpraDataset(Dataset):
             Transformation applied to the target data.
         """
     PARENT_FLAG = "MpraDaraset"
-    
-    
-    def __init__(self,
-                 split: str | List[int] | int | List[Union[int, str]],
-                 root,
-                 permute: bool = False,
-                 transform: Optional[Callable] = None,
-                 target_transform: Optional[Callable] = None
-                ):
+
+    def __init__(
+        self,
+        split: str | List[int] | int | List[Union[int, str]],
+        root,
+        permute: bool = False,
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+    ):
         self.split = split
         self.permute = permute
         self.transform = transform
         self.target_transform = target_transform
         self._scalars = {}
         self._vectors = {}
-        
+
         if root is not None:
-            root = os.path.join(root, self.FLAG)
-            self._data_path = os.path.abspath(root)
+            self.root = os.path.join(root, self.FLAG)
+            self._data_path = os.path.abspath(self.root)
             if not os.path.exists(self._data_path):
                 os.makedirs(self._data_path)
         else:
             self._data_path = os.path.join(DEFAULT_ROOT, self.FLAG)
-            
+
         self.info = INFO[self.FLAG]
 
     def __getitem__(self, idx):
         # Find all names start with 'seq' (e.g, 'seq', 'seq1', 'seq2', etc)
-        seq_keys = [key for key in self.ds.keys() if key.startswith('seq')]
-        
+        seq_keys = [key for key in self.ds.keys() if key.startswith("seq")]
+
         seqs_datasets = {}
         for seq_key in seq_keys:
             sequence = self.ds[seq_key][idx]
-            
-            scals = {name: sc[idx] for name, sc in self.scalars.items()} if hasattr(self, 'scalars') else {}
-            vecs = {name: vec[idx] for name, vec in self.vectors.items()} if hasattr(self, 'vectors') else {}
-    
+
+            scals = (
+                {name: sc[idx] for name, sc in self.scalars.items()}
+                if hasattr(self, "scalars")
+                else {}
+            )
+            vecs = (
+                {name: vec[idx] for name, vec in self.vectors.items()}
+                if hasattr(self, "vectors")
+                else {}
+            )
+
             Seq = seqobj(seq=sequence, scalars=scals, vectors=vecs, split=self.split)
-    
+
             if self.transform is not None:
                 Seq = self.transform(Seq)
-    
+
             if Seq.one_hot_encoded and self.permute:  # permute
                 Seq.seq = Seq.seq.permute(1, 0)
-                
+
             # Using original key name (seq, seq1, etc)
             seqs_datasets[seq_key] = Seq.seq
-        
+
         target = torch.tensor(self.ds["targets"][idx].astype(np.float32))
         if self.target_transform is not None:
             target = self.target_transform(target)
-    
+
         if len(seqs_datasets) > 1:
             return seqs_datasets, target  # {seq : seq, seq1 : seq1, ..., targets}
         else:
-            return seqs_datasets["seq"], target # sequences, targets
-        
+            return seqs_datasets["seq"], target  # sequences, targets
+
     @property
     def scalars(self):
         return self._scalars
@@ -96,37 +104,55 @@ class MpraDataset(Dataset):
     def add_numeric_scalar(self, name: str, val: List[T]):
         self._scalars[name] = ScalarDsFeature.numeric(val=val)
 
-    def add_categorial_scalar(self, name: str, val: List[T], levels: Dict[T, int] | None = None):
+    def add_categorial_scalar(
+        self, name: str, val: List[T], levels: Dict[T, int] | None = None
+    ):
         self._scalars[name] = ScalarDsFeature.categorial(val=val, levels=levels)
 
     def add_numeric_vector(self, name: str, val: List[List[T]], pad_value: T):
         self._vectors[name] = VectorDsFeature.numeric(val=val, pad_value=pad_value)
 
-    def add_categorial_vector(self, name: str, val: List[List[T]], pad_value: T, levels: Dict[T, int] | None = None):
-        self._vectors[name] = VectorDsFeature.categorial(val=val, pad_value=pad_value, levels=levels)
-    
+    def add_categorial_vector(
+        self,
+        name: str,
+        val: List[List[T]],
+        pad_value: T,
+        levels: Dict[T, int] | None = None,
+    ):
+        self._vectors[name] = VectorDsFeature.categorial(
+            val=val, pad_value=pad_value, levels=levels
+        )
+
     def __len__(self):
         return len(self.ds["seq"])
 
     def __repr__(self):
         """Adapted from torchvision."""
         _repr_indent = 4
-        head = f"Dataset {self.__class__.__name__} of size {self.__len__()} ({self.PARENT_FLAG})"
+        name_of_split = self.name_for_split_info 
+        head = f"Dataset {self.__class__.__name__} ({self.PARENT_FLAG})"
         body = [f"Number of datapoints: {self.__len__()}"]
-        body.append(f"Used split fold: {self.split}")
+        body.append(f"Root location: {self.root}")
+        body.append(f"Using split: {self.split}")
+        if name_of_split + "split" in self.info:
+            body.append(f"Split: {self.info[name_of_split + "split"]}")
+        body.append(f"Task: {self.info['task']}")
+        body.append(f"Description: {self.info['description']}")
+        if name_of_split + "description" in self.info:
+            body.append(f"{self.info[name_of_split + 'description']}")
         lines = [head] + [" " * _repr_indent + line for line in body]
         return "\n".join(lines)
-        
+
     def download(self, file_path, file_name):
         if not os.path.exists(os.path.join(file_path, file_name)):
             try:
                 from torchvision.datasets.utils import download_url
-    
+
                 download_url(
-                    url = self.info[f"url_{file_name}"],
-                    root = file_path,
-                    filename = file_name,
-                    md5 = self.info[f"MD5_{file_name}"],
+                    url=self.info[f"url_{file_name}"],
+                    root=file_path,
+                    filename=file_name,
+                    md5=self.info[f"MD5_{file_name}"],
                 )
             except:
                 raise RuntimeError(
@@ -142,4 +168,3 @@ class MpraDataset(Dataset):
                         {file_path}
                     """
                 )
-        

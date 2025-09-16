@@ -1,25 +1,30 @@
 from dataclasses import dataclass, field
 from typing import List, T, Dict
 
+
 class FeatureType:
     pass
 
+
 class Numeric(FeatureType):
     def __repr__(self):
-        return '<numeric feature>'
+        return "<numeric feature>"
+
 
 @dataclass
 class Categorial(FeatureType):
-    levels: Dict[T, int] # category levels
+    levels: Dict[T, int]  # category levels
 
     def __repr__(self):
-        return f'<categorial feature(levels=[{", ".join(map(str, self.levels))}])>'
+        return f"<categorial feature(levels=[{', '.join(map(str, self.levels))}])>"
+
 
 @dataclass
 class VectorFeature:
     val: List[T]
     tp: FeatureType
     pad_value: T
+
 
 @dataclass
 class VectorDsFeature:
@@ -32,30 +37,31 @@ class VectorDsFeature:
         return cls(val=val, tp=Numeric(), pad_value=pad_value)
 
     @classmethod
-    def categorial(cls, val: List[List[T]], pad_value: T, levels: Dict[T, int] | None = None):
+    def categorial(
+        cls, val: List[List[T]], pad_value: T, levels: Dict[T, int] | None = None
+    ):
         if levels is None:
-          # infer levels
+            # infer levels
             levels = dict()
             for va in val:
                 for v in va:
-                    if not v in levels:
-                      levels[v] = len(levels)
+                    if v not in levels:
+                        levels[v] = len(levels)
 
-            if not pad_value in levels:
+            if pad_value not in levels:
                 levels[pad_value] = len(levels)
-
 
         return cls(val=val, tp=Categorial(levels), pad_value=pad_value)
 
-
     def __getitem__(self, ind: int):
-        return VectorFeature(val=self.val[ind],
-                             tp=self.tp,
-                             pad_value=self.pad_value)
+        return VectorFeature(val=self.val[ind], tp=self.tp, pad_value=self.pad_value)
+
+
 @dataclass
 class ScalarFeature:
     val: T
     tp: FeatureType
+
 
 @dataclass
 class ScalarDsFeature:
@@ -72,24 +78,26 @@ class ScalarDsFeature:
             # infer levels
             levels = dict()
             for v in val:
-                if not v in levels:
+                if v not in levels:
                     levels[v] = len(levels)
 
         return cls(val=val, tp=Categorial(levels))
 
     def __getitem__(self, ind: int):
-        return ScalarFeature(val=self.val[ind],
-                             tp=self.tp)
-'''
+        return ScalarFeature(val=self.val[ind], tp=self.tp)
+
+
+"""
         SEQUENCE OBJECT
-'''
+"""
+
 
 @dataclass
 class seqobj:
     """Class for keeping track of a seq in df"""
-    
+
     seq: str
-    
+
     scalars: Dict[str, ScalarFeature] = field(default_factory=dict)
     vectors: Dict[str, VectorFeature] = field(default_factory=dict)
     split: str = ""
@@ -98,12 +106,10 @@ class seqobj:
     is_flank_added: bool = False
     reverse: bool = False
     use_reverse_channel: bool = False
-    feature_channels: list[str] = field(default_factory=list) # names of scalar and vector features to be included as a channel
-    
-    @property 
+    feature_channels: list[str] = field(
+        default_factory=list
+    )  # names of scalar and vector features to be included as a channel
+
+    @property
     def seqsize(self):
         return len(self.seq)
-
-
-
-    

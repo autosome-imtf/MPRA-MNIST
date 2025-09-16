@@ -1,9 +1,5 @@
-import numpy as np
-import pandas as pd
-import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from typing import List, T, Optional
+
 
 class Compose:
     """
@@ -14,19 +10,20 @@ class Compose:
     transforms : List[Callable]
         List of transformations to apply sequentially.
     """
+
     def __init__(self, transforms):
         self.transforms = transforms
 
     def __call__(self, target):
-    
         for transformation in self.transforms:
             target = transformation(target)
-    
+
         return target
-            
+
     def __repr__(self):
-        transformations = '\n    '.join(repr(t) for t in self.transforms)
+        transformations = "\n    ".join(repr(t) for t in self.transforms)
         return f"{self.__class__.__name__}(\n    {transformations}\n)"
+
 
 class Normalize(nn.Module):
     """
@@ -42,14 +39,15 @@ class Normalize(nn.Module):
     std : float or torch.Tensor
         The standard deviation used for normalization.
     """
+
     def __init__(self, mean: float, std: float):
         super().__init__()
         self.mean = mean
         self.std = std
-        
+
     def forward(self, target):
         target = (target - self.mean) / self.std
         return target
-        
+
     def __repr__(self):
         return f"{self.__class__.__name__}(mean={self.mean}, std={self.std})"
