@@ -140,7 +140,8 @@ class MpraDataset(Dataset):
         body.append(f"Description: {self.info['description']}")
         if name_of_split + "description" in self.info:
             body.append(f"{self.info[name_of_split + 'description']}")
-        body.append(f"Version: {self.info['version']}")
+        if 'licence'  in self.info:
+            body.append(f"Licence: {self.info['licence']}")
         lines = [head] + [" " * _repr_indent + line for line in body]
         return "\n".join(lines)
 

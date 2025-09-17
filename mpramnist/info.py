@@ -44,7 +44,6 @@ INFO = {
         "Agarwal_HepG2_split": {"train": 98336, "val": 12298, "test": 12298},
         "Agarwal_K562_split": {"train": 167328, "val": 19670, "test": 19670},
         "Agarwal_WTC11_split": {"train": 36946, "val": 4622, "test": 4622},
-        "version": "1.0",
     },
     "AgarwalJoint": {
         "python_class": "AgarwalJoint",
@@ -57,7 +56,6 @@ INFO = {
         "task": "Regression",
         "split": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10},
         "AgarwalJoint_split": {"train": 36946, "val": 4622, "test": 4622},
-        "version": "1.0",
     },
     "Kircher": {
         "python_class": "Kircher",
@@ -100,7 +98,6 @@ INFO = {
             "HBG1": 907,
             "HBB": 623,
         },
-        "version": "1.0",
     },
     "Malinois": {
         "python_class": "Malinois",
@@ -117,7 +114,6 @@ INFO = {
             "test": "7, 13",
         },
         "Malinois_split": {"train": 668946, "val": 58809, "test": 62582},
-        "version": "1.0",
     },
     "StarrSeq": {
         "python_class": "StarrSeq",
@@ -179,7 +175,6 @@ INFO = {
         "StarrSeq_genEnh_split": {"train": 323756, "val": 89062, "test": 99362},
         "StarrSeq_genProm_split": {"train": 36898, "val": 4098, "test": 7285},
         "StarrSeq_ranEnh_split": {"train": 7942528, "val": 1985634, "test": 3309387},
-        "version": "1.0",
     },
     "Sure": {
         "python_class": "Sure",
@@ -220,7 +215,6 @@ INFO = {
         "Sure_SuRE43_GM18983_split": {"train": 554829, "val": 72758, "test": 72774},
         "Sure_SuRE44_HG01241_split": {"train": 446214, "val": 62580, "test": 62639},
         "Sure_SuRE45_HG03464_split": {"train": 385977, "val": 50331, "test": 50422},
-        "version": "1.0",
     },
     "Sharpr": {
         "python_class": "Sharpr",
@@ -250,7 +244,6 @@ INFO = {
         "task": "Multilabel",
         "split": {"train", "val", "test"},
         "Sharpr_split": {"train": 457174, "val": 10130, "test": 10130},
-        "version": "1.0",
     },
     "Fluorescence": {
         "python_class": "Fluorescence",
@@ -267,7 +260,6 @@ INFO = {
         "task": "Regression",
         "split": {"train", "val", "test"},
         "Fluorescence_split": {"train": 12335, "val": 1416, "test": 3353},
-        "version": "1.0",
     },
     "Evfratov": {
         "python_class": "Evfratov",
@@ -291,7 +283,6 @@ INFO = {
         "split": {"train", "val", "test"},
         "Evfratov_23_split": {"train": 9353, "val": 1169, "test": 1170},
         "Evfratov_33_split": {"train": 9511, "val": 1189, "test": 1189},
-        "version": "1.0",
     },
     "DeepPromoter": {
         "python_class": "DeepPromoter",
@@ -304,7 +295,6 @@ INFO = {
         "task": "Regression",
         "split": {"train", "val", "test"},
         "DeepPromoter_split": {"train": 9000, "val": 1000, "test": 1184},
-        "version": "1.0",
     },
     "Dream": {
         "python_class": "Dream",
@@ -345,7 +335,6 @@ INFO = {
                 "tiling": 2361,
             },
         },
-        "version": "1.0",
     },
     "Vaishnav": {
         "python_class": "Vaishnav",
@@ -385,7 +374,6 @@ INFO = {
             "test drift": 2986,
             "test paired": 2986,
         },
-        "version": "1.0",
     },
     "DeepStarr": {
         "python_class": "DeepStarr",
@@ -402,6 +390,5 @@ INFO = {
             "test": "2R second half",
         },
         "DeepStarr_split": {"train": 201139, "val": 40570, "test": 3978},
-        "version": "1.0",
     },
 }
