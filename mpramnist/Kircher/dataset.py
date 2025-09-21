@@ -14,44 +14,38 @@ class KircherDataset(MpraDataset):
     ----------
     FLAG : str
         Identifier for this dataset type
-    PROMOTERS : list[str]
-        List of available promoter elements in the dataset
-    PROMOTERS_CELL_TYPES : dict
-        Mapping of promoters to their corresponding cell types
-    ENHANCERS : list[str]
-        List of available enhancer elements in the dataset  
-    ENHANCERS_CELL_TYPES : dict
-        Mapping of enhancers to their corresponding cell types
-    ALL_ELEMENTS : list[str]
-        Combined list of all promoters and enhancers
+    ELEMENT_TYPE : dict
+        List of promoter/enhancer elements available in the dataset
+    CELL_TYPE : dict
+        Mapping of elements to their corresponding cell types
     """
     
     FLAG = "Kircher"
-    # List of promoter elements available in the dataset
-    PROMOTERS = [
-        "F9", "FOXE1", "GP1BA", "HBB", "HBG1", "HNF4A", "LDLR", "LDLR.2", 
-        "MSMB", "PKLR-24h", "PKLR-48h", "TERT-GAa", "TERT-GBM", "TERT-GSc", "TERT-HEK"
-    ]
+    # List of promoter/enhancer elements available in the dataset
+    ELEMENT_TYPE = {
+        "F9": "promoter", "FOXE1": "promoter", "GP1BA": "promoter", 
+        "HBB": "promoter", "HBG1": "promoter", "HNF4A": "promoter", 
+        "LDLR": "promoter", "LDLR.2": "promoter", "MSMB": "promoter", 
+        "PKLR-24h": "promoter", "PKLR-48h": "promoter", 
+        "TERT-GAa": "promoter", "TERT-GBM": "promoter", 
+        "TERT-GSc": "promoter", "TERT-HEK": "promoter",
+        
+        "BCL11A": "enhancer", "IRF4": "enhancer", "IRF6": "enhancer", 
+        "MYCrs6983267": "enhancer", "MYCrs11986220": "enhancer", 
+        "RET": "enhancer", "SORT1": "enhancer", "SORT1-flip": "enhancer", 
+        "SORT1.2": "enhancer", "TCF7L2": "enhancer", "UC88": "enhancer", 
+        "ZFAND3": "enhancer", "ZRSh-13": "enhancer", "ZRSh-13h2": "enhancer"
+    }
     
-    # Mapping of promoters to their corresponding cell types
-    PROMOTERS_CELL_TYPES = {
+    # Mapping of elements to their corresponding cell types
+    CELL_TYPE = {
         "F9": "HepG2", "FOXE1": "HeLa", "GP1BA": "HEL92.1.7", 
         "HBB": "HEL92.1.7", "HBG1": "HEL92.1.7", "HNF4A": "HEK293T", 
         "LDLR": "HepG2", "LDLR.2": "HepG2", "MSMB": "HEK293T", 
         "PKLR-24h": "K562", "PKLR-48h": "K562", 
         "TERT-GAa": ["HEK293T", "SF7996"], "TERT-GBM": ["HEK293T", "SF7996"], 
-        "TERT-GSc": ["HEK293T", "SF7996"], "TERT-HEK": ["HEK293T", "SF7996"]
-    }
-    
-    # List of enhancer elements available in the dataset
-    ENHANCERS = [
-        "BCL11A", "IRF4", "IRF6", "MYCrs6983267", "MYCrs11986220", "RET", 
-        "SORT1", "SORT1-flip", "SORT1.2", "TCF7L2", "UC88", "ZFAND3", 
-        "ZRSh-13", "ZRSh-13h2"
-    ]
-    
-    # Mapping of enhancers to their corresponding cell types
-    ENHANCERS_CELL_TYPES = {
+        "TERT-GSc": ["HEK293T", "SF7996"], "TERT-HEK": ["HEK293T", "SF7996"],
+
         "BCL11A": "HEL92.1.7", "IRF4": "SK-MEL-28", "IRF6": "HaCaT", 
         "MYCrs6983267": "HEK293T", "MYCrs11986220": "LNCaP", 
         "RET": "Neuro-2a", "SORT1": "HepG2", "SORT1-flip": "HepG2", 
@@ -63,7 +57,7 @@ class KircherDataset(MpraDataset):
         self,
         split: str = "test",
         length: int = 230,  # length of cutted sequence
-        promoter_enhancer: list[str] | str = None,
+        elements: list[str] | str = None,
         cell_types: list[str] | str = None,
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
         exclude_regions: bool = False,
@@ -82,7 +76,7 @@ class KircherDataset(MpraDataset):
         length : int, optional  
             Length of the sequence for the differential expression experiment. 
             Must be positive integer. Default is 230.
-        promoter_enhancer : Union[list[str], str], optional
+        elements : Union[list[str], str], optional
             List of promoter-enhancer elements to include. If None, includes all elements.
             Can be a single string or list of strings.
         cell_types : Union[list[str], str], optional
@@ -109,14 +103,11 @@ class KircherDataset(MpraDataset):
         self.genomic_regions = genomic_regions
         self.exclude_regions = exclude_regions
         self.prefix = self.FLAG + "_"  # Prefix for file names
-
-        # Combine all available elements for validation
-        self.ALL_ELEMENTS = self.PROMOTERS + self.ENHANCERS
         
         # Validate promoter-enhancer input
-        if (isinstance(promoter_enhancer, str) and promoter_enhancer not in self.ALL_ELEMENTS) or (
-            isinstance(promoter_enhancer, list)
-            and not all(p in self.ALL_ELEMENTS for p in promoter_enhancer)
+        if (isinstance(elements, str) and elements not in self.ELEMENT_TYPE) or (
+            isinstance(elements, list)
+            and not all(p in self.ELEMENT_TYPE for p in elements)
         ):
             raise ValueError("Invalid promoter-enhancer list")
 
@@ -164,15 +155,15 @@ class KircherDataset(MpraDataset):
                 ]
     
             # Filter by promoters and enhancers if specified
-            if promoter_enhancer is not None:
+            if elements is not None:
                 # Convert single element to list for consistency
-                if isinstance(promoter_enhancer, str):
-                    promoter_enhancer = [promoter_enhancer]
+                if isinstance(elements, str):
+                    elements = [elements]
                 
-                self.ds = self.ds[self.ds.Element.isin(promoter_enhancer)]
+                self.ds = self.ds[self.ds.Element.isin(elements)]
             else:
                 # Include all promoters and enhancers if none specified
-                self.ds = self.ds[self.ds.Element.isin(self.ALL_ELEMENTS)]
+                self.ds = self.ds[self.ds.Element.isin(self.ELEMENT_TYPE.keys())]
         else:
             
             # If self.genomic_regions is not None filter by genomic regions 
