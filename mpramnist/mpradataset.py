@@ -50,6 +50,7 @@ class MpraDataset(Dataset):
             if not os.path.exists(self._data_path):
                 os.makedirs(self._data_path)
         else:
+            self.root = DEFAULT_ROOT
             self._data_path = os.path.join(DEFAULT_ROOT, self.FLAG)
 
         self.info = INFO[self.FLAG]
