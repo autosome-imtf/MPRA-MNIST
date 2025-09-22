@@ -68,8 +68,7 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | Priority | Artcile and link | DOI |
 | ----------- | ----------- | ----------- |
 | HUMAN | ----------- | ----------- |
-| 1 | [The regulatory grammar of human promoters uncovered by
-6 MPRA-trained deep learning]([https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2](https://www.biorxiv.org/content/10.1101/2024.07.09.602649v2)) | 10.1101/2024.07.09.602649 |
+| 1 | [The regulatory grammar of human promoters uncovered by MPRA-trained deep learning]([https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2](https://www.biorxiv.org/content/10.1101/2024.07.09.602649v2)) | 10.1101/2024.07.09.602649 |
 | 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
 | 1 | [Design principles of cell-state-specific enhancers in hematopoiesis](https://pmc.ncbi.nlm.nih.gov/articles/PMC12173716/) | 10.1016/j.cell.2025.04.017 |
 | 2 | [Fine-tuning sequence-to-expression models on personal genome and transcriptome data](https://www.biorxiv.org/content/10.1101/2024.09.23.614632v1) | 10.1101/2024.09.23.614632 |
