@@ -7,6 +7,54 @@ from mpramnist.mpradataset import MpraDataset
 
 
 class MalinoisDataset(MpraDataset):
+    """
+    Dataset class for Malinois MPRA (Massively Parallel Reporter Assay) data.
+    
+    This class handles loading, filtering, and processing of genomic sequence data
+    from the Malinois et al. study, with support for multiple cell types and
+    advanced filtering options.
+
+    The dataset uses human genome assembly hg19 with 0-based coordinate indexing.
+    All genomic positions (start, end) follow 0-based indexing convention.
+
+    This implementation is adapted from the original work:
+    https://github.com/sjgosai/boda2
+
+    Inherits from:
+        MpraDataset: Base class for MPRA datasets
+
+    Constants:
+        LEFT_FLANK (str): Left flanking sequence from boda dataset
+        RIGHT_FLANK (str): Right flanking sequence from boda dataset
+        CELL_TYPES (list): Available cell types: ['K562', 'HepG2', 'SKNSH']
+        FLAG (str): Dataset identifier flag: 'Malinois'
+
+    Examples:
+        >>> # Load training data with original filtration
+        >>> dataset = MalinoisDataset(split='train', filtration='original')
+        >>> 
+        >>> # Load data for specific chromosomes with custom filtration
+        >>> dataset = MalinoisDataset(
+        ...     split=['1', '2', '3'],
+        ...     filtration='own',
+        ...     stderr_threshold=0.8
+        ... )
+        >>> 
+        >>> # Load data filtered by genomic regions
+        >>> dataset = MalinoisDataset(
+        ...     split='test',
+        ...     genomic_regions='path/to/regions.bed',
+        ...     activity_columns=['K562_log2FC', 'HepG2_log2FC']
+        ... )
+        >>> 
+        >>> # Load data with duplication and reverse complement
+        >>> dataset = MalinoisDataset(
+        ...     split='val',
+        ...     duplication_cutoff=2.0,
+        ...     use_original_reverse_complement=True
+        ... )
+    """
+
     # from boda dataset
     LEFT_FLANK = "ACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG"
     RIGHT_FLANK = "CACTGCGGCTCCTGCGATCTAACTGGCCGGTACCTGAGCTCGCTAGCCTCGAGGATATCAAGATCTGGCCTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCT"
@@ -20,7 +68,7 @@ class MalinoisDataset(MpraDataset):
         split: str | List[Union[int, str]] | int,
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
         exclude_regions: bool = False,
-        genomic_regions_column: str = ["start.hg19", "stop.hg19"],
+        genomic_regions_column: str = ["start", "end", "strand"],
         filtration: str = "original",  # 'original', 'own' or 'none'
         activity_columns: List[str] = ["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"],
         stderr_columns: List[str] = ["K562_lfcSE", "HepG2_lfcSE", "SKNSH_lfcSE"],
@@ -40,36 +88,64 @@ class MalinoisDataset(MpraDataset):
 
         Parameters
         ----------
-        split : Union[str, List[Union[int, str]], int]
-            Specifies the data split to use (e.g., 'train', 'val', 'test', or list of indices).
+        split : str | List[Union[int, str]] | int
+            Specifies the data split to use. Can be:
+            - String: 'train', 'val', 'test' (uses predefined chromosome sets)
+            - List[str]: List of specific chromosomes (e.g., ['1', '2', 'X'])
+            - List[int]: List of chromosome numbers (1-22)
+            - int: Single chromosome number (1-22)
         genomic_regions : str | List[Dict], optional
             Genomic regions to include/exclude. Can be:
-            - Path to BED file
-            - List of dictionaries with 'chrom', 'start', 'end' keys
-        exclude_regions : bool
+            - str: Path to BED file containing genomic regions (hg19, 0-based)
+            - List[Dict]: List of dictionaries with 'chrom', 'start', 'end' keys (hg19, 0-based)
+        exclude_regions : bool, default=False
             If True, exclude the specified regions instead of including them.
-        filtration : str
-            Specifies the filtering method. Options are 'original', 'own', or 'none'.
-        activity_columns : List[str]
+        genomic_regions_column : List[str], default=["start", "end", "strand"]
+            Column names containing genomic position information.
+        filtration : str, default="original"
+            Specifies the filtering method. Options are:
+            - 'original': Uses the original study's filtering approach with padding
+            - 'own': Applies custom filtering with configurable parameters
+            - 'none': No filtering applied
+        activity_columns : List[str], default=["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"]
             List of column names with activity data to be used for filtering and duplication.
-        stderr_columns : List[str]
+        stderr_columns : List[str], default=["K562_lfcSE", "HepG2_lfcSE", "SKNSH_lfcSE"]
             List of column names with standard error values used for quality filtering.
-        data_project : List[str]
+        data_project : List[str], default=["UKBB", "GTEX", "CRE"]
             Specifies the data projects to include in filtering.
-        duplication_cutoff : Optional[float]
+        sequence_column : str, default="sequence"
+            Name of the column containing DNA sequences.
+        duplication_cutoff : Optional[float], optional
             If specified, sequences with a maximum activity value above this threshold will be duplicated.
-        stderr_threshold : float
+        stderr_threshold : float, default=1.0
             Maximum allowed standard error threshold for filtering rows.
-        std_multiple_cut : float
+        std_multiple_cut : float, default=6.0
             The multiplier applied to standard deviations to calculate the upper cut-off threshold.
-        up_cutoff_move : float
+        up_cutoff_move : float, default=3.0
             Shift value for adjusting the upper cut-off threshold.
-        transform : Optional[Callable]
+        transform : Optional[Callable], optional
             Transformation function applied to each sequence object.
-        target_transform : Optional[Callable]
+        target_transform : Optional[Callable], optional
             Transformation function applied to the target data.
-        use_original_reverse_complement : bool
-            Determines whether to generate the reverse complement of sequences using the same approach as the original study
+        use_original_reverse_complement : bool, default=False
+            Determines whether to generate the reverse complement of sequences using 
+            the same approach as the original study.
+        root : optional
+            Root directory for data storage.
+
+        Raises
+        ------
+        ValueError
+            - If filtration is not one of {'original', 'own', 'none'}
+            - If split contains invalid chromosome values
+            - If activity_columns contain invalid cell types
+
+        Notes
+        -----
+        - All genomic coordinates use hg19 assembly with 0-based indexing
+        - Chromosome splits: train (1-6,8-12,14-18,20,22,Y), val (19,21,X), test (7,13)
+        - The code is adapted from the original work: https://github.com/sjgosai/boda2
+        - When using 'original' filtration, sequences are padded to 600bp as in the original study
         """
         # Validate filtration parameter
         if filtration not in {"original", "own", "none"}:
@@ -83,7 +159,7 @@ class MalinoisDataset(MpraDataset):
         self.genomic_regions_column = genomic_regions_column
         self.data_project = data_project
         self.project_column = "data_project"
-        self.chr_column = "chr"
+        self.chr_column = "chromosome"
         self.duplication_cutoff = duplication_cutoff
         self.stderr_threshold = stderr_threshold
         self.std_multiple_cut = std_multiple_cut
@@ -113,22 +189,27 @@ class MalinoisDataset(MpraDataset):
         renaming columns, filtering data based on project and filtration type, splitting by chromosome,
         and handling duplication.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         activity_columns : list of str
             List of columns containing activity data in the dataset.
 
-        Returns:
-        --------
+        Returns
+        -------
         pd.DataFrame
             Filtered and processed DataFrame.
 
-        Raises:
-        -------
+        Raises
+        ------
         FileNotFoundError
             If the specified data file is not found.
         ValueError
             If `filtration` is not one of ['original', 'own', 'none'].
+
+        Notes
+        -----
+        - Uses Table_S2.tsv from the original Malinois dataset
+        - All genomic coordinates are in hg19 with 0-based indexing
         """
 
         try:
@@ -371,6 +452,28 @@ class MalinoisDataset(MpraDataset):
         """
         Filter dataframe based on genomic regions using bioframe.
 
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input dataframe containing genomic data with columns:
+            - 'chromosome': chromosome name (hg19)
+            - 'start': start position (0-based, hg19)
+            - 'end': end position (0-based, hg19)
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe containing only sequences that overlap (or don't overlap)
+            with the specified genomic regions
+
+        Notes
+        -----
+        - Uses bioframe library for genomic interval operations
+        - Converts chromosome names to strings for compatibility
+        - Handles both BED files and list of region dictionaries
+        - All genomic coordinates use hg19 assembly with 0-based indexing
+        - Input regions should be provided in hg19 coordinates with 0-based indexing
+        - BED files typically use 0-based coordinates, which matches this implementation
         """
         if self.genomic_regions is None:
             return df
@@ -388,7 +491,7 @@ class MalinoisDataset(MpraDataset):
         # Rename columns to match bioframe schema
         data_df = df.copy()
         data_df = data_df.rename(
-            columns={"chr": "chrom", "start.hg19": "start", "stop.hg19": "end"}
+            columns={"chromosome": "chrom", "start": "start", "end": "end"}
         )
 
         # Convert to integer if possible
