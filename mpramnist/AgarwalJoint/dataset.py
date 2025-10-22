@@ -6,6 +6,54 @@ from mpramnist.mpradataset import MpraDataset
 
 
 class AgarwalJointDataset(MpraDataset):
+    """
+    Dataset class for joint Agarwal MPRA (Massively Parallel Reporter Assay) data across multiple cell types.
+    
+    This class handles loading, filtering, and processing of genomic sequence data
+    from the Agarwal et al. study, with support for multiple cell types simultaneously
+    and genomic region-based filtering.
+
+    The dataset uses human genome assembly hg38 with 0-based coordinate indexing.
+    All genomic positions (start, end) follow 0-based indexing convention.
+
+    Inherits from:
+        MpraDataset: Base class for MPRA datasets
+
+    Constants:
+        CONSTANT_LEFT_FLANK (str): Constant left flanking sequence required for each sequence
+        CONSTANT_RIGHT_FLANK (str): Constant right flanking sequence required for each sequence
+        LEFT_FLANK (str): Left flanking sequence from human_legnet
+        RIGHT_FLANK (str): Right flanking sequence from human_legnet
+        CELL_TYPES (list): Available cell types: ['HepG2', 'K562', 'WTC11']
+        FLAG (str): Dataset identifier flag: 'AgarwalJoint'
+
+    Examples:
+        >>> # Load training data for HepG2 cell type only
+        >>> dataset = AgarwalJointDataset(split='train', cell_type='HepG2')
+        >>> 
+        >>> # Load data for multiple cell types
+        >>> dataset = AgarwalJointDataset(
+        ...     split='train',
+        ...     cell_type=['HepG2', 'K562']
+        ... )
+        >>> 
+        >>> # Load data filtered by genomic regions from BED file
+        >>> dataset = AgarwalJointDataset(
+        ...     split='train',
+        ...     cell_type=['HepG2', 'K562', 'WTC11'],
+        ...     genomic_regions='path/to/regions.bed'
+        ... )
+        >>> 
+        >>> # Load data excluding specific genomic regions
+        >>> regions = [{'chrom': 'chr1', 'start': 1000, 'end': 2000}]
+        >>> dataset = AgarwalJointDataset(
+        ...     split=[1, 2, 3],
+        ...     cell_type='WTC11',
+        ...     genomic_regions=regions,
+        ...     exclude_regions=True
+        ... )
+    """
+
     CONSTANT_LEFT_FLANK = "AGGACCGGATCAACT"  # required for each sequence
     CONSTANT_RIGHT_FLANK = "CATTGCGTGAACCGA"  # required for each sequence
     LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG"  # from human_legnet
@@ -27,22 +75,50 @@ class AgarwalJointDataset(MpraDataset):
         target_transform=None,
     ):
         """
-        Attributes
+        Initialize AgarwalJointDataset instance.
+
+        Parameters
         ----------
         split : str | List[int] | int
-            Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        cell_type : str
-            Specifies the cell type for filtering the data.
-        genomic_regions : str | List[Dict], optional
-            Genomic regions to include/exclude. Can be:
-            - Path to BED file
-            - List of dictionaries with 'chrom', 'start', 'end' keys
-        exclude_regions : bool
-            If True, exclude the specified regions instead of including them.
+            Defines which data split to use. Can be:
+            - String: 'train', 'val', 'test' (uses predefined fold sets)
+            - List[int]: List of specific fold numbers (1-10)
+            - int: Single fold number (1-10)
+        cell_type : str | List[str]
+            Cell type(s) for filtering the data. Can be:
+            - str: Single cell type ('HepG2', 'K562', or 'WTC11')
+            - List[str]: Multiple cell types
+        genomic_regions : Optional[Union[str, List[Dict]]], optional
+            Genomic regions to include or exclude. Can be:
+            - str: Path to BED file containing genomic regions (hg38, 0-based)
+            - List[Dict]: List of dictionaries with 'chrom', 'start', 'end' keys (hg38, 0-based)
+            - None: No genomic region filtering
+        exclude_regions : bool, default=False
+            If True, exclude the specified genomic regions instead of including them
+        root : optional
+            Root directory for data storage
         transform : callable, optional
-            Transformation applied to each sequence object.
+            Transformation function applied to each sequence
         target_transform : callable, optional
-            Transformation applied to the target data.
+            Transformation function applied to target values
+
+        Raises
+        ------
+        ValueError
+            - If cell_type is not in CELL_TYPES
+            - If split string is not 'train', 'val', or 'test'
+            - If fold numbers are not in range 1-10
+        FileNotFoundError
+            If the required joint data file is not found
+
+        Notes
+        -----
+        - The dataset uses 10-fold cross-validation by default
+        - Training folds: 1-8, Validation fold: 9, Test fold: 10
+        - When genomic_regions is specified, the split parameter is ignored for filtering
+          but the split information is stored as 'genomic region'
+        - All genomic coordinates use hg38 assembly with 0-based indexing
+        - For multiple cell types, the target will be a multi-column array
         """
         super().__init__(split, root)
 
@@ -97,6 +173,28 @@ class AgarwalJointDataset(MpraDataset):
         """
         Filter dataframe based on genomic regions using bioframe.
 
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input dataframe containing genomic data with columns:
+            - 'chromosome': chromosome name (hg38)
+            - 'start': start position (0-based, hg38)
+            - 'end': end position (0-based, hg38)
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe containing only sequences that overlap (or don't overlap)
+            with the specified genomic regions
+
+        Notes
+        -----
+        - Uses bioframe library for genomic interval operations
+        - Converts chromosome names to strings for compatibility
+        - Handles both BED files and list of region dictionaries
+        - All genomic coordinates use hg38 assembly with 0-based indexing
+        - Input regions should be provided in hg38 coordinates with 0-based indexing
+        - BED files typically use 0-based coordinates, which matches this implementation
         """
         if self.genomic_regions is None:
             return df
@@ -114,7 +212,7 @@ class AgarwalJointDataset(MpraDataset):
         # Rename columns to match bioframe schema
         data_df = df.copy()
         data_df = data_df.rename(
-            columns={"chr.hg38": "chrom", "start.hg38": "start", "stop.hg38": "end"}
+            columns={"chromosome": "chrom", "start": "start", "end": "end"}
         )
 
         # Convert to integer if possible
@@ -138,7 +236,31 @@ class AgarwalJointDataset(MpraDataset):
 
     def split_parse(self, split: list[int] | int | str) -> list[int]:
         """
-        Parses the input split and returns a list of folds.
+        Parse split parameter and return list of fold numbers.
+
+        Parameters
+        ----------
+        split : list[int] | int | str
+            Split specification to parse
+
+        Returns
+        -------
+        list[int]
+            List of fold numbers (1-10)
+
+        Raises
+        ------
+        ValueError
+            If split string is invalid or fold numbers are out of range
+
+        Examples
+        --------
+        >>> split_parse('train')
+        [1, 2, 3, 4, 5, 6, 7, 8]
+        >>> split_parse([1, 2, 3])
+        [1, 2, 3]
+        >>> split_parse(5)
+        [5]
         """
 
         split_default = {
