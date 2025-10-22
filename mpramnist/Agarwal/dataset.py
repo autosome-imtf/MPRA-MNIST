@@ -40,7 +40,7 @@ class AgarwalDataset(MpraDataset):
         ... )
         >>> 
         >>> # Load data excluding specific genomic regions
-        >>> regions = [{'chrom': 'chr1', 'start': 1000, 'end': 2000}]
+        >>> regions = [{'chrom': '1', 'start': 1000, 'end': 2000}]
         >>> dataset = AgarwalDataset(
         ...     split=[1, 2, 3],
         ...     cell_type='WTC11',
