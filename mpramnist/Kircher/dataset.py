@@ -43,14 +43,14 @@ class KircherDataset(MpraDataset):
         "HBB": "HEL92.1.7", "HBG1": "HEL92.1.7", "HNF4A": "HEK293T", 
         "LDLR": "HepG2", "LDLR.2": "HepG2", "MSMB": "HEK293T", 
         "PKLR-24h": "K562", "PKLR-48h": "K562", 
-        "TERT-GAa": ["HEK293T", "SF7996"], "TERT-GBM": ["HEK293T", "SF7996"], 
-        "TERT-GSc": ["HEK293T", "SF7996"], "TERT-HEK": ["HEK293T", "SF7996"],
+        "TERT-GAa": "SF7996", "TERT-GBM": "SF7996", 
+        "TERT-GSc": "SF7996", "TERT-HEK": "HEK293T",
 
         "BCL11A": "HEL92.1.7", "IRF4": "SK-MEL-28", "IRF6": "HaCaT", 
         "MYCrs6983267": "HEK293T", "MYCrs11986220": "LNCaP", 
         "RET": "Neuro-2a", "SORT1": "HepG2", "SORT1-flip": "HepG2", 
         "SORT1.2": "HepG2", "TCF7L2": "MIN6", "UC88": "Neuro-2a", 
-        "ZFAND3": "MIN6", "ZRSh-13": "NIH/3T3", "ZRSh-13h2": "NIH/3T3"
+        "ZFAND3": "MIN6", "ZRSh-13": "NIH-3T3", "ZRSh-13h2": "NIH-3T3"
     }
 
     def __init__(
@@ -58,7 +58,7 @@ class KircherDataset(MpraDataset):
         split: str = "test",
         length: int = 230,  # length of cutted sequence
         elements: list[str] | str = None,
-        cell_types: list[str] | str = None,
+        cell_type: list[str] | str = None,
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
         exclude_regions: bool = False,
         transform=None,
@@ -79,7 +79,7 @@ class KircherDataset(MpraDataset):
         elements : Union[list[str], str], optional
             List of promoter-enhancer elements to include. If None, includes all elements.
             Can be a single string or list of strings.
-        cell_types : Union[list[str], str], optional
+        cell_type : Union[list[str], str], optional
             List of cell types to filter by. If None, includes all elements.
             Can be a single string or list of strings.
         genomic_regions : str | List[Dict], optional
@@ -135,24 +135,15 @@ class KircherDataset(MpraDataset):
 
         if self.genomic_regions is None:
             # Filter by cell type or promoter-enhancer
-            # Preprocess cell type column to handle multiple cell types in one cell
-            # Convert to list of strings for easier filtering
-            self.ds['Cell_type_processed'] = self.ds['Cell_Type'].apply(
-                lambda x: [ct.strip() for ct in str(x).split(',')] if pd.notna(x) else []
-            )
     
             # Filter by cell types if specified
-            if cell_types is not None:
+            if cell_type is not None:
                 # Convert single cell type to list for consistency
-                if isinstance(cell_types, str):
-                    cell_types = [cell_types]
+                if isinstance(cell_type, str):
+                    cell_type = [cell_type]
                 
                 # Filter rows where any of the processed cell types matches the requested cell types
-                self.ds = self.ds[
-                    self.ds['Cell_type_processed'].apply(
-                        lambda cell_list: any(cell in cell_types for cell in cell_list)
-                    )
-                ]
+                self.ds = self.ds[self.ds['Cell_Type'].isin(cell_type)]
     
             # Filter by promoters and enhancers if specified
             if elements is not None:
@@ -168,9 +159,6 @@ class KircherDataset(MpraDataset):
             
             # If self.genomic_regions is not None filter by genomic regions 
             self.ds = self.filter_by_genomic_regions(self.ds)
-            
-        # Clean up and reset index after filtering
-        self.ds = self.ds.dropna().reset_index(drop=True)
         
         # Set up FASTA reference file for sequence extraction
         fasta_file = self._setup_fasta_file()
@@ -207,6 +195,9 @@ class KircherDataset(MpraDataset):
             axis=1,
         )
 
+        # Clean up and reset index after filtering
+        self.ds = self.ds.dropna().reset_index(drop=True)
+        
         # Prepare final dataset structure
         targets = self.ds[target_column].to_numpy()
         seq_alt = self.ds.seq_alt.to_numpy()
