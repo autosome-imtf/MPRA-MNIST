@@ -44,7 +44,7 @@ class MalinoisDataset(MpraDataset):
         >>> dataset = MalinoisDataset(
         ...     split='test',
         ...     genomic_regions='path/to/regions.bed',
-        ...     activity_columns=['K562_log2FC', 'HepG2_log2FC']
+        ...     cell_type=['K562_log2FC', 'HepG2_log2FC']
         ... )
         >>> 
         >>> # Load data with duplication and reverse complement
@@ -70,7 +70,7 @@ class MalinoisDataset(MpraDataset):
         exclude_regions: bool = False,
         genomic_regions_column: str = ["start", "end", "strand"],
         filtration: str = "original",  # 'original', 'own' or 'none'
-        activity_columns: List[str] = ["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"],
+        cell_type: List[str] = ["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"],
         stderr_columns: List[str] = ["K562_lfcSE", "HepG2_lfcSE", "SKNSH_lfcSE"],
         data_project: List[str] = ["UKBB", "GTEX", "CRE"],
         sequence_column="sequence",
@@ -107,7 +107,7 @@ class MalinoisDataset(MpraDataset):
             - 'original': Uses the original study's filtering approach with padding
             - 'own': Applies custom filtering with configurable parameters
             - 'none': No filtering applied
-        activity_columns : List[str], default=["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"]
+        cell_type : List[str], default=["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"]
             List of column names with activity data to be used for filtering and duplication.
         stderr_columns : List[str], default=["K562_lfcSE", "HepG2_lfcSE", "SKNSH_lfcSE"]
             List of column names with standard error values used for quality filtering.
@@ -138,7 +138,7 @@ class MalinoisDataset(MpraDataset):
         ValueError
             - If filtration is not one of {'original', 'own', 'none'}
             - If split contains invalid chromosome values
-            - If activity_columns contain invalid cell types
+            - If cell_type contain invalid cell types
 
         Notes
         -----
@@ -173,13 +173,13 @@ class MalinoisDataset(MpraDataset):
         self.exclude_regions = exclude_regions
 
         # Parse columns and split parameters
-        activity_columns = self.activity_columns_parse(activity_columns)
+        cell_type = self.activity_columns_parse(cell_type)
         self.split = self.split_parse(split)
 
         # Load and process the dataset
-        self.ds = self._load_and_filter_data(activity_columns)
-        self._cell_type = activity_columns
-        self.target = activity_columns  # initialization for MpraDataset.__getitem__()
+        self.ds = self._load_and_filter_data(cell_type)
+        self._cell_type = cell_type
+        self.target = cell_type  # initialization for MpraDataset.__getitem__()
 
         self.name_for_split_info = self.prefix
 
