@@ -10,35 +10,44 @@ from mpramnist.mpradataset import MpraDataset
 
 class KircherDataset(MpraDataset):
     """
-    Attributes
-    ----------
-    FLAG : str
-        Identifier for this dataset type
-    ELEMENT_TYPE : dict
-        List of promoter/enhancer elements available in the dataset
-    CELL_TYPE : dict
-        Mapping of elements to their corresponding cell types
+    Dataset class for Kircher MPRA (Massively Parallel Reporter Assay) data.
+    
+    This class handles loading, filtering, and processing of genomic sequence data
+    from the Kircher et al. study, which contains both promoter and enhancer elements
+    across multiple cell types with SNP/variant information.
+
+    The dataset uses human genome assembly hg38 with 0-based coordinate indexing.
+    All genomic positions (start, end) follow 0-based indexing convention.
+
+    Inherits from:
+        MpraDataset: Base class for MPRA datasets
+
+    Constants:
+        FLAG (str): Dataset identifier flag: 'Kircher'
+        CELL_TYPE (dict): Mapping of elements to their corresponding cell types
+
+    Examples:
+        >>> # Load all promoter elements
+        >>> dataset = KircherDataset(elements=['F9', 'HBB', 'LDLR'])
+        >>> 
+        >>> # Load data for specific cell types
+        >>> dataset = KircherDataset(cell_type=['HepG2', 'K562'])
+        >>> 
+        >>> # Load data with custom sequence length
+        >>> dataset = KircherDataset(length=300, elements='HBB')
+        >>> 
+        >>> # Load data filtered by genomic regions
+        >>> dataset = KircherDataset(
+        ...     genomic_regions='path/to/regions.bed',
+        ...     elements=['BCL11A', 'IRF4']
+        ... )
     """
     
     FLAG = "Kircher"
-    # List of promoter/enhancer elements available in the dataset
-    ELEMENT_TYPE = {
-        "F9": "promoter", "FOXE1": "promoter", "GP1BA": "promoter", 
-        "HBB": "promoter", "HBG1": "promoter", "HNF4A": "promoter", 
-        "LDLR": "promoter", "LDLR.2": "promoter", "MSMB": "promoter", 
-        "PKLR-24h": "promoter", "PKLR-48h": "promoter", 
-        "TERT-GAa": "promoter", "TERT-GBM": "promoter", 
-        "TERT-GSc": "promoter", "TERT-HEK": "promoter",
-        
-        "BCL11A": "enhancer", "IRF4": "enhancer", "IRF6": "enhancer", 
-        "MYCrs6983267": "enhancer", "MYCrs11986220": "enhancer", 
-        "RET": "enhancer", "SORT1": "enhancer", "SORT1-flip": "enhancer", 
-        "SORT1.2": "enhancer", "TCF7L2": "enhancer", "UC88": "enhancer", 
-        "ZFAND3": "enhancer", "ZRSh-13": "enhancer", "ZRSh-13h2": "enhancer"
-    }
     
     # Mapping of elements to their corresponding cell types
     CELL_TYPE = {
+        # promoters
         "F9": "HepG2", "FOXE1": "HeLa", "GP1BA": "HEL92.1.7", 
         "HBB": "HEL92.1.7", "HBG1": "HEL92.1.7", "HNF4A": "HEK293T", 
         "LDLR": "HepG2", "LDLR.2": "HepG2", "MSMB": "HEK293T", 
@@ -46,6 +55,7 @@ class KircherDataset(MpraDataset):
         "TERT-GAa": "SF7996", "TERT-GBM": "SF7996", 
         "TERT-GSc": "SF7996", "TERT-HEK": "HEK293T",
 
+        # enhancers
         "BCL11A": "HEL92.1.7", "IRF4": "SK-MEL-28", "IRF6": "HaCaT", 
         "MYCrs6983267": "HEK293T", "MYCrs11986220": "LNCaP", 
         "RET": "Neuro-2a", "SORT1": "HepG2", "SORT1-flip": "HepG2", 
@@ -56,7 +66,7 @@ class KircherDataset(MpraDataset):
     def __init__(
         self,
         split: str = "test",
-        length: int = 230,  # length of cutted sequence
+        length: int = 200,  # length of cutted sequence
         elements: list[str] | str = None,
         cell_type: list[str] | str = None,
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
@@ -75,7 +85,7 @@ class KircherDataset(MpraDataset):
             Default is "test".
         length : int, optional  
             Length of the sequence for the differential expression experiment. 
-            Must be positive integer. Default is 230.
+            Must be positive integer. Default is 200.
         elements : Union[list[str], str], optional
             List of promoter-enhancer elements to include. If None, includes all elements.
             Can be a single string or list of strings.
@@ -105,9 +115,9 @@ class KircherDataset(MpraDataset):
         self.prefix = self.FLAG + "_"  # Prefix for file names
         
         # Validate promoter-enhancer input
-        if (isinstance(elements, str) and elements not in self.ELEMENT_TYPE) or (
+        if (isinstance(elements, str) and elements not in self.CELL_TYPE) or (
             isinstance(elements, list)
-            and not all(p in self.ELEMENT_TYPE for p in elements)
+            and not all(p in self.CELL_TYPE for p in elements)
         ):
             raise ValueError("Invalid promoter-enhancer list")
 
@@ -154,7 +164,7 @@ class KircherDataset(MpraDataset):
                 self.ds = self.ds[self.ds.Element.isin(elements)]
             else:
                 # Include all promoters and enhancers if none specified
-                self.ds = self.ds[self.ds.Element.isin(self.ELEMENT_TYPE.keys())]
+                self.ds = self.ds[self.ds.Element.isin(self.CELL_TYPE.keys())]
         else:
             
             # If self.genomic_regions is not None filter by genomic regions 
@@ -172,7 +182,7 @@ class KircherDataset(MpraDataset):
         # Extract alternative sequences (with SNP/varaint)
         self.ds["seq_alt"] = self.ds.apply(
             lambda row: self.get_sequence(
-                file_pyfaidx=ref,
+                ref_genome=ref,
                 chromosome=row.Chromosome,
                 length=self.length,
                 pos=row.Position,
@@ -185,7 +195,7 @@ class KircherDataset(MpraDataset):
         # Extract reference sequences (without variant)
         self.ds["seq_ref"] = self.ds.apply(
             lambda row: self.get_sequence(
-                file_pyfaidx=ref,
+                ref_genome=ref,
                 chromosome=row.Chromosome,
                 length=self.length,
                 pos=row.Position,
@@ -197,7 +207,7 @@ class KircherDataset(MpraDataset):
 
         # Clean up and reset index after filtering
         self.ds = self.ds.dropna().reset_index(drop=True)
-        
+
         # Prepare final dataset structure
         targets = self.ds[target_column].to_numpy()
         seq_alt = self.ds.seq_alt.to_numpy()
@@ -210,6 +220,26 @@ class KircherDataset(MpraDataset):
     def filter_by_genomic_regions(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Filter dataframe based on genomic regions using bioframe.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input dataframe containing genomic data with columns:
+            - 'Chromosome': chromosome name (hg38)
+            - 'Position': variant position (0-based, hg38)
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered dataframe containing only sequences that overlap (or don't overlap)
+            with the specified genomic regions
+
+        Notes
+        -----
+        - Uses bioframe library for genomic interval operations
+        - All genomic coordinates use hg38 assembly with 0-based indexing
+        - Sequences are defined as regions centered on variant positions
+        - Input regions should be provided in hg38 coordinates with 0-based indexing
         """
         if self.genomic_regions is None:
             return df
@@ -250,7 +280,25 @@ class KircherDataset(MpraDataset):
         return filtered_df
         
     def _setup_fasta_file(self) -> str:
-        """Ensure FASTA file exists and is ready for use."""
+        """
+        Ensure FASTA file exists and is ready for use.
+
+        Returns
+        -------
+        str
+            Path to the FASTA file
+
+        Raises
+        ------
+        IOError
+            If the FASTA file cannot be downloaded or decompressed
+
+        Notes
+        -----
+        - Downloads hg38 reference genome from UCSC if not present
+        - Uses 0-based coordinate system for sequence extraction
+        """
+
         fasta_file = os.path.join(self._data_path, "hg38.fa")
 
         if not os.path.exists(fasta_file):
@@ -270,10 +318,43 @@ class KircherDataset(MpraDataset):
         return fasta_file
 
     def get_sequence(
-        self, file_pyfaidx, chromosome: str, length: int, pos: int, ref: str, alt: str
+        self, ref_genome, chromosome: str, length: int, pos: int, ref: str, alt: str
     ) -> str:
         """
         Extract sequence from a FASTA file with padding to a fixed length.
+
+        Parameters
+        ----------
+        ref_genome : pyfaidx.Fasta
+            FASTA file object for sequence extraction
+        chromosome : str
+            Chromosome name (without 'chr' prefix, will be added automatically)
+        length : int
+            Total length of sequence to extract
+        pos : int
+            Variant position (0-based, hg38)
+        ref : str
+            Reference allele (single character)
+        alt : str
+            Alternative allele (single character or '-' for deletion)
+
+        Returns
+        -------
+        str
+            Extracted sequence with variant incorporated
+
+        Raises
+        ------
+        ValueError
+            - If reference nucleotide doesn't match expected
+            - If sequence extraction fails
+
+        Notes
+        -----
+        - Uses hg38 reference genome with 0-based coordinates
+        - Sequences are centered on the variant position
+        - Handles both substitutions and deletions
+        - For deletions, the sequence length is maintained by removing the deleted base
         """
         chromosome = "chr" + chromosome
         # Input validation
@@ -283,14 +364,14 @@ class KircherDataset(MpraDataset):
             )
 
         # Verify reference nucleotide matches expected
-        observed_ref = str(file_pyfaidx.get_seq(chromosome, pos, pos)).upper()
+        observed_ref = str(ref_genome[chromosome][pos : pos+1]).upper()
         if observed_ref != ref.upper():
             return None
 
         half_len = length // 2
-        start = pos - half_len
+        start = pos - half_len - 1
         end = pos + half_len
-
+        
         if length % 2 == 0:
             end -= 1
 
@@ -299,12 +380,12 @@ class KircherDataset(MpraDataset):
 
             if alt == "-":
                 # Handle deletion
-                seq = str(file_pyfaidx.get_seq(chromosome, start, end + 1))
+                seq = str(ref_genome[chromosome][start : end + 1])
                 modified_seq = seq[:ref_pos_in_seq] + seq[ref_pos_in_seq + 1 :]
             else:
                 # Handle substitution or insertion
-                seq = str(file_pyfaidx.get_seq(chromosome, start, end))
-                modified_seq = seq[:ref_pos_in_seq] + alt + seq[ref_pos_in_seq + 1 :]
+                seq = str(ref_genome[chromosome][start : end])
+                modified_seq = seq[:ref_pos_in_seq] + alt + seq[ref_pos_in_seq + 1:]
 
             return modified_seq
         except Exception as e:
