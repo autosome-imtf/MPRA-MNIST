@@ -8,9 +8,101 @@ from mpramnist.mpradataset import MpraDataset
 
 
 class DeepStarrDataset(MpraDataset):
+    """
+    Dataset class for DeepSTARR MPRA data from Drosophila S2 cells.
+
+    This class handles loading and preprocessing of MPRA data from the DeepSTARR study,
+    which measures transcriptional activity of regulatory sequences in Drosophila
+    melanogaster S2 cells. The dataset includes measurements for both developmental
+    and housekeeping gene regulatory activities.
+
+    The dataset supports chromosome-based splits, genomic region filtering, and
+    reverse complement augmentation as implemented in the original study.
+
+    The dataset uses Drosophila melanogaster genome assembly BDGP R5/dm3 with 0-based coordinate indexing.
+    All genomic positions (start, end) follow 0-based indexing convention.
+
+    Attributes
+    ----------
+    FLAG : str
+        Identifier flag for DeepSTARR datasets ("DeepStarr")
+    ACTIVITY_COLUMNS : List[str]
+        Available activity measurement columns: ["Dev_log2", "Hk_log2"]
+    LIST_OF_CHR : List[str]
+        Valid chromosome names for chromosome-based splitting:
+        ["2L", "2LHet", "2RHet", "3L", "3LHet", "3R", "3RHet", "4", "X", "XHet", "YHet", "2R"]
+
+    Parameters
+    ----------
+    split : str | List[str]
+        Data split specification. Can be:
+        - Standard splits: 'train', 'val', 'test'
+        - Chromosome names: any from LIST_OF_CHR
+        - List of chromosome names for custom splits
+    cell_type : str | List[str], default: ["Dev_log2", "Hk_log2"]
+        Cell type(s) for target data. Can be:
+        - "Dev_log2": Developmental activity
+        - "Hk_log2": Housekeeping activity
+        - List containing both for multi-task learning
+    use_original_reverse_complement : bool | None, optional
+        Whether to apply reverse complement augmentation as in original study.
+        If None, automatically set to True for training split and False otherwise.
+    genomic_regions : str | List[Dict], optional
+        Genomic regions to include or exclude. Can be:
+        - Path to BED file
+        - List of dictionaries with 'chrom', 'start', 'end' keys
+    exclude_regions : bool, default: False
+        If True, exclude the specified genomic regions instead of including them
+    transform : callable, optional
+        Transformation function applied to each sequence.
+    target_transform : callable, optional
+        Transformation function applied to target values.
+    root : str, optional
+        Root directory for data storage.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the required data file cannot be found or downloaded
+    ValueError
+        If provided split, cell_type, or chromosome parameters are invalid
+
+    Examples
+    --------
+    >>> # Load training data with reverse complement augmentation
+    >>> train_data = DeepStarrDataset(split="train", cell_type="Dev_log2")
+    >>>
+    >>> # Load validation data from specific chromosome
+    >>> val_data = DeepStarrDataset(split="2L", cell_type="Hk_log2")
+    >>>
+    >>> # Load multi-task data with both activities
+    >>> multi_data = DeepStarrDataset(split="test", cell_type=["Dev_log2", "Hk_log2"])
+    >>>
+    >>> # Load data filtered by genomic regions
+    >>> region_data = DeepStarrDataset(
+    ...     split="train",
+    ...     genomic_regions="path/to/regions.bed",
+    ...     exclude_regions=True
+    ... )
+    >>>
+    >>> # Load custom chromosome split
+    >>> custom_data = DeepStarrDataset(split=["2L", "2R", "3L"], cell_type="Dev_log2")
+
+    Notes
+    -----
+    - Cell type: Drosophila melanogaster S2 cells
+    - Activity measurements: log2-transformed reporter activity
+    - Reverse complement augmentation: 
+        * Training set is pre-augmented in original study
+        * Applying manually may cause data leakage
+    - Chromosome-based splits: Useful for cross-chromosome validation
+    - Genomic region filtering: Uses bioframe for efficient genomic operations
+
+    """
+
     FLAG = "DeepStarr"
 
-    CELL_TYPES = ["Developmental", "HouseKeeping"]
+    ACTIVITY_COLUMNS = ["Dev_log2", "Hk_log2"]
     LIST_OF_CHR = [
         "2L",
         "2LHet",
@@ -25,12 +117,12 @@ class DeepStarrDataset(MpraDataset):
         "YHet",
         "2R",
     ]
-    ACTIVITY_COLUMNS = ["Dev_log2", "Hk_log2"]
+    
 
     def __init__(
         self,
         split: str | List[str],
-        activity_column: str | List[str] = ["Dev_log2", "Hk_log2"],
+        cell_type: str | List[str] = ["Dev_log2", "Hk_log2"],
         use_original_reverse_complement: bool | None = None,
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
         exclude_regions: bool = False,
@@ -39,28 +131,44 @@ class DeepStarrDataset(MpraDataset):
         root=None,
     ):
         """
-        Attributes
+        Initialize DeepStarrDataset for Drosophila regulatory sequence analysis.
+
+        Supports multiple split strategies including standard train/val/test splits
+        and chromosome-based splits for genomic cross-validation.
+
+        Parameters
         ----------
         split : str | List[str]
-            Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        activity_column : str | List[str]
-            Specifies the cell type for filtering the data.
-        use_original_reverse_complement : bool
-            Determines whether to generate the reverse complement of sequences using the same approach as the original study
+            Data split specification. Can be:
+            - Standard splits: 'train', 'val', 'test'
+            - Chromosome names: any from LIST_OF_CHR
+            - List of chromosome names for custom splits
+        cell_type : str | List[str], default: ["Dev_log2", "Hk_log2"]
+            Cell type(s) for target data. Can be:
+            - "Dev_log2": Developmental activity
+            - "Hk_log2": Housekeeping activity
+            - List containing both for multi-task learning
+        use_original_reverse_complement : bool | None, optional
+            Whether to apply reverse complement augmentation as in original study.
+            If None, automatically set to True for training split and False otherwise.
         genomic_regions : str | List[Dict], optional
-            Genomic regions to include/exclude. Can be:
+            Genomic regions to include or exclude. Can be:
             - Path to BED file
             - List of dictionaries with 'chrom', 'start', 'end' keys
-        exclude_regions : bool
-            If True, exclude the specified regions instead of including them
+        exclude_regions : bool, default: False
+            If True, exclude the specified genomic regions instead of including them
         transform : callable, optional
-            Transformation applied to each sequence object.
+            Transformation function applied to each sequence.
         target_transform : callable, optional
-            Transformation applied to the target data.
+            Transformation function applied to target values.
+        root : str, optional
+            Root directory for data storage.
         """
         super().__init__(split, root)
+        self.cell_type = ["Drosophila S2 Developmental", 
+                          "Drosophila S2 Housekeeping"] # for parent class compatibility
 
-        self.activity_column = activity_column
+        self.activity_column = cell_type
         if use_original_reverse_complement is None:
             if isinstance(split, list) or split != "train":
                 use_original_reverse_complement = False
@@ -122,6 +230,34 @@ class DeepStarrDataset(MpraDataset):
         self.name_for_split_info = self.prefix
 
     def reverse_complement(self, seq: str, mapping=None) -> str:
+        """
+        Generate reverse complement of a DNA sequence.
+
+        Parameters
+        ----------
+        seq : str
+            Input DNA sequence
+        mapping : dict, optional
+            Custom base mapping dictionary. Defaults to standard DNA complement:
+            {'A': 'T', 'T': 'A', 'G': 'C', 'C': 'G', 'N': 'N'}
+
+        Returns
+        -------
+        str
+            Reverse complement of the input sequence
+
+        Raises
+        ------
+        ValueError
+            If sequence contains invalid characters not in mapping
+
+        Examples
+        --------
+        >>> dataset.reverse_complement("ATCG")
+        'CGAT'
+        >>> dataset.reverse_complement("ATCG", mapping={'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C'})
+        'CGAT'
+        """
         if mapping is None:
             mapping = {"A": "T", "G": "C", "T": "A", "C": "G", "N": "N"}
 
@@ -132,8 +268,38 @@ class DeepStarrDataset(MpraDataset):
 
     def filter_by_genomic_regions(self, df: pd.DataFrame) -> pd.DataFrame:
         """
-        Filter dataframe based on genomic regions using bioframe.
+        Filter DataFrame based on specified genomic regions.
 
+        Uses bioframe for efficient genomic interval operations. Can either include
+        or exclude sequences overlapping with the specified regions.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input dataframe containing genomic data with columns:
+            - 'chromosome': chromosome name (BDGP R5/dm3)
+            - 'start': start position (0-based, BDGP R5/dm3)
+            - 'end': end position (0-based, BDGP R5/dm3)
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered DataFrame containing only sequences that overlap (or don't overlap)
+            with the specified genomic regions
+
+        Notes
+        -----
+        - Requires bioframe package for genomic operations
+        - Input DataFrame must have 'chr', 'start', 'end' columns
+        - Converts chromosome names to strings for compatibility
+        - Handles both BED files and list of region dictionaries
+        - All genomic coordinates use BDGP R5/dm3 assembly with 0-based indexing
+        - Input regions should be provided in BDGP R5/dm3 coordinates with 0-based indexing
+
+
+        See Also
+        --------
+        bioframe.overlap : Underlying genomic interval overlap function
         """
         if self.genomic_regions is None:
             return df
@@ -175,17 +341,39 @@ class DeepStarrDataset(MpraDataset):
 
     def split_parse(self, split: str) -> str:
         """
-        Parses the input split and returns a list of splits.
+        Parse and validate split parameter.
+
+        Converts various split specifications into standardized format and
+        determines the appropriate column for filtering.
 
         Parameters
         ----------
-        split : str
-            Defines the data split, expected values: 'train', 'val', 'test'.
+        split : str | List[str]
+            Split specification. Can be:
+            - Standard split: 'train', 'val', 'test'
+            - Chromosome name: any from LIST_OF_CHR
+            - List of chromosome names
 
         Returns
         -------
-        str
-            A string containing the parsed split.
+        tuple[List[str], str]
+            Tuple containing:
+            - parsed_split: List of split values
+            - column: Name of column to use for filtering ('split' or 'chr')
+
+        Raises
+        ------
+        ValueError
+            If split contains invalid values or mixed types
+
+        Examples
+        --------
+        >>> dataset.split_parse('train')
+        (['train'], 'split')
+        >>> dataset.split_parse('2L')
+        (['2L'], 'chr')
+        >>> dataset.split_parse(['2L', '2R'])
+        (['2L', '2R'], 'chr')
         """
 
         # Default valid splits
