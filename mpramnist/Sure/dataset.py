@@ -176,7 +176,7 @@ class SureDataset(MpraDataset):
         self.genomic_regions = genomic_regions
         self.exclude_regions = exclude_regions
         self.genome_id = genome_id
-        self._cell_type = genome_id
+        self.cell_type = self.CELL_TYPES
         if isinstance(genome_id, list):
             pass
         else:

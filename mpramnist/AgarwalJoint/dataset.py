@@ -135,7 +135,7 @@ class AgarwalJointDataset(MpraDataset):
                     raise ValueError(
                         f"Invalid cell_type: {act}. Must be one of {self.CELL_TYPES}."
                     )
-        self._cell_type = cell_type
+        self.cell_type = cell_type
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
@@ -155,7 +155,7 @@ class AgarwalJointDataset(MpraDataset):
         # Apply genomic region filtering
         df = self.filter_by_genomic_regions(df)
 
-        target_column = self._cell_type
+        target_column = self.cell_type
 
         if self.genomic_regions is None:
             self.ds = df[df.fold.isin(self.split)].reset_index(drop=True)

@@ -121,7 +121,7 @@ class AgarwalDataset(MpraDataset):
             raise ValueError(
                 f"Invalid cell_type: {cell_type}. Must be one of {self.CELL_TYPES}."
             )
-        self._cell_type = cell_type
+        self.cell_type = cell_type
         self.transform = transform
         self.target_transform = target_transform
         self.split = self.split_parse(split)
@@ -130,7 +130,7 @@ class AgarwalDataset(MpraDataset):
         self.exclude_regions = exclude_regions
 
         try:
-            file_name = self.prefix + self._cell_type + ".tsv"
+            file_name = self.prefix + self.cell_type + ".tsv"
             self.download(self._data_path, file_name)
             file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep="\t")
@@ -152,7 +152,7 @@ class AgarwalDataset(MpraDataset):
         seq = self.ds.seq.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
         
-        self.name_for_split_info = self.prefix + self._cell_type + "_"
+        self.name_for_split_info = self.prefix + self.cell_type + "_"
 
     def filter_by_genomic_regions(self, df: pd.DataFrame) -> pd.DataFrame:
         """

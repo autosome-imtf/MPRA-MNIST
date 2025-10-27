@@ -178,7 +178,7 @@ class MalinoisDataset(MpraDataset):
 
         # Load and process the dataset
         self.ds = self._load_and_filter_data(cell_type)
-        self._cell_type = cell_type
+        self.cell_type = cell_type
         self.target = cell_type  # initialization for MpraDataset.__getitem__()
 
         self.name_for_split_info = self.prefix

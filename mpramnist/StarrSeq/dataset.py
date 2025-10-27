@@ -125,8 +125,7 @@ class StarrSeqDataset(MpraDataset):
 
         self.binary_class = binary_class
 
-        self.cell_types = ["GP5d", "HepG2"]
-        self._cell_type = None
+        self.cell_type = ["GP5d", "HepG2"]
         self.transform = transform
         self.target_transform = target_transform
         self.prefix = self.FLAG + "_"
