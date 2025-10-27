@@ -31,15 +31,16 @@ class DreamDataset(MpraDataset):
         Right flanking sequence used for sequence extraction and alignment
     TYPES : List[str]
         Supported dataset types:
-        - "all": Complete dataset
-        - "high": High-activity sequences
-        - "low": Low-activity sequences  
-        - "yeast": Native yeast regulatory elements
-        - "random": Random sequence controls
-        - "challenging": Difficult-to-predict sequences
-        - "snv": Single nucleotide variants
-        - "perturbation": Systematic perturbations
-        - "tiling": Tiling mutation scans
+        - "all": All sequences in the test data.
+        - "high": Sequences designed to have high expression.
+        - "low": Sequences designed to have low expression.
+        - "yeast": Sequences that are present in the yeast genome.
+        - "random": Random DNA sequences.
+        - "challenging": Sequences designed to maximize the differences 
+            between a convolutional model and a biochemical model trained on the same data.
+        - "snv": Two sequences that differ by only a single base.
+        - "perturbation": Two sequences that differ due to perturbations to specific known TF binding site.
+        - "tiling": Two sequences that differ due to tiling known TF binding sites across random sequences.
 
     Parameters
     ----------
