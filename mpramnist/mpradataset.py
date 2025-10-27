@@ -136,7 +136,7 @@ class MpraDataset(Dataset):
         body.append(f"Root location: {self.root}")
         body.append(f"Using split: {self.split}")
         if name_of_split + "split" in self.info:
-            body.append(f"Split: {self.info[name_of_split + "split"]}")
+            body.append(f"Split: {self.info[name_of_split + 'split']}")
         body.append(f"Task: {self.info['task']}")
         body.append(f"Description: {self.info['description']}")
         if name_of_split + "description" in self.info:
