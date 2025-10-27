@@ -6,54 +6,121 @@ from mpramnist.mpradataset import MpraDataset
 
 
 class FluorescenceDataset(MpraDataset):
+    """
+    Dataset class for Fluorescence MPRA data.
+
+    This class extends MpraDataset to handle fluorescence-based MPRA data from
+    different cell types. It supports regression tasks with fluorescence intensity
+    measurements across multiple cell lines.
+
+    This implementation and preprocessed data are adapted from:
+    https://github.com/anikethjr/promoter_models/blob/main/promoter_modelling/dataloaders/FluorescenceData_classification.py
+
+    Attributes
+    ----------
+    CELL_TYPES : list of str
+        Available cell types in the dataset: ["JURKAT", "K562", "THP1"].
+    FLAG : str
+        Dataset identifier flag, set to "Fluorescence".
+
+    Examples
+    --------
+    >>> # Basic usage with default settings (all cell types)
+    >>> dataset = FluorescenceDataset(split='train')
+    >>> len(dataset)
+    10000
+    
+    >>> # Specific cell type for regression
+    >>> dataset = FluorescenceDataset(
+    ...     split='val',
+    ...     cell_type='K562',
+    ...     task='regression'
+    ... )
+    >>> sequence, target = dataset[0]
+    >>> print(sequence.shape, target.shape)
+    (1000,) (1,)
+
+    Notes
+    -----
+    - Currently only supports regression tasks
+    - Fluorescence measurements represent protein expression levels
+    - Data is collected from three different human cell lines
+    - Sequences are typically promoter or regulatory elements
+    """
+
     CELL_TYPES = ["JURKAT", "K562", "THP1"]
     FLAG = "Fluorescence"
 
     def __init__(
         self,
         split: str,
-        activity_columns: str | List[str] = [
+        cell_type: str | List[str] = [
             "JURKAT",
             "K562",
             "THP1",
         ],  # all three cell types is default
-        task: str = "regression",
+        task: str = "regression", # only regression is now available
         transform=None,
         target_transform=None,
         root=None,
     ):
         """
+        Initialize FluorescenceDataset instance.
+
         Attributes
         ----------
         split : str
-            Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        activity_columns : str | List[str]
-            Specifies the cell type for filtering the data.
-        task : str
-            Defines regression or classification task
+            Defines which data split to use. Must be one of: 'train', 'val', 'test'.
+            Determines which dataset file to load (e.g., 'Fluorescence_train.tsv').
+        cell_type : str | List[str], optional, default=["JURKAT", "K562", "THP1"]
+            Cell type(s) to include in the dataset. Can be a single cell type string
+            or list of multiple cell types. All three cell types are included by default.
+        task : str, optional, default="regression"
+            Specifies the machine learning task. Currently only "regression" is supported.
+            Classification may be added in future versions.
         transform : callable, optional
             Transformation applied to each sequence object.
         target_transform : callable, optional
             Transformation applied to the target data.
+        root : str, optional, default=None
+            Root directory where dataset files are stored or should be downloaded.
+            If None, uses the default dataset directory from parent class.
+
+        Raises
+        ------
+        ValueError
+            If `split` parameter is not 'train', 'val', or 'test'.
+            If `cell_type` contains invalid cell type names not in CELL_TYPES.
+            If `task` is not 'regression' (other tasks not yet implemented).
+        FileNotFoundError
+            If the dataset file for the specified split cannot be found or downloaded.
+        KeyError
+            If specified cell type columns are not found in the loaded dataframe.
+
+        Notes
+        -----
+        - For regression tasks, column names are prefixed with 'numerical_'
+        - Fluorescence values represent relative expression levels
+        - Multiple cell types result in multi-output regression
+        - Dataset files are automatically downloaded if not present
         """
         super().__init__(split, root)
-        self._cell_type = activity_columns
 
-        if isinstance(activity_columns, str):
-            if activity_columns not in self.CELL_TYPES:
+        if isinstance(cell_type, str):
+            if cell_type not in self.CELL_TYPES:
                 raise ValueError(
-                    f"Invalid activity_columns: {activity_columns}. Must be one of {self.CELL_TYPES}."
+                    f"Invalid cell_type: {cell_type}. Must be one of {self.CELL_TYPES}."
                 )
-            activity_columns = [activity_columns]
-        if isinstance(activity_columns, List):
-            for i in range(len(activity_columns)):
-                act = activity_columns[i]
+            cell_type = [cell_type]
+        if isinstance(cell_type, List):
+            for i in range(len(cell_type)):
+                act = cell_type[i]
                 if act not in self.CELL_TYPES:
                     raise ValueError(
-                        f"Invalid activity_columns: {act}. Must be one of {self.CELL_TYPES}."
+                        f"Invalid cell_type: {act}. Must be one of {self.CELL_TYPES}."
                     )
 
-        self.activity_columns = activity_columns
+        self.cell_type = cell_type
         self.task = task
         self.transform = transform
         self.target_transform = target_transform
@@ -69,8 +136,8 @@ class FluorescenceDataset(MpraDataset):
             raise FileNotFoundError(f"File not found: {file_path}")
 
         if task == "regression":
-            self.activity_columns = ["numerical_" + i for i in self.activity_columns]
-        targets = df[self.activity_columns].to_numpy()
+            self.cell_type = ["numerical_" + i for i in self.cell_type]
+        targets = df[self.cell_type].to_numpy()
         seq = df.sequence.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
 
@@ -78,17 +145,39 @@ class FluorescenceDataset(MpraDataset):
 
     def split_parse(self, split: str) -> str:
         """
-        Parses the input split and returns a list of splits.
+        Parse and validate the split parameter.
+
+        Validates that the provided split string is one of the allowed values
+        and returns the validated split identifier.
 
         Parameters
         ----------
         split : str
-            Defines the data split, expected values: 'train', 'val', 'test'.
+            Data split identifier. Must be one of: 'train', 'val', 'test'.
 
         Returns
         -------
         str
-            A string containing the parsed split.
+            Validated split string.
+
+        Raises
+        ------
+        ValueError
+            If split is not one of the allowed values ('train', 'val', 'test').
+
+        Examples
+        --------
+        >>> dataset = FluorescenceDataset(split='train')
+        >>> dataset.split_parse('val')
+        'val'
+        
+        >>> dataset.split_parse('invalid')
+        ValueError: Invalid split value: invalid. Expected 'train', 'val', or 'test'.
+
+        Notes
+        -----
+        - This method is called automatically during initialization
+        - Split validation ensures the correct data file is loaded
         """
 
         # Default valid splits
