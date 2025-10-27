@@ -13,6 +13,9 @@ class SureDataset(MpraDataset):
     functional measurements of genetic variants across multiple cell types and genomes.
     The dataset supports both classification and regression tasks with genomic region filtering.
 
+    This implementation and preprocessed data are adapted from:
+    https://github.com/anikethjr/promoter_models/blob/main/promoter_modelling/dataloaders/SuRE.py
+
     Important Notes
     ---------------
     - All genomic coordinates are based on the hg19 reference genome assembly
