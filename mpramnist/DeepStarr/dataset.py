@@ -317,7 +317,7 @@ class DeepStarrDataset(MpraDataset):
         # Rename columns to match bioframe schema
         data_df = df.copy()
         data_df = data_df.rename(
-            columns={"chr": "chrom", "start": "start", "end": "end"}
+            columns={"chromosome": "chrom", "start": "start", "end": "end"}
         )
 
         # Convert to integer if possible
