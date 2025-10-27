@@ -8,6 +8,40 @@ from mpramnist.mpradataset import MpraDataset
 
 
 class EvfratovDataset(MpraDataset):
+    """
+    Dataset class for Evfratov MPRA data.
+
+    This class extends MpraDataset to handle ribosomal profiling data from
+    E. coli experiments. The dataset contains sequence-activity relationships
+    for translation efficiency measurements with classification tasks.
+
+    Attributes
+    ----------
+    FLAG : str
+        Dataset identifier flag, set to "Evfratov".
+
+    Examples
+    --------
+    >>> # Basic usage with 23-length sequences
+    >>> dataset = EvfratovDataset(split='train', length_of_seq=23)
+    >>> len(dataset)
+    5000
+    
+    >>> # With merged classes for balanced classification
+    >>> dataset = EvfratovDataset(
+    ...     split='val',
+    ...     length_of_seq=33,
+    ...     merge_last_classes=True
+    ... )
+    >>> sequence, target = dataset[0]
+    >>> print(sequence.shape, target.shape)
+    (33,) (1,)
+
+    Notes
+    -----
+    - Original data contains 8 classes, can be reduced to 7 by merging last two classes
+    """
+
     FLAG = "Evfratov"
 
     def __init__(
@@ -20,12 +54,15 @@ class EvfratovDataset(MpraDataset):
         root=None,
     ):
         """
+        Initialize EvfratovDataset instance.
+
         Attributes
         ----------
         split : str
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
         length_of_seq: str | int
-            Defines a dataset to use: with 20 long sequences or 30 long sequences
+            Length of sequences to use. Must be either "23" or "33" (or corresponding integers).
+            Determines which dataset variant to load (23bp or 33bp sequences).
         merge_last_classes : bool
             A flag indicating whether to merge the last two classes in the dataset.
             If True, the last two classes (typically those with the fewest examples)
@@ -37,11 +74,27 @@ class EvfratovDataset(MpraDataset):
             Transformation applied to each sequence object.
         target_transform : callable, optional
             Transformation applied to the target data.
+        root : str, optional, default=None
+            Root directory where dataset files are stored or should be downloaded.
+            If None, uses the default dataset directory from parent class.
+
+        Raises
+        ------
+        ValueError
+            If `split` parameter is not 'train', 'val', or 'test'.
+            If `length_of_seq` is not "23" or "33" (or equivalent integers).
+        FileNotFoundError
+            If the dataset file for the specified split and sequence length cannot be found.
+
+        Notes
+        -----
+        - Raw count data is converted to probability distributions before label assignment
+        - Labels are assigned based on the bin with maximum expression
         """
         super().__init__(split, root)
 
         self.activity_columns = "label"
-        self._cell_type = None
+        self.cell_type = "The JM109 E. coli strain"
         self.length_of_seq = str(length_of_seq)
         self.transform = transform
         self.target_transform = target_transform
@@ -92,6 +145,30 @@ class EvfratovDataset(MpraDataset):
         self.name_for_split_info = self.prefix + self.length_of_seq + "_"
 
     def hist_plot(self):
+        """
+        Plot a histogram of class label distribution.
+
+        Creates a bar plot showing the count of samples in each class.
+        Useful for visualizing class imbalance and dataset composition.
+
+        Examples
+        --------
+        >>> dataset = EvfratovDataset(split='train', length_of_seq=23)
+        >>> dataset.hist_plot()
+        # Displays histogram with class counts
+
+        Returns
+        -------
+        None
+            Displays matplotlib plot directly.
+
+        Notes
+        -----
+        - Plot includes exact count numbers above each bar
+        - Uses skyblue bars with black edges
+        - Includes grid lines for better readability
+        - Title indicates it's a histogram of label counts
+        """
         data = self.df.label
         n_classes = self.n_classes
 
@@ -123,17 +200,40 @@ class EvfratovDataset(MpraDataset):
 
     def split_parse(self, split: str) -> str:
         """
-        Parses the input split and returns a list of splits.
+        Parse and validate the split parameter.
+
+        Validates that the provided split string is one of the allowed values
+        and returns the validated split identifier.
 
         Parameters
         ----------
         split : str
-            Defines the data split, expected values: 'train', 'val', 'test'.
+            Data split identifier. Must be one of: 'train', 'val', 'test'.
 
         Returns
         -------
         str
-            A string containing the parsed split.
+            Validated split string.
+
+        Raises
+        ------
+        ValueError
+            If split is not one of the allowed values ('train', 'val', 'test').
+
+        Examples
+        --------
+        >>> dataset = EvfratovDataset(split='train', length_of_seq=23)
+        >>> dataset.split_parse('val')
+        'val'
+        
+        >>> dataset.split_parse('invalid')
+        ValueError: Invalid split value: invalid. Expected 'train', 'val', or 'test'.
+
+        Notes
+        -----
+        - This method is called automatically during initialization
+        - Split validation ensures the correct data file is loaded
+        - Valid splits are hardcoded as {'train', 'val', 'test'}
         """
 
         # Default valid splits
