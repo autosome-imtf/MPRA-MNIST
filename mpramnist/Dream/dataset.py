@@ -7,10 +7,89 @@ from mpramnist.mpradataset import MpraDataset
 
 
 class DreamDataset(MpraDataset):
-    """Dataset class for DREAM MPRA data.
+    """
+    Dataset class for DREAM challenge MPRA data with yeast-specific processing.
 
-    Handles loading and preprocessing of DREAM challenge MPRA datasets.
-    Supports different dataset types and splits.
+    This class handles loading, filtering, and preprocessing of MPRA (Massively Parallel
+    Reporter Assay) data from the DREAM challenge, specifically designed for yeast
+    (S. cerevisiae) regulatory element analysis. It supports various dataset types
+    and experimental conditions relevant to yeast biology.
+
+    The dataset contains sequences with measured transcriptional activity in yeast
+    strains (primarily S288C background with ura3 auxotrophy), enabling the study
+    of regulatory logic in yeast promoters and other DNA elements.
+
+    Attributes
+    ----------
+    FLAG : str
+        Identifier flag for DREAM datasets ("Dream")
+    PLASMID : str
+        Constant plasmid backbone sequence used in the MPRA constructs
+    LEFT_FLANK : str
+        Left flanking sequence used for sequence extraction and alignment
+    RIGHT_FLANK : str
+        Right flanking sequence used for sequence extraction and alignment
+    TYPES : List[str]
+        Supported dataset types:
+        - "all": Complete dataset
+        - "high": High-activity sequences
+        - "low": Low-activity sequences  
+        - "yeast": Native yeast regulatory elements
+        - "random": Random sequence controls
+        - "challenging": Difficult-to-predict sequences
+        - "snv": Single nucleotide variants
+        - "perturbation": Systematic perturbations
+        - "tiling": Tiling mutation scans
+
+    Parameters
+    ----------
+    split : str
+        Data split specification. Valid values:
+        - "train": Training data
+        - "val" or "public": Validation/public test data  
+        - "test" or "private": Private test data
+    data_type : str | List[str], optional
+        Specific dataset type(s) to load. For training split, this parameter is ignored.
+        Single types: "high", "low", "yeast", "random", "challenging", "all"
+        Paired types: "snv", "perturbation", "tiling"
+    transform : callable, optional
+        Transformation function applied to each sequence. Useful for data augmentation
+        or sequence encoding. Should accept a sequence string and return transformed data.
+    target_transform : callable, optional  
+        Transformation function applied to target values. Useful for normalization
+        or target processing.
+    root : str, optional
+        Root directory for data storage. If None, uses default data directory.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the required data file cannot be found or downloaded
+    ValueError
+        If provided split or data_type parameters are invalid
+
+    Examples
+    --------
+    >>> # Load training data for yeast regulatory elements
+    >>> train_dataset = DreamDataset(split="train")
+    >>> 
+    >>> # Load validation data for high-activity sequences
+    >>> val_dataset = DreamDataset(split="val", data_type="high")
+    >>>
+    >>> # Load test data for SNV analysis
+    >>> test_dataset = DreamDataset(split="test", data_type="snv")
+    >>>
+    >>> # Load multiple dataset types
+    >>> multi_dataset = DreamDataset(split="val", data_type=["high", "yeast"])
+
+    Notes
+    -----
+    - Yeast strain information: Uses S288C background with ura3 auxotrophy
+    - Sequence context: All sequences must be embedded in the specified plasmid backbone
+    - Target values: Represent measured transcriptional activity in yeast
+    - For paired types (snv/perturbation/tiling), both reference and alternative
+      sequences are provided for comparative analysis
+
     """
 
     FLAG = "Dream"
@@ -40,16 +119,32 @@ class DreamDataset(MpraDataset):
         root=None,
     ):
         """
-        Attributes
+        Initialize DreamDataset for yeast MPRA data analysis.
+
+        The dataset is specifically designed for studying regulatory elements
+        in yeast (S. cerevisiae) using MPRA technology. It provides access to
+        various experimental conditions and sequence types relevant to yeast
+        transcriptional regulation research.
+
+        Parameters
         ----------
         split : str
-            Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
-        data_type : str
-            Dataset type (high, low, yeast, challenging, random, all, snv, perturbation, tiling)
+        Data split specification. Valid values:
+            - "train": Training data
+            - "val" or "public": Validation/public test data  
+            - "test" or "private": Private test data
+        data_type : str | List[str], optional
+            Specific dataset type(s) to load. For training split, this parameter is ignored.
+            Single types: "high", "low", "yeast", "random", "challenging", "all"
+            Paired types: "snv", "perturbation", "tiling"
         transform : callable, optional
-            Transformation applied to each sequence object.
-        target_transform : callable, optional
-            Transformation applied to the target data.
+            Transformation function applied to each sequence. Useful for data augmentation
+            or sequence encoding. Should accept a sequence string and return transformed data.
+        target_transform : callable, optional  
+            Transformation function applied to target values. Useful for normalization
+            or target processing.
+        root : str, optional
+            Root directory for data storage. If None, uses default data directory.
         """
         super().__init__(split, root)
 
@@ -57,6 +152,7 @@ class DreamDataset(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.prefix = self.FLAG + "_"
+        self.cell_type = "strains S288C::ura3, etc"
 
         # Parse and validate inputs
         self.split = self.split_parse(split)
@@ -74,7 +170,27 @@ class DreamDataset(MpraDataset):
         self.name_for_split_info = self.prefix
 
     def _load_and_prepare_data(self, dataset: str) -> pd.DataFrame:
-        """Load data from file and prepare the dataset."""
+        """
+        Load and prepare the dataset from TSV files.
+
+        Downloads the data file if not already present, then loads it into a pandas DataFrame.
+        Handles both local and remote data sources through the parent class download mechanism.
+
+        Parameters
+        ----------
+        dataset : str
+            Name of the dataset to load ('train', 'single', or 'paired')
+
+        Returns
+        -------
+        pd.DataFrame
+            Loaded and filtered dataset
+
+        Raises
+        ------
+        FileNotFoundError
+            If the data file cannot be found after attempted download
+        """
         try:
             file_name = self.prefix + dataset + ".tsv"
             self.download(self._data_path, file_name)
@@ -86,7 +202,17 @@ class DreamDataset(MpraDataset):
         return self._filter_dataset(df, self.split, self.data_type)
 
     def _prepare_data_structure(self):
-        """Prepare the data structure based on the split type."""
+        """
+        Prepare the internal data structure based on dataset type.
+
+        For single-type datasets (train, single), creates a dictionary with:
+        - 'targets': numpy array of target values (labels or delta_measured)
+        - 'seq': numpy array of sequence strings
+
+        For paired-type datasets (paired), additionally includes:
+        - 'seq_alt': numpy array of alternative sequences for comparative analysis
+
+        """
         if self.dataset in ["train", "single"]:
             self.ds = {
                 "targets": self.df[self.target_column].to_numpy(),
@@ -102,7 +228,27 @@ class DreamDataset(MpraDataset):
     def _filter_dataset(
         self, df: pd.DataFrame, split: str, dataset_type: str | List[str]
     ) -> pd.DataFrame:
-        """Filter the dataset based on split and type."""
+        """
+        Filter dataset based on split and data type specifications.
+
+        For training splits, returns the entire dataset without filtering.
+        For validation/test splits, applies filtering based on public/private
+        designation and specific data types.
+
+        Parameters
+        ----------
+        df : pd.DataFrame
+            Input DataFrame containing the full dataset
+        split : str
+            Data split to filter ('public' or 'private')
+        dataset_type : str | List[str]
+            Specific data type(s) to include
+
+        Returns
+        -------
+        pd.DataFrame
+            Filtered DataFrame containing only the specified split and types
+        """
         if split == "train":
             return df
         else:
@@ -117,10 +263,30 @@ class DreamDataset(MpraDataset):
     def _define_dataset(
         self, split: str, dataset_type: str | List[str]
     ) -> tuple[str, str | List[str]]:
-        """Determine which dataset to load based on type and split.
+        """
+        Determine which dataset to load based on type and split parameters.
 
-        Returns:
-            A tuple of (dataset_name, processed_type)
+        Maps user-friendly type names to internal dataset categories and validates
+        type combinations. Handles both single and multiple type specifications.
+
+        Parameters
+        ----------
+        split : str
+            Data split specification
+        dataset_type : str | List[str]
+            Requested dataset type(s)
+
+        Returns
+        -------
+        tuple[str, str | List[str]]
+            Tuple containing:
+            - dataset_category: 'train', 'single', or 'paired'
+            - processed_type: validated and normalized type specification
+
+        Raises
+        ------
+        ValueError
+            If invalid type combinations are provided
         """
         single_types = ["high", "low", "yeast", "challenging", "random", "all"]
         paired_types = ["snv", "perturbation", "tiling"]
@@ -144,7 +310,28 @@ class DreamDataset(MpraDataset):
     def _handle_single_type(
         self, dataset_type: str, single_types: list, paired_types: list
     ) -> tuple[str, str]:
-        """Handle single type specification."""
+        """
+        Process single dataset type specification.
+
+        Parameters
+        ----------
+        dataset_type : str
+            Single dataset type string
+        single_types : list
+            Valid single dataset types
+        paired_types : list
+            Valid paired dataset types
+
+        Returns
+        -------
+        tuple[str, str]
+            Dataset category and normalized type
+
+        Raises
+        ------
+        ValueError
+            If the specified type is not in supported types
+        """
         lower_type = dataset_type.lower()
         if lower_type in single_types:
             return "single", lower_type
@@ -155,7 +342,32 @@ class DreamDataset(MpraDataset):
     def _handle_multiple_types(
         self, dataset_types: List[str], single_types: list, paired_types: list
     ) -> tuple[str, List[str]]:
-        """Handle multiple types specification."""
+        """
+        Process multiple dataset type specifications.
+
+        Validates that all specified types belong to the same category
+        (either all single types or all paired types). Mixed categories
+        are not allowed.
+
+        Parameters
+        ----------
+        dataset_types : List[str]
+            List of dataset type strings
+        single_types : list
+            Valid single dataset types
+        paired_types : list
+            Valid paired dataset types
+
+        Returns
+        -------
+        tuple[str, List[str]]
+            Dataset category and normalized types
+
+        Raises
+        ------
+        ValueError
+            If types are mixed between single and paired categories
+        """
         lower_types = [t.lower() for t in dataset_types]
 
         if all(t in single_types for t in lower_types):
@@ -168,16 +380,37 @@ class DreamDataset(MpraDataset):
         )
 
     def split_parse(self, split: str) -> str:
-        """Parse and validate the split parameter.
+        """
+        Parse and validate the split parameter.
 
-        Args:
-            split: Input split specification
+        Converts user-friendly split names to internal representations:
+        - 'train' -> 'train'
+        - 'val' or 'public' -> 'public' 
+        - 'test' or 'private' -> 'private'
 
-        Returns:
-            Validated split string
+        Parameters
+        ----------
+        split : str
+            Input split specification
 
-        Raises:
-            ValueError: If split is invalid
+        Returns
+        -------
+        str
+            Validated internal split representation
+
+        Raises
+        ------
+        ValueError
+            If split parameter is not recognized
+
+        Examples
+        --------
+        >>> dataset.split_parse('val')
+        'public'
+        >>> dataset.split_parse('test')
+        'private'
+        >>> dataset.split_parse('train')
+        'train'
         """
         valid_splits = {
             "train": "train",
