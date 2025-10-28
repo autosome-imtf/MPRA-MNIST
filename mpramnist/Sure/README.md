@@ -106,6 +106,7 @@ Root directory where data is stored. If None, uses default data path.
     import mpramnist
     from torch.nn.utils.rnn import pad_sequence
     from mpramnist.Sure.dataset import SureDataset
+    import torch.utils.data as data
 
     def pad_collate(batch):  # required because sequence lengths vary
         (seq, targets) = zip(*batch)
