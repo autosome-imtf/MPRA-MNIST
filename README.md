@@ -19,23 +19,28 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 - PyTorch: 2.7.1+cu126
 
 ## **Installation**  
+
 1. Clone the repository:  
+
    ```bash
    git clone https://github.com/autosome-imtf/MPRA-MNIST
    cd MPRA-MNIST
    ```
 2. Create a Virtual Environment
+
    ```bash
    conda create -n mpramnist python=3.12.7
    conda activate mpramnist
    pip install torch
    ```
 3. Install dependencies:
+
    ```bash
    pip install --upgrade pip
    pip install -r requirements.txt 
    ```
 4. Install the package in editable mode (for development):
+
    ```bash
    pip install setuptools wheel
    python setup.py sdist bdist_wheel
@@ -45,28 +50,28 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 ## We have such datasets:
 
 | Name | Artcile and link | DOI | Cell types |
-| ----------- | ----------- | ----------- | -----------|
+|-----------|:-----------:|-----------|-----------|
 | HUMAN | ----------- | ----------- | ----------- |
-| `AgarwalDataset` | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
-| `AgarwalJointDataset` | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
-| `KircherDataset` | [Saturation mutagenesis of twenty disease-associated regulatory elements at single base-pair resolution](https://www.nature.com/articles/s41467-019-11526-w) | 10.1038/s41467-019-11526-w | HepG2, K562, etc |
-| `MalinoisDataset` | [Machine-guided design of synthetic cell type-specific cis-regulatory elements](https://pmc.ncbi.nlm.nih.gov/articles/PMC10441439/) | 10.1101/2023.08.08.552077 | HepG2, K562, SK-N-SH |
-| `StarrSeqDataset` | [Sequence determinants of human gene regulatory elements](https://www.nature.com/articles/s41588-021-01009) | 10.1038/s41588-021-01009-4 | HepG2, GP5D, RPE1 |
-| `SureDataset` | [Genome-wide mapping of autonomous promoter activity in human cells](https://pmc.ncbi.nlm.nih.gov/articles/PMC5498152/) | 10.1038/nbt.3754 | HepG2, K562 |
-| `SharpDataset` | [Genome-scale high-resolution mapping of activating and repressive nucleotides in regulatory regions](https://pmc.ncbi.nlm.nih.gov/articles/PMC5125825/) | 10.1038/nbt.3678 | HepG2, K562 |
-| `FluorescenceDataset` | [Strategies for effectively modelling promoter-driven gene expression using transfer learning](https://pmc.ncbi.nlm.nih.gov/articles/PMC10002662/) | 10.1101/2023.02.24.529941 | JURKAT, K562, THP1 |
+| [`AgarwalDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Agarwal) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/AgarwalDataset_example.ipynb)) | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
+| [`AgarwalJointDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/AgarwalJoint) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/AgarwalJointDataset_example.ipynb)) | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
+| [`KircherDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Kircher) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/KircherDataset_example.ipynb)) | [Saturation mutagenesis of twenty disease-associated regulatory elements at single base-pair resolution](https://www.nature.com/articles/s41467-019-11526-w) | 10.1038/s41467-019-11526-w | HepG2, K562, etc |
+| [`MalinoisDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Malinois) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/Malinois_example.ipynb), [Usage Example with LegNet](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/Malinois_Dataset_example_model_legnet.ipynb)) | [Machine-guided design of synthetic cell type-specific cis-regulatory elements](https://pmc.ncbi.nlm.nih.gov/articles/PMC10441439/) | 10.1101/2023.08.08.552077 | HepG2, K562, SK-N-SH |
+| [`StarrSeqDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/StarrSeq) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/StarrSeq_example.ipynb), [Usage Example with LegNet](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/StarrSeq_example_model_legnet.ipynb)) | [Sequence determinants of human gene regulatory elements](https://www.nature.com/articles/s41588-021-01009) | 10.1038/s41588-021-01009-4 | HepG2, GP5D, RPE1 |
+| [`SureDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Sure) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SureDataset_example.ipynb)) | [Genome-wide mapping of autonomous promoter activity in human cells](https://pmc.ncbi.nlm.nih.gov/articles/PMC5498152/) | 10.1038/nbt.3754 | HepG2, K562 |
+| [`SharpDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Sharpr) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SharprDataset_example.ipynb)) | [Genome-scale high-resolution mapping of activating and repressive nucleotides in regulatory regions](https://pmc.ncbi.nlm.nih.gov/articles/PMC5125825/) | 10.1038/nbt.3678 | HepG2, K562 |
+| [`FluorescenceDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Fluorescence) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/FluorescenceDataset_example.ipynb)) | [Strategies for effectively modelling promoter-driven gene expression using transfer learning](https://pmc.ncbi.nlm.nih.gov/articles/PMC10002662/) | 10.1101/2023.02.24.529941 | JURKAT, K562, THP1 |
 | BACTERIA | ----------- | ----------- | ----------- |
-| `EvfratovDataset` | [Application of sorting and next generation sequencing to study 5΄-UTR influence on translation efficiency in Escherichia coli](https://academic.oup.com/nar/article/45/6/3487/2605795) | 10.1093/nar/gkw1141 | The JM109 E. coli strain |
-| `DeepPromoterDataset` | [Synthetic promoter design in Escherichia coli based on a deep generative network](https://academic.oup.com/nar/article/48/12/6403/5837049) | 10.1093/nar/gkaa325 | The DH5α E. coli strain |
+| [`EvfratovDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Evfratov) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/EvfratovDataset_example.ipynb)) | [Application of sorting and next generation sequencing to study 5΄-UTR influence on translation efficiency in Escherichia coli](https://academic.oup.com/nar/article/45/6/3487/2605795) | 10.1093/nar/gkw1141 | The JM109 E. coli strain |
+| [`DeepPromoterDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/DeepPromoter) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/DeepPromoterDataset_example.ipynb)) | [Synthetic promoter design in Escherichia coli based on a deep generative network](https://academic.oup.com/nar/article/48/12/6403/5837049) | 10.1093/nar/gkaa325 | The DH5α E. coli strain |
 | YEAST | ----------- | ----------- | ----------- |
-| `DreamDataset` | [Random Promoter DREAM Challenge Consortium. Evaluation and optimization of sequence-based gene regulatory deep learning models.](https://pmc.ncbi.nlm.nih.gov/articles/PMC10888977/) | 10.1101/2023.04.26.538471 | strains S288C::ura3, etc |
-| `VaishnavDataset` | [The evolution, evolvability and engineering of gene regulatory DNA](https://www.nature.com/articles/s41586-022-04506-6) | 10.1038/s41586-022-04506-6 | strains Y8205, S288C::ura3, etc |
+| [`DreamDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Dream) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/DreamDataset_example.ipynb)) | [Random Promoter DREAM Challenge Consortium. Evaluation and optimization of sequence-based gene regulatory deep learning models.](https://pmc.ncbi.nlm.nih.gov/articles/PMC10888977/) | 10.1101/2023.04.26.538471 | strains S288C::ura3, etc |
+| [`VaishnavDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Vaishnav) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/VaishnavDataset_example.ipynb)) | [The evolution, evolvability and engineering of gene regulatory DNA](https://www.nature.com/articles/s41586-022-04506-6) | 10.1038/s41586-022-04506-6 | strains Y8205, S288C::ura3, etc |
 | DROSOPHILA | ----------- | ----------- | ----------- |
-| `DeepStarrDataset` | [DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers](https://www.nature.com/articles/s41588-022-01048-5) | 10.1038/s41588-022-01048-5 | Drosophila S2 |
+| [`DeepStarrDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/DeepStarr) ([Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/DeepStarrDataset_example.ipynb)) | [DeepSTARR predicts enhancer activity from DNA sequence and enables the de novo design of synthetic enhancers](https://www.nature.com/articles/s41588-022-01048-5) | 10.1038/s41588-022-01048-5 | Drosophila S2 |
 
 ## Planned datasets
 | Priority | Artcile and link | DOI |
-| ----------- | ----------- | ----------- |
+|:-----------:|:-----------:|-----------|
 | HUMAN | ----------- | ----------- |
 | 1 | [The regulatory grammar of human promoters uncovered by MPRA-trained deep learning](https://www.biorxiv.org/content/10.1101/2024.07.09.602649v2) | 10.1101/2024.07.09.602649 |
 | 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
