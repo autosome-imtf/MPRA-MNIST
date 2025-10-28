@@ -52,7 +52,7 @@ class SureDataset(MpraDataset):
     permute : bool, optional, default=True
         Whether to transpose one-hot encoded sequence matrices from 
         (sequence_length, 4) to (4, sequence_length) format.
-        This converts from sequence-first to channels-first format for CNN compatibility.
+        This converts from sequence-first to channels-first format for padding fuctions.
     genomic_regions : str | List[Dict], optional
         Genomic regions to include or exclude. Can be specified as:
         - Path to BED file (str)
@@ -147,14 +147,13 @@ class SureDataset(MpraDataset):
             Specifies which genomic dataset to load.
         task : str
             Type of machine learning task. Must be one of:
-            - "classification": for binary classification tasks
+            - "classification": for multi-class classification tasks
             - "regression": for continuous value prediction tasks
             Determines how target values are processed and interpreted.
         permute : bool, optional, default=True
             Whether to transpose one-hot encoded sequence matrices from 
             (sequence_length, 4) to (4, sequence_length) format.
-            This is done for compatibility with certain model architectures
-            that expect channels-first input format.
+            This is done for compatibility with padding functions.
         genomic_regions : str | List[Dict], optional
             Genomic regions to include/exclude. Can be:
             - Path to BED file
