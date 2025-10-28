@@ -1,6 +1,7 @@
 import pandas as pd
 import os
 from typing import List, Union, Dict, Optional
+from collections import defaultdict
 import pyfaidx
 import subprocess
 import bioframe as bf
@@ -27,7 +28,7 @@ class KircherDataset(MpraDataset):
         CELL_TYPE (dict): Mapping of elements to their corresponding cell types
 
     Examples:
-        >>> # Load all promoter elements
+        >>> # Load data for specific regulatory elements
         >>> dataset = KircherDataset(elements=['F9', 'HBB', 'LDLR'])
         >>> 
         >>> # Load data for specific cell types
@@ -392,3 +393,41 @@ class KircherDataset(MpraDataset):
             raise ValueError(
                 f"Error processing {chromosome}:{pos}-{ref}>{alt}: {str(e)}"
             ) from e
+        
+    @classmethod
+    def Cell_Type_Map(cls):
+        """
+    Transforms the CELL_TYPE dictionary into a cell line-grouped format.
+    
+    The original CELL_TYPE dictionary contains mappings of elements (promoters and enhancers)
+    to their corresponding cell lines. This method inverts this relationship by grouping
+    all elements under their respective cell lines.
+
+    Use it to print detailed info about cell_type - elements
+    
+    Returns:
+        dict: A dictionary where keys are cell line names and values are sorted lists 
+              of corresponding elements.
+              
+        Example return value:
+        {
+            'HepG2': ['F9', 'LDLR', 'LDLR.2', 'SORT1', 'SORT1-flip', 'SORT1.2'],
+            'HeLa': ['FOXE1'],
+            'HEL92.1.7': ['BCL11A', 'GP1BA', 'HBB', 'HBG1'],
+            ...
+        }
+    
+    Note:
+        - The method uses the class attribute CELL_TYPE as source data
+        - Returns a standard dictionary with cell lines as keys and sorted lists as values
+    """
+
+        kircher_split = defaultdict(list)
+        
+        for element, cell_line in cls.CELL_TYPE.items():
+            kircher_split[cell_line].append(element)
+        
+        kircher_split = {cell_line: sorted(elements) 
+                        for cell_line, elements in kircher_split.items()}
+
+        return kircher_split
