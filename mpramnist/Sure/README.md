@@ -69,6 +69,7 @@ This is done for compatibility with padding functions.
 Genomic regions to include/exclude. Can be:
 - Path to BED file
 - List of dictionaries with 'chrom', 'start', 'end' keys
+- Uses 0-based indexing for genomic coordinates
 
 ### **exclude_regions : bool**
 
@@ -92,7 +93,9 @@ Root directory where data is stored. If None, uses default data path.
 
 2) **Permute Parameter**: When `permute=True`, the function transforms tensors from shape (sequence_length, 4) to (4, sequence_length).
 
-3) **Example Usage**: See [Sure Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SureDataset_example.ipynb]) for detailed usage example and training
+3) **Genomic Coordinates**: Use the `genomic_regions` and `exclude_regions` parameters to select or exclude specific genomic regions across chromosomes in the dataset. *Uses 0-based indexing for genomic coordinates.*
+
+4) **Example Usage**: See [Sure Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SureDataset_example.ipynb]) for detailed usage example and training
 
 ## Examples
 
