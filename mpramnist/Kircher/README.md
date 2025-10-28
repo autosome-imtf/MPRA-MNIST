@@ -44,7 +44,7 @@ These experimentally characterized sequences are proposed as a benchmark dataset
 
 The regression task involves predicting scalar values of regulatory activity for the corresponding cell line.
 
-### Представление данных
+### Data Representation
 
 ```
 Element     Cell_Type       Chromosome      Position        Ref     Alt     Value
@@ -63,29 +63,46 @@ TERT-HEK	HEK293T	            5	           1295069	    G	    T   	-0.4
 ## Parameters
 
 ### **split : str, optional**
+
 Specifies how to split the data. Currently only "test" is supported.
 Default is "test".
+
 ### **length : int, optional**  
+
 Length of the sequence for the differential expression experiment. 
 Must be positive integer. Default is 200.
+
 ### **elements : Union[list[str], str], optional**
+
 List of promoter-enhancer elements to include. If None, includes all elements.
 Can be a single string or list of strings.
+
 ### **cell_type : Union[list[str], str], optional**
+
 List of cell types to filter by. If None, includes all elements.
 Can be a single string or list of strings.
+
 ### **genomic_regions : str | List[Dict], optional**
+
 Genomic regions to include/exclude. Can be:
 - Path to BED file
 - List of dictionaries with 'chrom', 'start', 'end' keys
 - Uses 0-based indexing for genomic coordinates
+
 ### **exclude_regions : bool**
+
 If True, exclude the specified regions instead of including them.
+
 ### **transform : callable, optional**
+
 Transformation applied to each sequence object.
+
 ### **target_transform : callable, optional**
+
 Transformation applied to the target data (**expression values).
+
 ### **root : str, optional**
+
 Root directory where data is stored. If None, uses default data directory.
 
 ## Data Handling Considerations
