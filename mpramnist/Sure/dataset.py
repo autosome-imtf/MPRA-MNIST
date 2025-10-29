@@ -51,7 +51,7 @@ class SureDataset(MpraDataset):
         - "regression": Continuous regression with average expression values
     permute : bool, optional, default=True
         Whether to transpose one-hot encoded sequence matrices from 
-        (sequence_length, 4) to (4, sequence_length) format.
+        (4, sequence_length) to (sequence_length, 4). format.
         This converts from sequence-first to channels-first format for padding fuctions.
     genomic_regions : str | List[Dict], optional
         Genomic regions to include or exclude. Can be specified as:
@@ -152,7 +152,7 @@ class SureDataset(MpraDataset):
             Determines how target values are processed and interpreted.
         permute : bool, optional, default=True
             Whether to transpose one-hot encoded sequence matrices from 
-            (sequence_length, 4) to (4, sequence_length) format.
+            (4, sequence_length) to (sequence_length, 4). format.
             This is done for compatibility with padding functions.
         genomic_regions : str | List[Dict], optional
             Genomic regions to include/exclude. Can be:
