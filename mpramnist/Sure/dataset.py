@@ -176,11 +176,16 @@ class SureDataset(MpraDataset):
         self.exclude_regions = exclude_regions
         self.genome_id = genome_id
         self.cell_type = self.CELL_TYPES
+
         if isinstance(genome_id, list):
             pass
         else:
             self.genome_id = [genome_id]
+
         self.ds = {}
+
+        # First, collect all data from all specified genomes
+        all_data = []
         for genome in self.genome_id:
             if genome not in self.GENOME_IDS:
                 raise ValueError(f"genome_id value must be one of {self.GENOME_IDS}")
@@ -195,34 +200,44 @@ class SureDataset(MpraDataset):
 
             # Apply genomic region filtering
             df = self.filter_by_genomic_regions(df)
-    
-            if self.genomic_regions is None:
-                df = df[df["split"].isin(self.split)].reset_index(drop=True)
-            else:
-                self.split = "genomic region"
+            all_data.append(df)
+
+        # Combine all data into a single DataFrame
+        combined_df = pd.concat(all_data, ignore_index=True)
+
+        # Filter sequence duplicates between splits
+        if self.split[0] in ["val", "test"]:
+            # For val/test splits: remove sequences that appear in train split
+            train_sequences = set(combined_df[combined_df["split"] == "train"]["sequence"])
+            combined_df = combined_df[combined_df["split"].isin(self.split)]
             
-            if self.task == "classification":
-                self.output_names = ["K562_bin", "HepG2_bin"]
-                self.num_classes_per_output = [5, 5]
-                self.num_outputs = np.sum(self.num_classes_per_output)
-                targets = df[self.output_names].to_numpy()
+            # Remove sequences from val/test that are present in train
+            mask = ~combined_df["sequence"].isin(train_sequences)
+            combined_df = combined_df[mask].reset_index(drop=True)
+            
+            print(f"After filtering duplicates: {len(combined_df)} sequences in {self.split[0]}")
+        else:
+            # For train split: simply select train split as before
+            combined_df = combined_df[combined_df["split"].isin(self.split)].reset_index(drop=True)
 
-            elif self.task == "regression":
-                self.output_names = ["avg_K562_exp", "avg_HepG2_exp"]
-                self.num_outputs = 2
-                targets = df[self.output_names].to_numpy()
+        # Process targets based on task type
+        if self.task == "classification":
+            self.output_names = ["K562_bin", "HepG2_bin"]
+            self.num_classes_per_output = [5, 5]
+            self.num_outputs = np.sum(self.num_classes_per_output)
+            targets = combined_df[self.output_names].to_numpy()
 
-            seq = df.sequence.to_numpy()
+        elif self.task == "regression":
+            self.output_names = ["avg_K562_exp", "avg_HepG2_exp"]
+            self.num_outputs = 2
+            targets = combined_df[self.output_names].to_numpy()
 
-            if "targets" in self.ds:
-                self.ds["targets"] = np.concatenate((self.ds["targets"], targets))
+        seq = combined_df.sequence.to_numpy()
 
-                self.ds["seq"] = np.concatenate((self.ds["seq"], seq))
-            else:
-                self.ds["targets"] = targets
-                self.ds["seq"] = seq
+        self.ds["targets"] = targets
+        self.ds["seq"] = seq
 
-            self.name_for_split_info = self.prefix + genome + "_"
+        self.name_for_split_info = self.prefix + "_".join(self.genome_id) + "_"
 
     def filter_by_genomic_regions(self, df: pd.DataFrame) -> pd.DataFrame:
         """
