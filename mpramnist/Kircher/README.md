@@ -42,7 +42,11 @@ These experimentally characterized sequences are proposed as a benchmark dataset
 
 ### Regression
 
-The regression task involves predicting scalar values of regulatory activity for the corresponding cell line.
+Measured activity values represent the **difference between** *alternative* and *reference* sequence **activities**.
+
+But the regression task involves predicting scalar values of **regulatory activity** of *alternative* and *reference* sequences for the corresponding cell line.
+
+Therefore, the difference between the predicted alternative and reference sequence activities must be computed.
 
 ### Data Representation
 
@@ -109,11 +113,11 @@ Root directory where data is stored. If None, uses default data directory.
 
 1) The data is intended exclusively for validation of machine learning models.
 
-2) The dataset contains information about nucleotide positions in the hg38 genome, including reference and alternative nucleotide variants. For your specific task, use the `length` parameter (default: 200) to extract nucleotide sequences of the specified length with the variant nucleotide at the center.
+2) The dataset contains information about nucleotide positions in the hg38 genome, including reference and alternative nucleotide variants. For your specific task, use the `length` parameter (default: 200) to extract nucleotide sequences with specified length and the variant nucleotide at the center.
 
 3) When using the dataset, the hg38 genome is automatically loaded if not previously available, and nucleotide sequences of the specified length are extracted with the variant nucleotide positioned at the center.
 
-4) Activity values represent the difference between alternative and reference sequence activities.
+4) Measured activity values represent the difference between alternative and reference sequence activities.
 
 5) Use the `cell_type` parameter to filter elements from specific cell types.
 
@@ -193,11 +197,45 @@ See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/exampl
 
 ## Original Benchmark Quality
 
-Pearson correlation, r = 0.49 for SORT1 (HepG2), 0.65 for PKLR (K562), 0.66 for LDLR (HepG2), and 0.51 for F9 (HepG2)
+Pearson correlation, r 
+
+    r = 0.49 for SORT1 (HepG2)
+    
+    r = 0.65 for PKLR (K562)
+
+    r = 0.66 for LDLR (HepG2)
+    
+    r = 0.51 for F9 (HepG2)
 
 ## Achieved Quality Using LegNet Model in MPRA-MNIST
 
-Pearson correlation, r = 0.4 for SORT1 (HepG2), 0.54 for PKLR (K562), 0.66 for LDLR (HepG2), and 0.52 for F9 (HepG2)
+Pearson correlation, r
 
+    r = 0.4 for SORT1 (HepG2)
+    
+    r = 0.54 for PKLR (K562)
 
+    r = 0.66 for LDLR (HepG2)
+    
+    r = 0.52 for F9 (HepG2)
+
+## Citation
+
+When using this dataset, please cite the original publication:
+
+[Kircher et al. 2019](https://www.nature.com/articles/s41467-019-11526-w) 
+
+Kircher, M., Xiong, C., Martin, B. et al. Saturation mutagenesis of twenty disease-associated regulatory elements at single base-pair resolution. Nat Commun 10, 3583 (2019). https://doi.org/10.1038/s41467-019-11526-w
+
+```bibtex
+    @article{kircher2019saturation,
+        title={Saturation mutagenesis of twenty disease-associated regulatory elements at single base-pair resolution},
+        author={Kircher, M., Xiong, C., Martin, B. and others},
+        journal={Nat. Commun.},
+        volume={10},
+        pages={3583},
+        year={2019},
+        doi={10.1038/s41467-019-11526-w}
+    }
+```
 

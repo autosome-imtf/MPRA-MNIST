@@ -193,7 +193,22 @@ Pearson correlation, r
 ## Citation
 
 When using this dataset, please cite the original publication:
-[Agarwal et al. 2025](https://www.nature.com/articles/s41586-024-08430-9) [Agarwal, V., Inoue, F., Schubach, M. et al. Massively parallel characterization of transcriptional regulatory elements. Nature 639, 411–420 (2025). https://doi.org/10.1038/s41586-024-08430-9]
+
+[Agarwal et al. 2025](https://www.nature.com/articles/s41586-024-08430-9) 
+
+Agarwal, V., Inoue, F., Schubach, M. et al. Massively parallel characterization of transcriptional regulatory elements. Nature 639, 411–420 (2025). https://doi.org/10.1038/s41586-024-08430-9
+
+```bibtex
+    @article{agarwal2025massively,
+        title={Massively parallel characterization of transcriptional regulatory elements},
+        author={Agarwal, V. and Inoue, F. and Schubach, M. and others},
+        journal={Nature},
+        volume={639},
+        pages={411--420},
+        year={2025},
+        doi={10.1038/s41586-024-08430-9}
+    }
+```
 
     
 

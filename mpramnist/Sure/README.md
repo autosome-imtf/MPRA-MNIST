@@ -22,7 +22,7 @@ The classification task involves predicting two independent class labels (rangin
 
 ### Regression Task
 
-The regression task involves predicting two continuous values representing expression levels (normalized read counts) for each of the two cell lines - K562 and HepG2.
+The regression task involves predicting the average expression level (calculated from normalized read counts) for each of the two cell lines - K562 and HepG2.
 
 ```
     chr     start       end     strand      split       seq                  avg_K562_exp  avg_HepG2_exp
@@ -180,3 +180,22 @@ No other study has used this data for pretraining, so we don't have information 
 | SuRE44_HG01241 | <span style="color:blue">0.573</span> | <span style="color:red">0.317</span> | --- | --- |
 | SuRE45_HG03464 | <span style="color:purple">**0.624**</span> | <span style="color:red">0.320</span> | --- | --- |
 
+## Citation
+
+When using this dataset, please cite the original publication:
+
+[van Arensbergen J et al. 2017](https://pmc.ncbi.nlm.nih.gov/articles/PMC5498152/) 
+
+van Arensbergen J, FitzPatrick VD, de Haas M, Pagie L, Sluimer J, Bussemaker HJ, van Steensel B. Genome-wide mapping of autonomous promoter activity in human cells. Nat Biotechnol. 2017 Feb;35(2):145-153. doi: 10.1038/nbt.3754. Epub 2016 Dec 26. PMID: 28024146; PMCID: PMC5498152.
+
+```bibtex
+    @article{arensbergen2017Genome-wide,
+        title={Genome-wide mapping of autonomous promoter activity in human cells},
+        author={van Arensbergen J, FitzPatrick VD, de Haas M, Pagie L, Sluimer J, Bussemaker HJ, van Steensel B},
+        journal={Nat. Biotechnol.},
+        volume={35(2)},
+        pages={145--153},
+        year={2017},
+        doi={10.1038/nbt.3754}
+    }
+```
