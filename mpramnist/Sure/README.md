@@ -36,7 +36,7 @@ See [Sure Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/example
 
 ## Parameters
 
-### **split : str | List[str]**
+### **split : str**
 
 Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
 
@@ -92,6 +92,7 @@ Root directory where data is stored. If None, uses default data path.
 1) **Variable Sequence Lengths**: The main characteristic of this data is that sequence lengths vary. To handle this, we use an approach where sequences in each batch are padded with "N" nucleotides to match the length of the longest sequence in the batch. The `pad_collate` function is used for implementation. However, to enable this function to work properly, the shape of sequence tensors needs to be changed, which is achieved by setting the `permute=True` parameter.
 
 2) **Permute Parameter**: When `permute=True`, the function transforms tensors from shape (4, sequence_length) to (sequence_length, 4).
+
 3) **Genomic Coordinates**: Use the `genomic_regions` and `exclude_regions` parameters to select or exclude specific genomic regions across chromosomes in the dataset. *Uses 0-based indexing for genomic coordinates.*
 
 4) **Example Usage**: See [Sure Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SureDataset_example.ipynb]) for detailed usage example and training

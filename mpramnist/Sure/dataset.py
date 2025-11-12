@@ -136,7 +136,7 @@ class SureDataset(MpraDataset):
         """
         Attributes
         ----------
-        split : str | List[str]
+        split : str
             Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
         genome_id : str
             Identifier of the genome to use. Must be one of:
