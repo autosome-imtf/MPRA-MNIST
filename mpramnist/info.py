@@ -216,13 +216,9 @@ INFO = {
     },
     "Sharpr": {
         "python_class": "Sharpr",
-        "description": "The Sharpr dataset contains activity measurements for approximately 477 thousand synthetic promoter sequences, each 145 bp long, tested in K562 and HepG2 cell lines. About 427 thousand sequences are used for training. The task is to predict 12 scalar values representing gene expression activity measurements.",
-        "url_Sharpr_test.tsv": "https://zenodo.org/records/15195607/files/Sharpr_test.tsv?download=1",
-        "MD5_Sharpr_test.tsv": "c93d3bd2b5a9e8e8f71699af50a81614",
-        "url_Sharpr_train.tsv": "https://zenodo.org/records/15195607/files/Sharpr_train.tsv?download=1",
-        "MD5_Sharpr_train.tsv": "b862d888630bda8de8f968fa930e2203",
-        "url_Sharpr_val.tsv": "Sharpr_val.tsv",
-        "MD5_Sharpr_val.tsv": "c93d3bd2b5a9e8e8f71699af50a81614",
+        "description": "The Sharpr dataset contains activity measurements for approximately 487 thousand synthetic promoter sequences, each 145 bp long, tested in K562 and HepG2 cell lines. About 457 thousand sequences are used for training. The task is to predict 12 scalar values representing gene expression activity measurements.",
+        "url_Sharpr_all_chr.tsv": "https://zenodo.org/records/17723590/files/Sharpr_all_chr.tsv?download=1",
+        "MD5_Sharpr_all_chr.tsv": "a3f66e56506013e58d869258922bce46",
         "scalar_features": {},
         "vector_features": {},
         "target_columns": {
@@ -241,7 +237,7 @@ INFO = {
         },
         "task": "Multilabel",
         "split": {"train", "val", "test"},
-        "Sharpr_split": {"train": 457174, "val": 10130, "test": 10130},
+        "Sharpr_split": {"train": 457174, "val": 19833, "test": 10130},
     },
     "Fluorescence": {
         "python_class": "Fluorescence",
