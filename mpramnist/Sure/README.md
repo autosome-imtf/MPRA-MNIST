@@ -67,6 +67,7 @@ This is done for compatibility with padding functions.
 ### **genomic_regions : str | List[Dict], optional**
 
 Genomic regions to include/exclude. Can be:
+- Uses hg19 reference genome
 - Path to BED file
 - List of dictionaries with 'chrom', 'start', 'end' keys
 - Uses 0-based indexing for genomic coordinates
