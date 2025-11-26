@@ -372,8 +372,8 @@ INFO = {
     "DeepStarr": {
         "python_class": "DeepStarr",
         "description": "The DeepSTARR data contains information on enhancer activity in D. melanogaster S2 cells. The dataset includes 282,892 sequences, each 249 nucleotides in length. The regression task is to predict two independent values of enhancer activity for two types of promoters.",
-        "url_DeepStarr_all_chr.tsv": "https://zenodo.org/records/17453603/files/DeepStarr_all_chr.tsv?download=1",
-        "MD5_DeepStarr_all_chr.tsv": "05addbb00e662cba478d13f1272e088d",
+        "url_DeepStarr_all_chr.tsv": "https://zenodo.org/records/17724143/files/DeepStarr_all_chr.tsv?download=1",
+        "MD5_DeepStarr_all_chr.tsv": "78fc4954eb5cf5343beff1788c7c225c",
         "scalar_features": {},
         "vector_features": {},
         "target_columns": {"Dev_log2", "Hk_log2"},
