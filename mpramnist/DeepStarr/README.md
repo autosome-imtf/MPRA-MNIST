@@ -2,7 +2,7 @@
 
 ## Main Information
 
-The DeepSTARR dataset ([de Almeida et al. 2022](https://www.nature.com/articles/s41588-022-01048-5)) is based on a **genome-wide STARR-seq screen** in D. melanogaster S2 cells to quantitatively measure the activity of **thousands of native genomic enhancers** towards two distinct promoter types: developmental (8) and housekeeping (*hsp70*).
+The DeepSTARR dataset ([de Almeida et al. 2022](https://www.nature.com/articles/s41588-022-01048-5)) is based on a **genome-wide STARR-seq screen** in D. melanogaster S2 cells to quantitatively measure the activity of **thousands of native genomic enhancers** towards two distinct promoter types: developmental (*sim*) and housekeeping (*hsp70*).
 
 **The dataset comprises 249 bp sequences**, which correspond to enhancer regions identified as peaks in the original screen, resized to a fixed length. The target variable (`Dev_log2` and `Hk_log2`) represents the quantitative enhancer activity, calculated as **log2((RNA+1)/(DNA+1))**, where RNA and DNA are the read counts from the STARR-seq reporter RNA and input DNA libraries, respectively. This log2 fold-change (log2FC) metric quantifies the transcriptional activation strength of each enhancer sequence for the corresponding promoter type.
 
