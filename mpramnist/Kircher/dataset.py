@@ -370,11 +370,15 @@ class KircherDataset(MpraDataset):
             return None
 
         half_len = length // 2
-        start = pos - half_len - 1
-        end = pos + half_len
         
-        if length % 2 == 0:
-            end -= 1
+        if length % 2 == 1:  
+            start = pos - half_len
+            end = pos + half_len + 1
+            ref_pos_in_seq = half_len  
+        else:  
+            start = pos - half_len
+            end = pos + half_len
+            ref_pos_in_seq = half_len
 
         try:
             ref_pos_in_seq = half_len
