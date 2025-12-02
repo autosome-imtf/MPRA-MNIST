@@ -2,20 +2,57 @@
 
 ## Main information
 
-The Sharpr (Systematic High-resolution Activation and Repression Profiling using Reporters) dataset is based on the Sharpr-MPRA dataset, which contains expression activity measurements for approximately 487 thousand synthetic promoter sequences of 145 bp length, tested in K562 and HepG2 cell lines (Ernst et al. 2016). For testing and validation, we use approximately 10 thousand sequences from chromosome 18 and 19 thousand sequences from chromosome 8, respectively. We recommend using all other sequences for training, as was done in the original study (Reddy et al. 2024). The output data (labels) consist of 12 scalar values: 8 measurements (2 cell lines × 2 underlying promoters × 2 replicates) and 4 values representing replicate-averaged measurements.
+The Sharpr (Systematic High-resolution Activation and Repression Profiling using Reporters) dataset is based on the original Sharpr-MPRA dataset ([Ernst et al. 2016](https://pmc.ncbi.nlm.nih.gov/articles/PMC5125825/)), which contains expression activity measurements for approximately 487,000 synthetic promoter sequences of 145 bp length. These sequences are derived from DNase I peaks in K-562, HepG2, HUVEC, and H1-hESC cells. Each promoter is cloned upstream of either a minimal TATA promoter or a strong SV40 promoter, and promoter-driven expression is measured in both K562 and HepG2 cell lines with two biological replicates, resulting in 8 raw measurements per sequence (2 cell lines × 2 promoters × 2 replicates).
+
+Following the modeling approach by [Movva et al. 2019](https://pubmed.ncbi.nlm.nih.gov/31206543/), the dataset includes **replicate averaging**: the average of two replicates is computed, resulting in 12 total outputs per input sequence (8 individual replicates + 4 averaged values)
+
+The dataset is partitioned as in the original study ([Reddy et al. 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC10002662/)):
+
+- **Training**: All sequences except those from chromosomes 8 and 18
+
+- **Validation**: ~19,000 sequences from chromosome 8
+
+- **Testing**: ~10,000 sequences from chromosome 18
 
 Our implementation and preprocessed data are adapted from:
     https://github.com/anikethjr/promoter_models/blob/main/promoter_modelling/dataloaders/Sharpr_MPRA.py
+
+### Data Processing Pipeline
+
+The raw experimental data undergoes the following preprocessing steps:
+
+1) **Read count generation**: DNA and RNA counts are generated following [Kheradpour et al. 2013](https://pubmed.ncbi.nlm.nih.gov/23512712/), with a pseudo-count of 1 added to all counts
+
+2) **Library size normalization**: RNA counts are divided by the total RNA count for the experiment; DNA counts are divided by the total DNA count
+
+3) **Log fold change calculation**: The log₂ ratio of normalized RNA to DNA counts is computed: log₂((RNA/total_RNA) / (DNA/total_DNA))
+
+4) **Quality filtering**: Barcodes with original DNA counts < 20 are treated as missing data
+
+5) **Background subtraction (pilot design)**: For initial experiments, values are normalized by subtracting the average activity of control tiles (positions #1 and #9) to estimate background
+
+6) **Z-score normalization**: Column-wise z-score normalization is applied to the log fold changes for each of the 12 tasks, resulting in outputs with mean 0 and variance 1
 
 ## Tasks
 
 ### Regression Task
 
-The raw counts from the experiments were processed by:
- 1. Computing log2(RNA+1 / DNA+1) for each 145bp sequence in each of the 12 tasks (described below) in the two cell lines - K562 and HepG2
- 2. Applying column-wise z-score normalization to the log fold-changes (i.e., each task's output values had mean 0 and variance 1)
+The regression task involves predicting 12 normalized expression values for each 145bp promoter sequence. These values represent the processed log fold changes of expression activity across different experimental conditions:
 
-The regression task involves predicting the expression level (calculated from normalized log fold-changes) for each replic of the two cell lines - K562 and HepG2.
+- **2 cell lines**: K562 and HepG2
+
+- **2 core promoters**: Minimal TATA promoter (minp) and SV40 promoter (sv40p)
+
+- **3 representations**: Two biological replicates (rep1, rep2) and their average (avg)
+
+The 12 target columns are:
+
+    k562_minp_rep1, k562_minp_rep2, k562_minp_avg,
+    k562_sv40p_rep1, k562_sv40p_rep2, k562_sv40p_avg,
+    hepg2_minp_rep1, hepg2_minp_rep2, hepg2_minp_avg,
+    hepg2_sv40p_rep1, hepg2_sv40p_rep2, hepg2_sv40p_avg
+
+### Data Representation
 
 ```    
     name	chromosome	start	end	strand	seq	k562_minp_rep1	k562_minp_rep2	k562_minp_avg	... split
@@ -30,11 +67,11 @@ See [Sharpr Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examp
 
 ## Parameters
 
-### **split : str**
+### **`split : str`**
 
-Defines which split to use (e.g., 'train', 'val', 'test', or list of fold indices).
+Defines which split to use (e.g., `'train'`, `'val'`, `'test'`, or list of fold indices).
 
-### **cell_type : List[str]**
+### **`cell_type : List[str]`**
 
 List of column names with activity data to be used as targets.
 Must be a subset of 
@@ -46,29 +83,29 @@ Must be a subset of
         "hepg2_sv40p_rep1", "hepg2_sv40p_rep2", "hepg2_sv40p_avg",
     ]
 
-### **genomic_regions : str | List[Dict], optional**
+### **`genomic_regions : str | List[Dict]`, optional**
 
 Genomic regions to include/exclude. Can be:
 - Uses hg19 reference genome
 - Path to BED file
-- List of dictionaries with 'chrom', 'start', 'end' keys
+- List of dictionaries with `'chrom'`, `'start'`, `'end'` keys
 - Uses 0-based indexing for genomic coordinates
 
-### **exclude_regions : bool**
+### **`exclude_regions : bool`**
 
-If True, exclude the specified regions instead of including them
+If `True`, exclude the specified regions instead of including them
 
-### **transform : callable, optional**
+### **`transform : callable`, optional**
 
 Transformation applied to each sequence object.
 
-### **target_transform : callable, optional**
+### **`target_transform : callable`, optional**
 
 Transformation applied to the target data.
 
-### **root : str, optional**
+### **`root : str`, optional**
 
-Root directory where data is stored. If None, uses default data path.
+Root directory where data is stored. If `None`, uses default data path.
 
 ## Data Handling Considerations
 
@@ -104,19 +141,32 @@ Root directory where data is stored. If None, uses default data path.
  ... 'hepg2_sv40p_avg']
 ```
 
-### 2) Dataset Creation
+### 2) Initialize transforms
+
+```python
+    train_transform = t.Compose(
+        [
+            t.ReverseComplement(0.5), # Set it to 0.0 for validation and test
+            t.Seq2Tensor(),
+        ]
+    )
+``` 
+
+### 3) Dataset Creation
 
 ```python
     train_dataset = SharprDataset(
         split="train",
         cell_type=SharprDataset.CELL_TYPES,
+        transform = transform
     )   
 
     # Load regression data with genomic region filtering
     test_dataset = SharprDataset(
         split="test",
         cell_type = SharprDataset.CELL_TYPES,
-        genomic_regions="promoters.bed"
+        genomic_regions="promoters.bed",
+        transform = transform
     )
 
     # Load data excluding specific genomic regions
@@ -125,11 +175,12 @@ Root directory where data is stored. If None, uses default data path.
         split="val",
         cell_type = SharprDataset.CELL_TYPES,
         genomic_regions=regions,
-        exclude_regions=True
+        exclude_regions=True,
+        transform = transform
     )
 ```
 
-### 3) Dataloader Creation
+### 2) Dataloader Creation
 
 ```python
     # Create DataLoader for training
