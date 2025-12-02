@@ -45,7 +45,7 @@ class VaishnavDataset(MpraDataset):
         Required for test split only. Specifies test scenario:
         - "drift": The sequences designed by the genetic algorithm 
         - "native": Native yeast promoter test sequences
-        - "paired": Paired reference (native)/alternative (single mutations into each native sequence) sequences
+        - "paired": Paired reference (seq from drift)/alternative (seq with single mutations) sequences
     transform : callable, optional
         Transformation function applied to each sequence. Useful for data augmentation
         or sequence encoding. Should accept a sequence string and return transformed data.
@@ -99,7 +99,7 @@ class VaishnavDataset(MpraDataset):
     - Test scenarios:
         * "native": Native yeast promoter test sequences
         * "drift": The sequences designed by the genetic algorithm 
-        * "paired": Paired reference (native)/alternative (single mutations into each native sequence) sequences
+        * "paired": Paired reference (seq from drift)/alternative (seq with single mutations) sequences
     - Target values: 
         * For "paired" test type: delta_measured (difference in activity)
         * For other types: label (absolute activity measurement)
@@ -187,7 +187,7 @@ class VaishnavDataset(MpraDataset):
 
         Constructs the appropriate filename according to the dataset configuration:
         - Training/validation: {env_type}_train_val
-        - Test: {env_type}_{test_type}
+        - Test: {env_type}_{test_dataset_type}
 
         Parameters
         ----------
@@ -281,7 +281,7 @@ class VaishnavDataset(MpraDataset):
             self.ds["seq_alt"] = self.df.seq_alt.to_numpy()
 
     def parse_dataset_config(
-        self, split: str, complex_or_defined: str, test_type: str
+        self, split: str, complex_or_defined: str, test_dataset_type: str
     ) -> str:
         """
         Parse and validate dataset configuration parameters.
@@ -295,7 +295,7 @@ class VaishnavDataset(MpraDataset):
             Data split specification
         complex_or_defined : str
             Environmental context type
-        test_type : str
+        test_dataset_type : str
             Test scenario type
 
         Returns
@@ -306,7 +306,7 @@ class VaishnavDataset(MpraDataset):
         Raises
         ------
         ValueError
-            If any parameter is invalid or test_type is None for test split
+            If any parameter is invalid or test_dataset_type is None for test split
         """
 
         # Default valid splits
@@ -320,16 +320,16 @@ class VaishnavDataset(MpraDataset):
             raise ValueError(
                 f"Invalid dataset_env_type value: {complex_or_defined}. Expected 'complex' or 'defined'."
             )
-        if test_type is not None and test_type not in ["native", "drift", "paired"]:
+        if test_dataset_type is not None and test_dataset_type not in ["native", "drift", "paired"]:
             raise ValueError(
-                f"Invalid test_dataset_type value: {test_type}. Expected 'native', 'drift' or 'paired'."
+                f"Invalid test_dataset_type value: {test_dataset_type}. Expected 'native', 'drift' or 'paired'."
             )
-        elif test_type is None and split == "test":
+        elif test_dataset_type is None and split == "test":
             raise ValueError(
-                "Parameter 'test_type' cannot be None for test split. "
+                "Parameter 'test_dataset_type' cannot be None for test split. "
                 "Expected one of: 'native', 'drift', 'paired'."
             )
 
-        target_column = "delta_measured" if test_type == "paired" else "label"
+        target_column = "delta_measured" if test_dataset_type == "paired" else "label"
 
         return split, target_column
