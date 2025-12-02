@@ -24,15 +24,19 @@ The regression task is to predict a single scalar value representing normalized 
 
 2) **Normalization**: Promoter strength (S) was calculated relative to positive and negative controls using the formula:
 
+S = ( (F/OD600)_clone - (F/OD600)_blank ) / ( (F/OD600)_BBA_J23_119 - (F/OD600)_blank )
+
+Or in methematical notation:
+
 $$S = \frac{(F/OD600)_{\text{clone}} - (F/OD600)_{\text{blank}}}{(F/OD600)_{\text{BBA\_J23\_119}} - (F/OD600)_{\text{blank}}}$$
 
 Where:
 
- - $(F/OD600)$ = Fluorescence normalized by cell density
+ - **(F/OD600)**= Fluorescence normalized by cell density
 
- - $\text{blank}$ = Control with a 10-nt random sequence (GGGCTCTGTA)
+ - **blank** = Control with a 10-nt random sequence (GGGCTCTGTA)
 
- - $\text{BBA\_J23\_119}$ = Reference wild-type promoter (positive control)
+ - **BBA_J23_119** = Reference wild-type promoter (positive control)
 
 3) **Interpretation**: 
    - S = 1: Activity equal to reference promoter
