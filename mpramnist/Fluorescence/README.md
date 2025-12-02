@@ -19,7 +19,7 @@ The classification task is not yet implemented and will be added in a future rel
 ### Data Representation
 
 ```
-sequence	JURKAT	K562	THP1	numerical_JURKAT	numerical_K562	numerical_THP1
+sequence	    JURKAT	K562	THP1	numerical_JURKAT	numerical_K562	    numerical_THP1
 GGGGGCGCT...	False	False	True	-0.2697505930801609	-1.1044306691338297	0.1111939002042786
 CCATGCGGC...	True	True	True	0.4672150010860452	0.4805318315873264	0.5567267144276968
 CGCGTTCCA...	False	True	False	-0.693749046357636	1.1414958790310077	-0.8999900063099485
@@ -34,26 +34,32 @@ CGCGTTCCA...	False	True	False	-0.693749046357636	1.1414958790310077	-0.899990006
 ## Parameters
 
 ### **`split : str`**
-    Defines which data split to use. Must be one of: 'train', 'val', 'test'.
-    Determines which dataset file to load (e.g., 'Fluorescence_train.tsv').
+
+Defines which data split to use. Must be one of: 'train', 'val', 'test'.
+Determines which dataset file to load (e.g., 'Fluorescence_train.tsv').
 
 ### **`cell_type : str` | List[str]**, optional, default=`["JURKAT", "K562", "THP1"]`
-    Cell type(s) to include in the dataset. Can be a single cell type string
-    or list of multiple cell types. All three cell types are included by default.
+
+Cell type(s) to include in the dataset. Can be a single cell type string
+or list of multiple cell types. All three cell types are included by default.
 
 ### **`task : str`, optional**, default="regression"
-    Specifies the machine learning task. Currently only "regression" is supported.
-    Classification may be added in future versions.
+
+Specifies the machine learning task. Currently only "regression" is supported.
+Classification may be added in future versions.
 
 ### **`transform : callable`, optional**
-    Transformation applied to each sequence object.
+
+Transformation applied to each sequence object.
 
 ### **`target_transform : callable`, optional**
-    Transformation applied to the target data.
+
+Transformation applied to the target data.
 
 ### **`root : str`, optional, default=`None`**
-    Root directory where dataset files are stored or should be downloaded.
-    If None, uses the default dataset directory from parent class.
+
+Root directory where dataset files are stored or should be downloaded.
+If None, uses the default dataset directory from parent class.
 
 
 ## Data Handling Considerations
