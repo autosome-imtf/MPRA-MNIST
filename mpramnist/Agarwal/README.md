@@ -2,17 +2,32 @@
 
 ## Main Information
 
-The Agarwal dataset ([Agarwal et al. 2025](https://www.nature.com/articles/s41586-024-08430-9)) is based on a lentiviral MPRA system and includes:
+The Agarwal dataset ([Agarwal et al., 2025](https://www.nature.com/articles/s41586-024-08430-9)) is based on an **optimized lentiMPRA system** (lentiviral MPRA), which provides an "in genome" readout through random genomic integration, offering higher cell-type specificity compared to episomal MPRA systems.
 
-- Potential enhancers (identified from open chromatin regions in corresponding cell types)
+The dataset was designed to:
+1. Characterize **tissue-specific regulatory activity** of cis-regulatory elements (CREs)
+2. Examine the **relative orientation dependence** of promoters and enhancers
+3. Train models to predict regulatory and nucleotide variant effects
 
-- Canonical promoters centered on transcription start sites (TSS)
+### Experimental Design
 
-- Shuffled enhancer sequences with preserved dinucleotide composition
+The study tested **over 200,000 sequences** in a single experiment, including:
 
-- Control elements with known activity in hepatocyte (HepG2), lymphoblast (K562), and induced pluripotent stem cell (WTC11) lines
+*   **Potential enhancers:** Identified from open chromatin regions (cCREs) in corresponding cell types
+*   **Core promoter regions:** To characterize promoter activity effects
+*   **Canonical promoters:** Centered on transcription start sites (TSS)
+*   **Shuffled enhancer sequences:** With preserved dinucleotide composition (negative controls)
+*   **Control elements:** With known activity in HepG2, K562, and WTC11 cell lines
+*   **60,000 sequences tested in all three cell lines** (joint library)
 
-The dataset comprises 122,926 (HepG2), 196,664 (K562), and 46,185 (WTC11) sequences, each 200 nucleotides long. Sequences are divided into training, validation, and test sets using an 8:1:1 ratio, following the original study.
+### Dataset Composition
+
+The processed dataset comprises:
+*   **HepG2:** 122,926 sequences
+*   **K562:** 196,664 sequences  
+*   **WTC11:** 46,185 sequences
+
+All sequences are **200 nucleotides long** (excluding constant 15-nt flanks). Data is split into training, validation, and test sets using an 8:1:1 ratio, following the original study.
 
 See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/AgarwalDataset_example.ipynb) for detailed usage example and training
 
@@ -20,7 +35,26 @@ See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/exampl
 
 ### Regression
 
-The regression task involves predicting scalar values representing regulatory activity for the corresponding cell line. Activity is measured as the logarithm of the ratio of transcript sequence reads (RNA) to reporter sequence reads (DNA): *log₂(RNA/DNA).*
+### Calculation of Regulatory Activity
+
+The regression task involves predicting scalar values representing the **regulatory activity** (enhancer/promoter strength) for each cell line.
+
+**Key steps from the original study:**
+1. **Replicate measurements:** Three independent biological replicates for both DNA and RNA
+2. **Barcode filtering:** Elements measured with <10 independent barcodes were excluded to reduce noise
+3. **Activity calculation:** For each replicate: *log₂(RNA reads / DNA reads)*
+4. **Normalization:** Activity values were normalized to the median within each replicate
+5. **Replicate averaging:** Normalized values were averaged across three replicates
+
+### Final Activity Score
+
+The target variable represents:
+**Mean normalized log₂(RNA/DNA)** across three biological replicates
+
+This provides a robust measure of regulatory element activity that accounts for:
+- Technical variability through barcode counting
+- Biological variability through replicate measurements
+- Normalization for batch effects
 
 ### Data Representation
 
@@ -32,48 +66,52 @@ seq10004_F	    10	    89029900	89030100	+	        TAGCTCAACACAAATCC	 0.43	      
 seq10004_R	    10	    89029900	89030100	-	        CATTGTTTCCATAGGGA	-0.464	            -0.017	                10
 seq10005_F	    10	    89032143	89032343	+	        GACCCTAAATCAGTATG	-1.231	            -1.6350000000000002	    7
 seq10005_R	    10	    89032143	89032343	-	        AAAGGGACTTTCCGCAT	-2.039	            -1.6350000000000002	    7
-
 ```
+
+**Column descriptions:**
+*   `expression`: Mean normalized activity across 3 replicates for the individual sequence
+*   `averaged_expression`: Mean of forward and reverse-complement activities for the same genomic region
+*   `fold`: Cross-validation fold (1-10)
 
 ## Parameters
 
-### **split : Union[str, List[int], int]**
+### **`split : Union[str, List[int], int]`**
 
 Defines which data split to use. Opions:
-- String: 'train', 'val', 'test' (uses predefined fold sets)
-- List[int]: List of specific fold numbers (1-10)
-- int: Single fold number (1-10)
+- String: `'train'`, `'val'`, `'test'` (uses predefined fold sets)
+- List[int]: List of specific fold numbers (`1-10`)
+- int: Single fold number (`1-10`)
 
-### **cell_type : str**
+### **`cell_type : str`**
 
-Cell type for filtering the data. Must be one of: 'HepG2', 'K562', 'WTC11'
+Cell type for filtering the data. Must be one of: `'HepG2'`, `'K562'`, `'WTC11'`
 
-### **genomic_regions : Optional[Union[str, List[Dict]]], optional**
+### **`genomic_regions : Optional[Union[str, List[Dict]]], optional`**
 
 Genomic regions to include or exclude. Options:
 - str: Path to BED file containing genomic regions
-- List[Dict]: List of dictionaries with 'chrom', 'start', 'end' keys
+- List[Dict]: List of dictionaries with `'chrom'`, `'start'`, `'end'` keys
 - None: No genomic region filtering
 - Uses **0-based** indexing for genomic coordinates in **hg38**
 
-### **exclude_regions : bool, default=False**
+### **`exclude_regions : bool, default=False`**
 
-If True, exclude the specified genomic regions instead of including them
+If `True`, exclude the specified genomic regions instead of including them
 
-### **averaged_target : bool, default=False**
+### **`averaged_target : bool, default=False`**
 
-If True, use 'averaged_expression' (mean activity between forward and reverse-complement sequences) as target;
-otherwise use individual 'expression' values
+If `True`, use `'averaged_expression'` (mean activity between forward and reverse-complement sequences) as target;
+otherwise use individual `'expression'` values
 
-### **root : optional**
+### **`root : optional`**
 
 Root directory for data storage
 
-### **transform : callable, optional**
+### **`transform : callable, optional`**
 
 Transformation function applied to each sequence
 
-### **target_transform : callable, optional**
+### **`target_transform : callable, optional`**
 
 Transformation function applied to target values
 
@@ -209,6 +247,3 @@ Agarwal, V., Inoue, F., Schubach, M. et al. Massively parallel characterization 
         doi={10.1038/s41586-024-08430-9}
     }
 ```
-
-    
-
