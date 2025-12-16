@@ -55,11 +55,11 @@ The 12 target columns are:
 ### Data Representation
 
 ```    
-    name	chromosome	start	end	strand	seq	k562_minp_rep1	k562_minp_rep2	k562_minp_avg	... split
+    name	                    chromosome	    start	    end	        strand	seq	            k562_minp_rep1	k562_minp_rep2	k562_minp_avg	...       split
     -----------------------------------------------------------------------------------------------------
-    H1hesc_1_0_0_chr20_30310735	20	30310588	30310733	+	GGGAGCCCA...	-1.8394496	-1.3714164	-1.860508   ...	train
-    H1hesc_1_6_0_chr8_128830575	8	128830428	128830573	+	CCCATTTTA...	-0.8249799	-1.5034798	-1.3725991  ...	val
-    H1hesc_1_94_0_chr18_11851975	18	11851828	11851973	+	AATCTGGAG...	-1.1480043	-1.559959	-1.5876448  ...	test
+    H1hesc_1_0_0_chr20_30310735	    20	        30310588	30310733	+	    GGGAGCCCA...	-1.8394496	    -1.3714164	        -1.860508       ... 	  train
+    H1hesc_1_6_0_chr8_128830575	    8	        128830428	128830573	+	    CCCATTTTA...	-0.8249799	    -1.5034798	        -1.3725991      ... 	  val
+    H1hesc_1_94_0_chr18_11851975	18	        11851828	11851973	+	    AATCTGGAG...	-1.1480043	    -1.559959	        -1.5876448      ... 	  test
 
 ```
 
