@@ -54,6 +54,9 @@ class LitModel(L.LightningModule):
         self.log(
             "train_loss", loss, prog_bar=True, on_step=False, on_epoch=True, logger=True
         )
+        ###
+        self.log("lr", self.lr, on_step=False, on_epoch=True, prog_bar=True)
+        ###
         self.train_pearson.update(y_hat, y)
         return loss
 
@@ -520,17 +523,20 @@ class LitModel_Evfratov(LitModel):
         self.log("val_loss", loss, on_epoch=True, prog_bar=True)
 
     def on_validation_epoch_end(self):
+        val_auroc = self.val_auroc.compute()
         if (self.current_epoch + 1) % self.print_each == 0:
             res_str = f"| Epoch: {self.current_epoch} "
             res_str += f"| Val Acc: {self.val_acc.compute()} "
-            res_str += f"| Val AUROC: {self.val_auroc.compute()} "
+            res_str += f"| Val AUROC: {val_auroc} "
+            
             res_str += f"| Val AUPR: {self.val_aupr.compute()} |"
             res_str += f"\n| Val Precision: {self.val_precision.compute()} "
             res_str += f"| Val Recall: {self.val_recall.compute()} "
             res_str += f"| Val F1: {self.val_f1.compute()} "
             border = "-" * 100
             print("\n".join(["", border, res_str, border, ""]))
-
+        self.log("val_auroc", val_auroc, on_epoch=True, prog_bar=True)
+        
         self.val_acc.reset()
         self.val_auroc.reset()
         self.val_aupr.reset()
@@ -564,7 +570,9 @@ class LitModel_Evfratov(LitModel):
         res_str += f"| Test AUPR: {self.test_aupr.compute()} |"
         res_str += f"\n| Test Precision: {self.test_precision.compute()} "
         res_str += f"| Test Recall: {self.test_recall.compute()} "
-        res_str += f"| Test F1: {self.test_f1.compute()} "
+        f1 = self.test_f1.compute()
+        self.log("test_f1", f1, on_epoch=True, prog_bar=True)
+        res_str += f"| Test F1: {f1} "
         border = "-" * 100
         print("\n".join(["", border, res_str, border, ""]))
 
