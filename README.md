@@ -73,7 +73,7 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | Priority | Artcile and link | DOI |
 |:-----------:|:-----------:|-----------|
 | HUMAN | ----------- | ----------- |
-| 1 | [The regulatory grammar of human promoters uncovered by MPRA-trained deep learning](https://www.biorxiv.org/content/10.1101/2024.07.09.602649v2) | 10.1101/2024.07.09.602649 |
+| 1 | [The regulatory grammar of human promoters uncovered by MPRA-trained deep learning](https://www.nature.com/articles/s41586-025-10093-z) | 10.1038/s41586-025-10093-z |
 | 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
 | 1 | [Design principles of cell-state-specific enhancers in hematopoiesis](https://pmc.ncbi.nlm.nih.gov/articles/PMC12173716/) | 10.1016/j.cell.2025.04.017 |
 | 2 | [Generative Design of Cell Type-Specific RNA Splicing Elements for Programmable Gene Regulation](https://www.biorxiv.org/content/10.1101/2025.11.05.686847v1) | 10.1101/2025.11.05.686847 |
@@ -83,6 +83,8 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | 3 | [Disease-linked regulatory DNA variants and homeostatic transcription factors in epidermis](https://www.nature.com/articles/s41467-025-63070-5) | 10.1038/s41467-025-63070-5 |
 | 3 | [Deciphering the functional impact of Alzheimer’s Disease-associated variants in resting and proinflammatory immune cells](https://www.medrxiv.org/content/10.1101/2024.09.13.24313654v1.full-text) | 10.1101/2024.09.13.24313654 |
 | 3 | [Uncovering the whole genome silencers of human cells via Ss-STARR-seq](https://www.nature.com/articles/s41467-025-55852-8) | 10.1038/s41467-025-55852-8 |
+| 3 | [Billion-Scale Deciphering of Human Gene Regulatory Grammar](https://www.biorxiv.org/content/10.1101/2025.11.10.687627v1.full) | 10.1101/2025.11.10.687627 |
+| 3 | [Decoding the MYC locus reveals a druggable ultraconserved RNA element](https://www.biorxiv.org/content/10.64898/2026.01.29.702547v1) | 10.64898/2026.01.29.702547 |
 | BACTERIA | ----------- | ----------- |
 | 1 | [De-novo promoters emerge more readily from random DNA than from genomic DNA](https://www.biorxiv.org/content/10.1101/2025.08.25.672121v1) | 10.1101/2025.08.25.672121 |
 | 2 | [Predictive Modeling of Gene Expression and Localization of DNA Binding Site Using Deep Convolutional Neural Networks](https://www.biorxiv.org/content/10.1101/2024.12.17.629042v1.abstract), this is pre-processed data from [Deciphering the regulatory genome of Escherichia coli, one hundred promoters at a time](https://elifesciences.org/articles/55308) | 10.1101/2024.12.17.629042 |
