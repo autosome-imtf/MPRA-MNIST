@@ -4,12 +4,6 @@
 
 The SuRE dataset (Survey of Regulatory Elements) is based on the analysis of genomes from 4 individuals from 4 different populations ([van Arensbergen et al. 2017](https://pubmed.ncbi.nlm.nih.gov/28024146/)) and was scaled up by [van Arensbergen et al. (2019)](https://pmc.ncbi.nlm.nih.gov/articles/PMC6609452/). The genomes of these individuals are fragmented into 150–500 bp sequences, each cloned into a reporter plasmid. These fragments can drive expression if they contain a functional promoter. Approximately 2.4B and 1.2B fragments were tested (assayed) in K562 and HepG2 cells, respectively.
 
-**Key Data Processing Steps (from van Arensbergen et al.):**
-
-1) Equalization of cDNA sequencing depth: To minimize technical bias, samples with excessively high cDNA sequencing depth were down-sampled.
-
-2) Signal normalization per fragment: For each fragment, a normalized SuRE signal (SSuRE) is calculated. This is defined as the mean across transfection replicates of the ratio **(normalized cDNA count) / (normalized iPCR count)**. The SSuRE is an enrichment score representing the fragment's transcriptional activity.
-
 Preprocessed data and code were integrated from the work of [Reddy et al. 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC10002662/) ([GitHub](https://github.com/anikethjr/promoter_models/blob/main/promoter_modelling/dataloaders/SuRE.py). Following their subsampling methodology, separate datasets are created for each individual. This subsampling controls for GC content and expression level distribution. The final datasets contain approximately 400-600K training sequences and 50-70K test and validation sequences per individual.
 
 ## Tasks
