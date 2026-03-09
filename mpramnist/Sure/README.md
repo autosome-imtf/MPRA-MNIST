@@ -36,13 +36,11 @@ Most sequences fall into Bin 0. The datasets are balanced across all 25 possible
 
 ### Regression Task
 
-The regression task involves predicting the **continuous transcriptional activity** for each cell line. The target variable is the **SuRE signal (SSuRE)**, calculated as:
+The target variables for the regression task are **the average expression levels** of genomic elements in two cell lines, K562 and HepG2.
 
-`SSuRE = mean( (normalized cDNA counts) / (normalized iPCR counts) )` across replicates.
+These averages are derived from the raw SuRE-seq count data.
 
-This ratio represents **RNA output per DNA input** — a direct quantitative measure of promoter strength. The resulting values are **positive enrichment scores** (0 for inactive fragments, >0 for active ones).
-
-*Note: While the original studies use linear SSuRE values, some downstream analyses may apply logarithmic transformation (e.g., log2(SSuRE + 1)) to compress dynamic range for machine learning models.*
+Each element is associated with two continuous values representing its average regulatory activity in the two cell lines, which can then be used as prediction targets in regression models.
 
 ```
     chr     start       end     strand      split       seq                  avg_K562_exp  avg_HepG2_exp
