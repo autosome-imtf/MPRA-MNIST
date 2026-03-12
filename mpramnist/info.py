@@ -7,11 +7,10 @@ import warnings
 
 def get_default_root():
     home = expanduser("~")
-    dirpath = os.path.join(home, ".mpramnist", "data", "")
+    dirpath = os.path.join(home, ".cache", "mpramnist", "data", "")
 
     try:
-        if not os.path.exists(dirpath):
-            os.makedirs(dirpath)
+        os.makedirs(dirpath, exist_ok=True)
     except:
         warnings.warn("Failed to setup default root.")
         dirpath = None
@@ -386,3 +385,72 @@ INFO = {
         "DeepStarr_split": {"train": 201139, "val": 40570, "test": 3978},
     },
 }
+
+INFO['BarbadillaMartinez2026'] = {'python_class': 'BarbadillaMartinez2026',
+  'description': '',
+  'url_BarbadillaMartinez2026_focused_v1_library_fold0.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v1_library_fold0.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed': 'be11b21d6a4a7b156b7e637d89b6a1a8',
+  'url_BarbadillaMartinez2026_focused_v1_library_fold1.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v1_library_fold1.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed': 'a45e9ebaae58e7e7367f7907f71b4196',
+  'url_BarbadillaMartinez2026_focused_v1_library_fold2.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v1_library_fold2.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed': '53dc8350ecad1c648ddce977dba450cf',
+  'url_BarbadillaMartinez2026_focused_v1_library_fold3.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v1_library_fold3.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed': 'c3997391a63376bae6a12b8b4cd51a4b',
+  'url_BarbadillaMartinez2026_focused_v1_library_fold4.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v1_library_fold4.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed': '6dfca80e3e0138ce475aa01a5273b870',
+  'url_BarbadillaMartinez2026_focused_v1_library_test.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v1_library_test.bed?download=1',
+  'url_BarbadillaMartinez2026_focused_v1_library_test.bed': '81e171dfb310b6037980001af6ca5024',
+
+
+  'url_BarbadillaMartinez2026_focused_v2_library_fold0.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold0.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v2_library_fold0.bed': 'e9d2fc58349f57dabb77121c28973c0c',
+  'url_BarbadillaMartinez2026_focused_v2_library_fold1.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold1.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v2_library_fold0.bed': 'a2cfa3c9d0a3e9e45888775a2b1b546d',
+  'url_BarbadillaMartinez2026_focused_v2_library_fold2.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold2.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v2_library_fold0.bed': '20fef5c777afe344e18927a48dfe232d',
+  'url_BarbadillaMartinez2026_focused_v2_library_fold3.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold3.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v2_library_fold0.bed': '91d1e6fb65441fed00e3b8195be6acda',
+  'url_BarbadillaMartinez2026_focused_v2_library_fold4.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold4.bed?download=1',
+  'MD5_BarbadillaMartinez2026_focused_v2_library_fold0.bed': '13b0ac984628a9404dd25d0a8ae3fbc9',
+  'url_BarbadillaMartinez2026_focused_v2_library_test.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_test.bed?download=1',
+  'url_BarbadillaMartinez2026_focused_v2_library_test.bed': '51e30a5b5df0cb1b0bfe9171e1005371',
+
+  'url_BarbadillaMartinez2026_genomewide_library_fold0.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold0.bed?download=1',
+  'MD5_BarbadillaMartinez2026_genomewide_library_fold0.bed': 'c5e3c65524ed2b8cc0fb741838d37a93',
+  'url_BarbadillaMartinez2026_genomewide_library_fold1.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold1.bed?download=1',
+  'MD5_BarbadillaMartinez2026_genomewide_library_fold0.bed': '51cb21dea5a69a7020a55d02df42123b',
+  'url_BarbadillaMartinez2026_genomewide_library_fold2.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold2.bed?download=1',
+  'MD5_BarbadillaMartinez2026_genomewide_library_fold0.bed': '26d06a1f3cff1329c697af2477160869',
+  'url_BarbadillaMartinez2026_genomewide_library_fold3.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold3.bed?download=1',
+  'MD5_BarbadillaMartinez2026_genomewide_library_fold0.bed': '8d4b7d885d0e5e822dacf8b13b82eee1',
+  'url_BarbadillaMartinez2026_genomewide_library_fold4.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_fold4.bed?download=1',
+  'MD5_BarbadillaMartinez2026_genomewide_library_fold0.bed': 'baa806996dd98afe859f54b3733520c1',
+  'url_BarbadillaMartinez2026_genomewide_library_test.bed': 'https://zenodo.org/records/17453603/files/BarbadillaMartinez2026_focused_v2_library_test.bed?download=1',
+  'url_BarbadillaMartinez2026_genomewide_library_test.bed': 'ced52c6e28c11b973e63685c6ce3895b',
+
+
+
+                                  
+  'target_columns': {'Log2RPM_HAP1': 'Log2RPM_HAP1',
+                     'Log2RPM_AGS': 'Log2RPM_AGS',
+                     'Log2RPM_HEK293': 'Log2RPM_HEK293',
+                     'Log2RPM_HCT116': 'Log2RPM_HCT116',
+                     'Log2RPM_HepG2': 'Log2RPM_HepG2',
+                     'Log2RPM_K562': 'Log2RPM_K562',
+                     'Log2RPM_LNCaP': 'Log2RPM_LNCaP',
+                     'Log2RPM_MCF7': 'Log2RPM_MCF7',
+                     'Log2RPM_U2OS': 'Log2RPM_U2OS',
+                     'Log2RPM_K562_HeatShock': 'Log2RPM_K562_HeatShock',
+                     'Log2RPM_K562_Control_HeatShock': 'Log2RPM_K562_Control_HeatShock',
+                     'Log2RPM_HepG2_Nutlin3a': 'Log2RPM_HepG2_Nutlin3a',
+                     'Log2RPM_HepG2_Control_Nutlin3a': 'Log2RPM_HepG2_Control_Nutlin3a',
+                     'Log2RPM_K562_PMA': 'Log2RPM_K562_PMA',
+                     'Log2RPM_K562_Control_PMA': 'Log2RPM_K562_Control_PMA',
+                     'Log2RPM_K562': 'Log2RPM_K562', 
+                     'Log2RPM_HepG2': 'Log2RPM_HepG2'
+                     
+                     },
+  'scalar_features': {},
+  'vector_features': {},
+  'task': 'Regression',
+  'split': {'train': [0, 1, 2, 3], 'val': 4, 'test': 'test'}}

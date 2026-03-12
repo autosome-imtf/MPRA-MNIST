@@ -5,11 +5,98 @@ import torch.nn.functional as F
 from typing import Optional
 from .dataclass import seqobj
 
-CODES = {"A": 0, "T": 3, "G": 1, "C": 2, "N": 4}
+IUPAC_MAP: dict[str, list[str]] = {
+    "A": ["A"],
+    "C": ["C"],
+    "G": ["G"],
+    "T": ["T"],
+    "U": ["T"],  # treat Uracil as Thymine
+    "R": ["A", "G"],            # purine
+    "Y": ["C", "T"],            # pyrimidine
+    "K": ["G", "T"],
+    "M": ["A", "C"],
+    "S": ["G", "C"],
+    "W": ["A", "T"],
+    "B": ["C", "G", "T"],
+    "D": ["A", "G", "T"],
+    "H": ["A", "C", "T"],
+    "V": ["A", "C", "G"],
+    "N": ["A", "C", "G", "T"],
+}
+IUPAC_MAP_REV = {tuple(sorted(y)) : x for x, y in IUPAC_MAP.items()}
 
+import torch
 
-def n2id(n):
-    return CODES[n.upper()]
+# Order of channels
+BASE_ORDER = ["A", "C", "G", "T"]
+
+# Encoding table
+iupac_encoding_dict = {
+    "A": [1,0,0,0],
+    "C": [0,1,0,0],
+    "G": [0,0,1,0],
+    "T": [0,0,0,1],
+    "U": [0,0,0,1],
+    "R": [0.5,0,0.5,0],
+    "Y": [0,0.5,0,0.5],
+    "K": [0,0,0.5,0.5],
+    "M": [0.5,0.5,0,0],
+    "S": [0,0.5,0.5,0],
+    "W": [0.5,0,0,0.5],
+    "B": [0,1/3,1/3,1/3],
+    "D": [1/3,0,1/3,1/3],
+    "H": [1/3,1/3,0,1/3],
+    "V": [1/3,1/3,1/3,0],
+    "N": [0.25,0.25,0.25,0.25],
+}
+
+standard_encoding_dict = {
+    "A": [1,0,0,0],
+    "C": [0,1,0,0],
+    "G": [0,0,1,0],
+    "T": [0,0,0,1],
+    "N": [0.25,0.25,0.25,0.25],
+}
+
+standard_encoding_dict_nzeros = {
+    "A": [1,0,0,0],
+    "C": [0,1,0,0],
+    "G": [0,0,1,0],
+    "T": [0,0,0,1],
+    "N": [0,0,0,0],
+}
+
+def transform2f32tensor(dt: dict):
+    return {
+        x: torch.tensor(y, dtype=torch.float32) for x, y in dt.items()
+    }
+
+iupac_encoding_dict = transform2f32tensor(iupac_encoding_dict)
+standard_encoding_dict = transform2f32tensor(standard_encoding_dict)
+standard_encoding_dict_nzeros = transform2f32tensor(standard_encoding_dict_nzeros)
+
+def encode_sequence(seq: str,
+                    include_iupac: bool,
+                    non_atgc_as_zeros: bool,
+                    raise_if_letter_not_in_dict: bool,
+                    default_ohe: torch.Tensor | None):
+    """
+    Encode sequence -> tensor (L,4)
+    """
+    if non_atgc_as_zeros:
+        enc_dt = standard_encoding_dict_nzeros
+    elif include_iupac:
+        enc_dt = iupac_encoding_dict
+    else:
+        enc_dt = standard_encoding_dict
+
+    if raise_if_letter_not_in_dict:
+        idx = torch.stack([enc_dt[c] for c in seq])
+    else:
+        if default_ohe is None:
+            default_ohe = enc_dt['N']
+        idx = torch.stack([enc_dt.get(c, default_ohe) for c in seq])
+    return idx
 
 
 class Seq2Tensor(nn.Module):
@@ -28,20 +115,26 @@ class Seq2Tensor(nn.Module):
     - This method modifies the input object in-place.
     """
 
-    def __init__(self):
+    def __init__(self,  
+                 include_iupac: bool = False,
+                 non_atgc_as_zeros: bool = False,
+                 raise_if_letter_not_in_dict: bool = False,
+                 default_ohe: torch.Tensor | None = None):
         super().__init__()
+        self.include_iupac = include_iupac
+        self.non_atgc_as_zeros = non_atgc_as_zeros
+        self.raise_if_letter_not_in_dict = raise_if_letter_not_in_dict
+        self.default_ohe = default_ohe
 
     def forward(self, Seq: seqobj) -> seqobj:
         if isinstance(Seq.seq, torch.FloatTensor):
             return Seq  # Sequence is already a tensor, no further processing required.
 
-        code = [n2id(x) for x in Seq.seq]
-        code = torch.from_numpy(np.array(code))
-        code = F.one_hot(code, num_classes=5).float()  # 5th class is N
-
-        # Encode 'N' class with 0.25
-        code[code[:, 4] == 1] = 0.25
-        code = code[:, :4]
+        code = encode_sequence(Seq.seq, 
+                               include_iupac=self.include_iupac, 
+                               non_atgc_as_zeros=self.non_atgc_as_zeros,
+                               raise_if_letter_not_in_dict=self.raise_if_letter_not_in_dict,
+                               default_ohe=self.default_ohe)
         X = code.transpose(0, 1)
 
         to_concat = [X]
@@ -70,6 +163,46 @@ class Seq2Tensor(nn.Module):
 
     def __repr__(self):
         return self.__class__.__name__ + "()"
+
+import torch
+import torch.nn as nn
+
+class RandomPadding(nn.Module):
+    """
+    Pads a sequence to a specified length by adding a random number of Ns at both ends. 
+
+    Parameters
+    ----------
+    output_size : int Desired output size for padding. 
+
+    Methods
+    -------
+    forward(seq: seqobj) -> seqobj:
+        Pads the sequence and its vector features according to `output_size`.
+    """
+
+    def __init__(
+        self,
+        output_size: int
+    ):
+        super().__init__()
+        if output_size <= 0:
+            raise ValueError("Output size must be a positive integer.")
+
+        self.output_size = output_size
+
+    def forward(self, seq: seqobj) -> seqobj:
+        required = self.output_size - len(seq.seq)
+        if required > 0:
+            lpad = torch.randint(low=0, high=required, size=(1, )).item()
+            rpad = required - lpad
+            seq.seq = "N" * lpad + seq.seq + 'N' * rpad
+
+        return seq
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(output_size={self.output_size})"
+
 
 
 class Compose:
@@ -124,14 +257,14 @@ class AddFlanks(nn.Module):
 
     def forward(self, Seq: seqobj) -> seqobj:
         # Validate that flanks contain only valid DNA characters
-        if not set(self.left_side).issubset(CODES):
-            raise ValueError(
-                f"Left flank contains invalid DNA characters: {self.left_side}"
-            )
-        if not set(self.right_side).issubset(CODES):
-            raise ValueError(
-                f"Right flank contains invalid DNA characters: {self.right_side}"
-            )
+        #if not set(self.left_side).issubset(CODES):
+        #    raise ValueError(
+        #        f"Left flank contains invalid DNA characters: {self.left_side}"
+        #    )
+        #if not set(self.right_side).issubset(CODES):
+        #    raise ValueError(
+        #        f"Right flank contains invalid DNA characters: {self.right_side}"
+        #    )
 
         # Add flanks to the sequence
         Seq.is_flank_added = True
