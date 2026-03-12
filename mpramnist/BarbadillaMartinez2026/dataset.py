@@ -111,7 +111,7 @@ class BarbadillaMartinez2026(MpraDataset):
         else:
             self.account_for_snps = False # where is no information on snps in focused libraries 
 
-        data['start'] = data['start'] # to zero-indexed
+        data['start'] = data['start'] - 1# to zero-indexed
         self._data = data
         self.chr = data['chr'].values
         self.start = data['start'].values 
