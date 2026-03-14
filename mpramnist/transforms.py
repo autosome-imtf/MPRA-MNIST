@@ -115,7 +115,8 @@ class Seq2Tensor(nn.Module):
     - This method modifies the input object in-place.
     """
 
-    def __init__(self,  
+    def __init__(self,
+                 sequence_first: bool = False, # whether one-hot encoding produces [L,E] or [E,L] encoding of the sequence   
                  include_iupac: bool = False,
                  non_atgc_as_zeros: bool = False,
                  raise_if_letter_not_in_dict: bool = False,
@@ -158,6 +159,10 @@ class Seq2Tensor(nn.Module):
 
         # Concatenate all channels
         Seq.seq = torch.cat(to_concat, dim=0) if len(to_concat) > 1 else X
+
+        if self.sequence_first:
+            Seq.seq = Seq.seq.transpose(0, 1)
+
         Seq.one_hot_encoded = True
         return Seq
 
