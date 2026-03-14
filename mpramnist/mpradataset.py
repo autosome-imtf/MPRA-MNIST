@@ -2,7 +2,7 @@ import numpy as np
 from typing import List, T, Union, Optional, Callable, Dict
 import torch
 import os
-
+from .utils import md5_file
 from torch.utils.data import Dataset
 from .dataclass import seqobj, VectorDsFeature, ScalarDsFeature
 from .info import INFO, HOMEPAGE, DEFAULT_ROOT
@@ -147,7 +147,8 @@ class MpraDataset(Dataset):
         return "\n".join(lines)
 
     def download(self, file_path, file_name):
-        if not os.path.exists(os.path.join(file_path, file_name)):
+        candidate_file_path = os.path.join(file_path, file_name)
+        if not os.path.exists(candidate_file_path):
             try:
                 from torchvision.datasets.utils import download_url
 
@@ -171,3 +172,14 @@ class MpraDataset(Dataset):
                         {file_path}
                     """
                 )
+        elif md5_file(candidate_file_path) != self.info[f"MD5_{file_name}"]:
+            raise RuntimeError(
+                f"""MD5 mismatch! Please remove the file and download it again:{file_name}. Also, you can download it manually.
+                1. [Optional] Check your network connection: 
+                    Go to {HOMEPAGE} and find the Zenodo repository
+                2. Download the file from the Zenodo repository or its Zenodo data link: 
+                    {self.info[f"url_{file_name}"]}
+                3. [Optional] Verify the MD5: 
+                    {self.info[f"MD5_{file_name}"]}
+                4. Put the npz file under your MPRA-MNIST root folder: 
+                    {file_path}""")

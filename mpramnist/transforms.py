@@ -126,6 +126,7 @@ class Seq2Tensor(nn.Module):
         self.non_atgc_as_zeros = non_atgc_as_zeros
         self.raise_if_letter_not_in_dict = raise_if_letter_not_in_dict
         self.default_ohe = default_ohe
+        self.sequence_first = sequence_first
 
     def forward(self, Seq: seqobj) -> seqobj:
         if isinstance(Seq.seq, torch.FloatTensor):
