@@ -25,7 +25,7 @@ class BarbadillaMartinez2026(MpraDataset):
         'enchancer': 1
     }
 
-    CELLLINE_2_LIBRARY: dict[str, str] = {
+    CELLLINE_2_LIBRARY: ClassVar[dict[str, str]]= {
        'AGS': 'focused_v1', 
        'HAP1': 'focused_v1',
        'K562': 'focused_v2',
@@ -45,13 +45,13 @@ class BarbadillaMartinez2026(MpraDataset):
        'HepG2_genomewide': 'genomewide',
     }
     
-    LIBRARY_2_NORMALIZATION: dict[str, str] = {
+    LIBRARY_2_NORMALIZATION: ClassVar[dict[str, str]] = {
         'focused_v1': 'pDNA_pHY3_T2',
         'focused_v2': 'pDNA_T1_T2_sum',
         'genomewide': 'iPCR'
     }
     
-    NORMALIZATION_2_THRESHOLD: dict[str, str] = {
+    NORMALIZATION_2_THRESHOLD: ClassVar[dict[str, str]]= {
         'pDNA_pHY3_T2': 10,
         'pDNA_T1_T2_sum': 10,
         'iPCR': 0,
@@ -62,7 +62,7 @@ class BarbadillaMartinez2026(MpraDataset):
     FLAG: ClassVar[str] = 'BarbadillaMartinez2026'
 
     def __init__(self,
-                 split: list[int], # folds 
+                 split: list[int] | str | int, # folds 
                  library_type: str = 'focused',
                  cell_line: str = 'AGS', 
                  transform: Callable | None = None,
