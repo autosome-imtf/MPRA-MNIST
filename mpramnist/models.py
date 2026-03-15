@@ -205,10 +205,11 @@ class HumanLegNet(nn.Module):
 ################## MPRAnn ###########################
 
 class MPRAnn(nn.Module):
-    def __init__(self, output_dim, end_sigmoid: bool = True):
+    def __init__(self, output_dim, in_channels: int = 4, end_sigmoid: bool = True):
         super().__init__()
+        self.in_channels = in_channels
         self.output_dim = output_dim
-        self.conv1 = nn.Conv1d(in_channels=4, out_channels=250, kernel_size=7, padding="valid")
+        self.conv1 = nn.Conv1d(in_channels=in_channels, out_channels=250, kernel_size=7, padding="valid")
         self.bn1 = nn.BatchNorm1d(250)
         self.conv2 = nn.Conv1d(in_channels=250, out_channels=250, kernel_size=8, padding="valid")
         self.bn2 = nn.BatchNorm1d(250)
