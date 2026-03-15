@@ -666,3 +666,39 @@ class AddReverseChannel(nn.Module):
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
+
+class RandomPadding(nn.Module):
+    """
+    Pads a sequence to a specified length by adding a random number of Ns at both ends.
+
+    Parameters
+    ----------
+    output_size : int Desired output size for padding.
+
+    Methods
+    -------
+    forward(seq: seqobj) -> seqobj:
+        Pads the sequence and its vector features according to `output_size`.
+    """
+
+    def __init__(
+        self,
+        output_size: int
+    ):
+        super().__init__()
+        if output_size <= 0:
+            raise ValueError("Output size must be a positive integer.")
+
+        self.output_size = output_size
+
+    def forward(self, seq: seqobj) -> seqobj:
+        required = self.output_size - len(seq.seq)
+        if required > 0:
+            lpad = torch.randint(low=0, high=required, size=(1, )).item()
+            rpad = required - lpad
+            seq.seq = "N" * lpad + seq.seq + 'N' * rpad
+
+        return seq
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(output_size={self.output_size})"

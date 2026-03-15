@@ -63,8 +63,7 @@ class BarbadillaMartinez2026(MpraDataset):
 
     def __init__(self,
                  split: list[int] | str | int, # folds 
-                 library_type: str = 'focused',
-                 cell_line: str = 'AGS', 
+                 cell_line: str | list[str] = 'AGS', 
                  transform: Callable | None = None,
                  target_transform: Callable | None = None,
                  normalization_treshold: int | None = None,
@@ -79,9 +78,26 @@ class BarbadillaMartinez2026(MpraDataset):
         self.split = split
         folds = self.split_parse(split)
 
-        version = self.CELLLINE_2_LIBRARY.get(cell_line, None)
-        if version is None:
-            raise Exception(f'Wrong cell line provided: {cell_line}')
+        if isinstance(cell_line, str):
+            if cell_line.startswith('all'):
+                version = cell_line.replace('all_', '')
+                cell_lines = [x for x, y in self.CELLLINE_2_LIBRARY.items() if y == version]
+            else:
+                version = self.CELLLINE_2_LIBRARY.get(cell_line, None)
+                if version is None:
+                    raise Exception(f'Wrong cell line provided: {cell_line}')
+                cell_lines = [cell_line]
+        else: # list of cell lines
+            possible_versions = [self.CELLLINE_2_LIBRARY.get(x, None) for x in cell_line]
+            if None in possible_versions:
+                raise Exception(f'Wrong cell line provided: {cell_line}')
+            if len(set(possible_versions)) > 1:
+                raise Exception(f'Cell lines must be from the same library: {possible_versions}')
+            version = possible_versions[0]
+            cell_lines = cell_line
+        self.cell_lines = cell_lines
+        self.version = version
+
         normalization_column = self.LIBRARY_2_NORMALIZATION[version]
         normalization_threshold = self.NORMALIZATION_2_THRESHOLD[normalization_column]
         
@@ -94,7 +110,7 @@ class BarbadillaMartinez2026(MpraDataset):
         feature_ids = self.map_feature_types(feature_types)
         data = data[data['FEATtype'].isin(feature_ids)]
 
-        if self.library_is_genomewide(cell_line):
+        if self.version == 'genomewide':
             self.account_for_snps = True
             genome_ids = self.map_genomes(genomes)
             data = data[data['genome'].isin(genome_ids)]
@@ -119,12 +135,12 @@ class BarbadillaMartinez2026(MpraDataset):
         self.start = data['start'].values 
         self.end = data['end'].values
         self.strand = data['strand'].values
-        if self.library_is_genomewide(cell_line):
+        if self.version == 'genomewide':
             self.snps = data['SNPbase'].values
             self.snps_poses = data['SNPrelpos'].values
 
-        target_column = self.get_target_column(cell_line)
-        self.target = data[target_column].values
+        self.target_columns = [self.get_target_column(x) for x in cell_lines]
+        self.target = data[self.target_columns].values
 
         self.lengths = self.end - self.start
         self.genome_path = download_genome('hg19')
@@ -135,9 +151,6 @@ class BarbadillaMartinez2026(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.feat = data['FEAT']
-
-    def library_is_genomewide(self, cell_line) -> bool:
-        return 'genomewide' in cell_line
 
     def map_genomes(self, genomes: str | list[str]) -> list[str]:
         if isinstance(genomes, str):
