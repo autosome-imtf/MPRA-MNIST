@@ -389,7 +389,7 @@ INFO = {
 INFO['BarbadillaMartinez2026'] = {'python_class': 'BarbadillaMartinez2026',
   'description': '',
   "url_BarbadillaMartinez2026_focused_v1_library_fold0.bed": "https://zenodo.org/records/18969018/files/BarbadillaMartinez2026_focused_v1_library_fold0.bed?download=1",
-   "MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed": "be11b21d6a4a7b156b7e637d89b6a1a8    ",
+   "MD5_BarbadillaMartinez2026_focused_v1_library_fold0.bed": "be11b21d6a4a7b156b7e637d89b6a1a8",
    "url_BarbadillaMartinez2026_focused_v1_library_fold1.bed": "https://zenodo.org/records/18969018/files/BarbadillaMartinez2026_focused_v1_library_fold1.bed?download=1",
    "MD5_BarbadillaMartinez2026_focused_v1_library_fold1.bed": "a45e9ebaae58e7e7367f7907f71b4196",
    "url_BarbadillaMartinez2026_focused_v1_library_fold2.bed": "https://zenodo.org/records/18969018/files/BarbadillaMartinez2026_focused_v1_library_fold2.bed?download=1",
