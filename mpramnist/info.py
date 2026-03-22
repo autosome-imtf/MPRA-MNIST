@@ -384,6 +384,18 @@ INFO = {
         },
         "DeepStarr_split": {"train": 201139, "val": 40570, "test": 3978},
     },
+    "Fromel2025": {
+        "python_class": "Fromel2025",
+        "description": "",
+        "url_Fromel2025_Fromel.tsv": "",
+        "MD5_Fromel2025_Fromel.tsv": "",
+        "scalar_features": {},
+        "vector_features": {},
+        "target_columns": {},
+        "task": "Regression",
+        "split": {        },
+        "Fromel2025_split": {},
+    },
 }
 
 INFO['BarbadillaMartinez2026'] = {'python_class': 'BarbadillaMartinez2026',
