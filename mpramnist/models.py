@@ -205,10 +205,11 @@ class HumanLegNet(nn.Module):
 ################## MPRAnn ###########################
 
 class MPRAnn(nn.Module):
-    def __init__(self, output_dim):
+    def __init__(self, output_dim, in_channels: int = 4, end_sigmoid: bool = True):
         super().__init__()
+        self.in_channels = in_channels
         self.output_dim = output_dim
-        self.conv1 = nn.Conv1d(in_channels=4, out_channels=250, kernel_size=7, padding="valid")
+        self.conv1 = nn.Conv1d(in_channels=in_channels, out_channels=250, kernel_size=7, padding="valid")
         self.bn1 = nn.BatchNorm1d(250)
         self.conv2 = nn.Conv1d(in_channels=250, out_channels=250, kernel_size=8, padding="valid")
         self.bn2 = nn.BatchNorm1d(250)
@@ -223,6 +224,7 @@ class MPRAnn(nn.Module):
         self.fc1 = nn.LazyLinear(300)
         self.dropout3 = nn.Dropout(0.3)
         self.fc2 = nn.Linear(300, self.output_dim)
+        self.end_sigmoid = end_sigmoid
 
 
 
@@ -249,7 +251,8 @@ class MPRAnn(nn.Module):
         seq = F.sigmoid(seq)
         seq = self.dropout3(seq)
         seq = self.fc2(seq)
-        seq = F.sigmoid(seq)
+        if self.end_sigmoid:
+            seq = F.sigmoid(seq)
         seq = seq.squeeze(-1)
 
         return seq

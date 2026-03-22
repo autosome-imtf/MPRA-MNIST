@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
-from .dataclass import seqobj
+from .dataclass import seqobj, Categorial
 
 IUPAC_MAP: dict[str, list[str]] = {
     "A": ["A"],
@@ -115,7 +115,8 @@ class Seq2Tensor(nn.Module):
     - This method modifies the input object in-place.
     """
 
-    def __init__(self,  
+    def __init__(self,
+                 sequence_first: bool = False, # whether one-hot encoding produces [L,E] or [E,L] encoding of the sequence   
                  include_iupac: bool = False,
                  non_atgc_as_zeros: bool = False,
                  raise_if_letter_not_in_dict: bool = False,
@@ -125,11 +126,13 @@ class Seq2Tensor(nn.Module):
         self.non_atgc_as_zeros = non_atgc_as_zeros
         self.raise_if_letter_not_in_dict = raise_if_letter_not_in_dict
         self.default_ohe = default_ohe
+        self.sequence_first = sequence_first
 
     def forward(self, Seq: seqobj) -> seqobj:
         if isinstance(Seq.seq, torch.FloatTensor):
             return Seq  # Sequence is already a tensor, no further processing required.
 
+        
         code = encode_sequence(Seq.seq, 
                                include_iupac=self.include_iupac, 
                                non_atgc_as_zeros=self.non_atgc_as_zeros,
@@ -146,11 +149,18 @@ class Seq2Tensor(nn.Module):
 
         # Add additional feature channels
         if getattr(Seq, "add_feature_channel", False):
+           
             for ch in Seq.feature_channels:
-                if ch in Seq.scalars.keys():
-                    rev = torch.full(
-                        (1, Seq.seqsize), Seq.scalars[ch].val, dtype=torch.float32
-                    )
+                if ch in Seq.scalars.keys(): # TODO: move logic to values
+                    v = Seq.scalars[ch]
+                    if isinstance(v.tp, Categorial):
+                        vl = torch.LongTensor([v.val])
+                        rev = F.one_hot(vl, num_classes=len(v.tp.levels)).T.float()
+                        rev = rev.repeat(1, Seq.seqsize)
+                    else:
+                        rev = torch.full(
+                            (1, Seq.seqsize), v.val, dtype=torch.float32
+                        )
                     to_concat.append(rev)
                 if ch in Seq.vectors.keys():
                     rev = torch.tensor([Seq.vectors[ch].val])
@@ -158,51 +168,15 @@ class Seq2Tensor(nn.Module):
 
         # Concatenate all channels
         Seq.seq = torch.cat(to_concat, dim=0) if len(to_concat) > 1 else X
+
+        if self.sequence_first:
+            Seq.seq = Seq.seq.transpose(0, 1)
+
         Seq.one_hot_encoded = True
         return Seq
 
     def __repr__(self):
         return self.__class__.__name__ + "()"
-
-import torch
-import torch.nn as nn
-
-class RandomPadding(nn.Module):
-    """
-    Pads a sequence to a specified length by adding a random number of Ns at both ends. 
-
-    Parameters
-    ----------
-    output_size : int Desired output size for padding. 
-
-    Methods
-    -------
-    forward(seq: seqobj) -> seqobj:
-        Pads the sequence and its vector features according to `output_size`.
-    """
-
-    def __init__(
-        self,
-        output_size: int
-    ):
-        super().__init__()
-        if output_size <= 0:
-            raise ValueError("Output size must be a positive integer.")
-
-        self.output_size = output_size
-
-    def forward(self, seq: seqobj) -> seqobj:
-        required = self.output_size - len(seq.seq)
-        if required > 0:
-            lpad = torch.randint(low=0, high=required, size=(1, )).item()
-            rpad = required - lpad
-            seq.seq = "N" * lpad + seq.seq + 'N' * rpad
-
-        return seq
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(output_size={self.output_size})"
-
 
 
 class Compose:
@@ -692,3 +666,39 @@ class AddReverseChannel(nn.Module):
 
     def __repr__(self):
         return f"{self.__class__.__name__}()"
+
+class RandomPadding(nn.Module):
+    """
+    Pads a sequence to a specified length by adding a random number of Ns at both ends.
+
+    Parameters
+    ----------
+    output_size : int Desired output size for padding.
+
+    Methods
+    -------
+    forward(seq: seqobj) -> seqobj:
+        Pads the sequence and its vector features according to `output_size`.
+    """
+
+    def __init__(
+        self,
+        output_size: int
+    ):
+        super().__init__()
+        if output_size <= 0:
+            raise ValueError("Output size must be a positive integer.")
+
+        self.output_size = output_size
+
+    def forward(self, seq: seqobj) -> seqobj:
+        required = self.output_size - len(seq.seq)
+        if required > 0:
+            lpad = torch.randint(low=0, high=required, size=(1, )).item()
+            rpad = required - lpad
+            seq.seq = "N" * lpad + seq.seq + 'N' * rpad
+
+        return seq
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(output_size={self.output_size})"

@@ -54,8 +54,10 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | HUMAN | ----------- | ----------- | ----------- |
 | [`AgarwalDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Agarwal) | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
 | [`AgarwalJointDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/AgarwalJoint) | [Massively parallel characterization of transcriptional regulatory elements](https://www.nature.com/articles/s41586-024-08430-9) | 10.1038/s41586-024-08430-9 | HepG2, K562, WTC11 |
+| [`BarbadillaMartinez2026`](https://github.com/autosome-ru/MPRA-MNIST/tree/main/mpramnist/BarbadillaMartinez2026) | [Regulatory grammar in human promoters uncovered by MPRA-based deep learning](https://www.nature.com/articles/s41586-025-10093-z) | 10.1038/s41588-022-01048-5 | AGS HAP1 HepG2 K562 MCF7 U2OS HCT116 HEK293 LNCaP |
 | [`KircherDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Kircher) | [Saturation mutagenesis of twenty disease-associated regulatory elements at single base-pair resolution](https://www.nature.com/articles/s41467-019-11526-w) | 10.1038/s41467-019-11526-w | HepG2, K562, etc |
 | [`MalinoisDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Malinois) | [Machine-guided design of synthetic cell type-specific cis-regulatory elements](https://pmc.ncbi.nlm.nih.gov/articles/PMC10441439/) | 10.1101/2023.08.08.552077 | HepG2, K562, SK-N-SH |
+| [`Fromel2025`](https://github.com/autosome-ru/MPRA-MNIST/tree/main/mpramnist/Fromel2025) | [Design principles of cell-state-specific enhancers in hematopoiesis](https://www.cell.com/cell/fulltext/S0092-8674(25)00449-0) | 10.1038/s41588-022-01048-5 | K562, HSPC (7 states) |
 | [`StarrSeqDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/StarrSeq) | [Sequence determinants of human gene regulatory elements](https://www.nature.com/articles/s41588-021-01009) | 10.1038/s41588-021-01009-4 | HepG2, GP5D, RPE1 |
 | [`SureDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Sure) | [Genome-wide mapping of autonomous promoter activity in human cells](https://pmc.ncbi.nlm.nih.gov/articles/PMC5498152/) | 10.1038/nbt.3754 | HepG2, K562 |
 | [`SharpDataset`](https://github.com/autosome-imtf/MPRA-MNIST/tree/main/mpramnist/Sharpr) | [Genome-scale high-resolution mapping of activating and repressive nucleotides in regulatory regions](https://pmc.ncbi.nlm.nih.gov/articles/PMC5125825/) | 10.1038/nbt.3678 | HepG2, K562 |
@@ -73,9 +75,10 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | Priority | Artcile and link | DOI |
 |:-----------:|:-----------:|-----------|
 | HUMAN | ----------- | ----------- |
-| 1 | [The regulatory grammar of human promoters uncovered by MPRA-trained deep learning](https://www.nature.com/articles/s41586-025-10093-z) | 10.1038/s41586-025-10093-z |
+| 1 | [A systematic evaluation of the design and context dependencies of massively parallel reporter assays](https://www.nature.com/articles/s41592-020-0965-y) | 10.1038/s41592-020-0965-y |
 | 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
-| 1 | [Design principles of cell-state-specific enhancers in hematopoiesis](https://pmc.ncbi.nlm.nih.gov/articles/PMC12173716/) | 10.1016/j.cell.2025.04.017 |
+| 1 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://www.science.org/doi/10.1126/science.adh0559) | 10.1126/science.adh0559 |
+| 2 | [BRAIN-MAGNET: A functional genomics atlas for interpretation of non-coding variants](https://www.cell.com/cell/fulltext/S0092-8674(25)01234-6) | 10.1016/j.cell.2025.10.029 |
 | 2 | [Generative Design of Cell Type-Specific RNA Splicing Elements for Programmable Gene Regulation](https://www.biorxiv.org/content/10.1101/2025.11.05.686847v1) | 10.1101/2025.11.05.686847 |
 | 2 | [Fine-tuning sequence-to-expression models on personal genome and transcriptome data](https://www.biorxiv.org/content/10.1101/2024.09.23.614632v1) | 10.1101/2024.09.23.614632 |
 | 2 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://pubmed.ncbi.nlm.nih.gov/38781390/) | 10.1126/science.adh0559 |
@@ -92,3 +95,6 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | 3 | [The emergence and evolution of gene expression in genome regions replete with regulatory motifs](https://elifesciences.org/articles/98654) | 10.7554/eLife.98654.3 |
 | YEAST | ----------- | ----------- |
 | 3 | [Deep learning of the regulatory grammar of yeast 5′ untranslated regions from 500,000 random sequences](https://genome.cshlp.org/content/27/12/2015) | 10.1101/gr.224964.117 |
+| PLANTS | ----------- | ----------- |
+| 1 | [Synthetic promoter designs enabled by a comprehensive analysis of plant core promoters](https://www.nature.com/articles/s41477-021-00932-y) | 10.1038/s41477-021-00932-y |
+| 3 | [Arabidopsis and maize terminator strength is determined by GC content, polyadenylation motifs and cleavage probability](https://www.nature.com/articles/s41467-024-50174-7) | 10.1038/s41467-024-50174-7 |

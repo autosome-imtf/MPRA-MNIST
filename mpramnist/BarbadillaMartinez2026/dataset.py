@@ -10,6 +10,8 @@ import pandas as pd
 import os
 import pyfaidx
 
+from mpramnist.transforms import IUPAC_MAP_REV
+
 class BarbadillaMartinez2026(MpraDataset):
     LEFT_FLANK: ClassVar[str] = (
         "CAGTGAT" # for focused dataset, part of adapter
@@ -23,7 +25,7 @@ class BarbadillaMartinez2026(MpraDataset):
         'enchancer': 1
     }
 
-    CELLLINE_2_LIBRARY: dict[str, str] = {
+    CELLLINE_2_LIBRARY: ClassVar[dict[str, str]]= {
        'AGS': 'focused_v1', 
        'HAP1': 'focused_v1',
        'K562': 'focused_v2',
@@ -43,13 +45,13 @@ class BarbadillaMartinez2026(MpraDataset):
        'HepG2_genomewide': 'genomewide',
     }
     
-    LIBRARY_2_NORMALIZATION: dict[str, str] = {
+    LIBRARY_2_NORMALIZATION: ClassVar[dict[str, str]] = {
         'focused_v1': 'pDNA_pHY3_T2',
         'focused_v2': 'pDNA_T1_T2_sum',
         'genomewide': 'iPCR'
     }
     
-    NORMALIZATION_2_THRESHOLD: dict[str, str] = {
+    NORMALIZATION_2_THRESHOLD: ClassVar[dict[str, str]]= {
         'pDNA_pHY3_T2': 10,
         'pDNA_T1_T2_sum': 10,
         'iPCR': 0,
@@ -60,9 +62,8 @@ class BarbadillaMartinez2026(MpraDataset):
     FLAG: ClassVar[str] = 'BarbadillaMartinez2026'
 
     def __init__(self,
-                 split: list[int], # folds 
-                 library_type: str = 'focused',
-                 cell_line: str = 'AGS', 
+                 split: list[int] | str | int, # folds 
+                 cell_line: str | list[str] = 'AGS', 
                  transform: Callable | None = None,
                  target_transform: Callable | None = None,
                  normalization_treshold: int | None = None,
@@ -77,9 +78,26 @@ class BarbadillaMartinez2026(MpraDataset):
         self.split = split
         folds = self.split_parse(split)
 
-        version = self.CELLLINE_2_LIBRARY.get(cell_line, None)
-        if version is None:
-            raise Exception(f'Wrong cell line provided: {cell_line}')
+        if isinstance(cell_line, str):
+            if cell_line.startswith('all'):
+                version = cell_line.replace('all_', '')
+                cell_lines = [x for x, y in self.CELLLINE_2_LIBRARY.items() if y == version]
+            else:
+                version = self.CELLLINE_2_LIBRARY.get(cell_line, None)
+                if version is None:
+                    raise Exception(f'Wrong cell line provided: {cell_line}')
+                cell_lines = [cell_line]
+        else: # list of cell lines
+            possible_versions = [self.CELLLINE_2_LIBRARY.get(x, None) for x in cell_line]
+            if None in possible_versions:
+                raise Exception(f'Wrong cell line provided: {cell_line}')
+            if len(set(possible_versions)) > 1:
+                raise Exception(f'Cell lines must be from the same library: {possible_versions}')
+            version = possible_versions[0]
+            cell_lines = cell_line
+        self.cell_lines = cell_lines
+        self.version = version
+
         normalization_column = self.LIBRARY_2_NORMALIZATION[version]
         normalization_threshold = self.NORMALIZATION_2_THRESHOLD[normalization_column]
         
@@ -92,7 +110,7 @@ class BarbadillaMartinez2026(MpraDataset):
         feature_ids = self.map_feature_types(feature_types)
         data = data[data['FEATtype'].isin(feature_ids)]
 
-        if self.library_is_genomewide(cell_line):
+        if self.version == 'genomewide':
             self.account_for_snps = True
             genome_ids = self.map_genomes(genomes)
             data = data[data['genome'].isin(genome_ids)]
@@ -111,18 +129,18 @@ class BarbadillaMartinez2026(MpraDataset):
         else:
             self.account_for_snps = False # where is no information on snps in focused libraries 
 
-        data['start'] = data['start'] # to zero-indexed
+        data['start'] = data['start'] - 1# to zero-indexed
         self._data = data
         self.chr = data['chr'].values
         self.start = data['start'].values 
         self.end = data['end'].values
         self.strand = data['strand'].values
-        if self.library_is_genomewide(cell_line):
+        if self.version == 'genomewide':
             self.snps = data['SNPbase'].values
             self.snps_poses = data['SNPrelpos'].values
 
-        target_column = self.get_target_column(cell_line)
-        self.target = data[target_column].values
+        self.target_columns = [self.get_target_column(x) for x in cell_lines]
+        self.target = data[self.target_columns].values
 
         self.lengths = self.end - self.start
         self.genome_path = download_genome('hg19')
@@ -133,9 +151,6 @@ class BarbadillaMartinez2026(MpraDataset):
         self.transform = transform
         self.target_transform = target_transform
         self.feat = data['FEAT']
-
-    def library_is_genomewide(self, cell_line) -> bool:
-        return 'genomewide' in cell_line
 
     def map_genomes(self, genomes: str | list[str]) -> list[str]:
         if isinstance(genomes, str):
