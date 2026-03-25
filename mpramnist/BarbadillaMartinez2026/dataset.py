@@ -12,7 +12,7 @@ import pyfaidx
 
 from mpramnist.transforms import IUPAC_MAP_REV
 
-class BarbadillaMartinez2026(MpraDataset):
+class BarbadillaMartinezDataset(MpraDataset):
     LEFT_FLANK: ClassVar[str] = (
         "CAGTGAT" # for focused dataset, part of adapter
     )

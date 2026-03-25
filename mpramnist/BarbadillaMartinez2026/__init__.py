@@ -1,3 +1,4 @@
-from .dataset import BarbadillaMartinez2026
+from .dataset import BarbadillaMartinezDataset
+from .trainer import LitModel_BarbadillaMartinez
 
-__all__ = ['BarbadillaMartinez2026']
+__all__ = ['BarbadillaMartinezDataset', 'LitModel_BarbadillaMartinez']
