@@ -33,12 +33,10 @@ class MpraDataset(Dataset):
         self,
         split: str | List[int] | int | List[Union[int, str]],
         root,
-        permute: bool = False,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
     ):
         self.split = split
-        self.permute = permute
         self.transform = transform
         self.target_transform = target_transform
         self._scalars = {}
@@ -78,9 +76,6 @@ class MpraDataset(Dataset):
 
             if self.transform is not None:
                 Seq = self.transform(Seq)
-
-            if Seq.one_hot_encoded and self.permute:  # permute
-                Seq.seq = Seq.seq.permute(1, 0)
 
             # Using original key name (seq, seq1, etc)
             seqs_datasets[seq_key] = Seq.seq
