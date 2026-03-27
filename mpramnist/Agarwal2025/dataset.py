@@ -6,7 +6,7 @@ import bioframe as bf
 from mpramnist.mpradataset import MpraDataset
 
 
-class AgarwalDataset(MpraDataset):
+class AgarwalSingleDataset(MpraDataset):
     """
     Dataset class for Agarwal MPRA (Massively Parallel Reporter Assay) data.
     
@@ -30,10 +30,10 @@ class AgarwalDataset(MpraDataset):
 
     Examples:
         >>> # Load training data for HepG2 cell type
-        >>> dataset = AgarwalDataset(split='train', cell_type='HepG2')
+        >>> dataset = AgarwalSingleDataset(split='train', cell_type='HepG2')
         >>> 
         >>> # Load data filtered by genomic regions from BED file
-        >>> dataset = AgarwalDataset(
+        >>> dataset = AgarwalSingleDataset(
         ...     split='train',
         ...     cell_type='K562',
         ...     genomic_regions='path/to/regions.bed'
@@ -41,7 +41,7 @@ class AgarwalDataset(MpraDataset):
         >>> 
         >>> # Load data excluding specific genomic regions
         >>> regions = [{'chrom': '1', 'start': 1000, 'end': 2000}]
-        >>> dataset = AgarwalDataset(
+        >>> dataset = AgarwalSingleDataset(
         ...     split=[1, 2, 3],
         ...     cell_type='WTC11',
         ...     genomic_regions=regions,
@@ -71,7 +71,7 @@ class AgarwalDataset(MpraDataset):
         target_transform=None,
     ):
         """
-        Initialize AgarwalDataset instance.
+        Initialize AgarwalSingleDataset instance.
 
         Parameters
         ----------
@@ -133,7 +133,7 @@ class AgarwalDataset(MpraDataset):
             file_name = self.prefix + self.cell_type + ".tsv"
             self.download(self._data_path, file_name)
             file_path = os.path.join(self._data_path, file_name)
-            df = pd.read_csv(file_path, sep="\t")
+            df = pd.read_csv(file_path, sep="\t", low_memory=False)
         except FileNotFoundError:
             raise FileNotFoundError(f"File not found: {file_path}")
 
@@ -272,3 +272,171 @@ class AgarwalDataset(MpraDataset):
                     raise ValueError(f"Fold {spl} not in range 1-10.")
 
         return split
+
+
+class AgarwalMultiDataset(AgarwalSingleDataset):
+    """
+    Dataset class for joint Agarwal MPRA (Massively Parallel Reporter Assay) data across multiple cell types.
+    
+    This class handles loading, filtering, and processing of genomic sequence data
+    from the Agarwal et al. study, with support for multiple cell types simultaneously
+    and genomic region-based filtering.
+
+    The dataset uses human genome assembly hg38 with 0-based coordinate indexing.
+    All genomic positions (start, end) follow 0-based indexing convention.
+
+    Inherits from:
+        MpraDataset: Base class for MPRA datasets
+
+    Constants:
+        CONSTANT_LEFT_FLANK (str): Constant left flanking sequence required for each sequence
+        CONSTANT_RIGHT_FLANK (str): Constant right flanking sequence required for each sequence
+        LEFT_FLANK (str): Left flanking sequence from human_legnet
+        RIGHT_FLANK (str): Right flanking sequence from human_legnet
+        CELL_TYPES (list): Available cell types: ['HepG2', 'K562', 'WTC11']
+        FLAG (str): Dataset identifier flag: 'AgarwalJoint'
+
+    Examples:
+        >>> # Load training data for HepG2 cell type only
+        >>> dataset = AgarwalMultiDataset(split='train', cell_type='HepG2')
+        >>> 
+        >>> # Load data for multiple cell types
+        >>> dataset = AgarwalMultiDataset(
+        ...     split='train',
+        ...     cell_type=['HepG2', 'K562']
+        ... )
+        >>> 
+        >>> # Load data filtered by genomic regions from BED file
+        >>> dataset = AgarwalMultiDataset(
+        ...     split='train',
+        ...     cell_type=['HepG2', 'K562', 'WTC11'],
+        ...     genomic_regions='path/to/regions.bed'
+        ... )
+        >>> 
+        >>> # Load data excluding specific genomic regions
+        >>> regions = [{'chrom': 'chr1', 'start': 1000, 'end': 2000}]
+        >>> dataset = AgarwalMultiDataset(
+        ...     split=[1, 2, 3],
+        ...     cell_type='WTC11',
+        ...     genomic_regions=regions,
+        ...     exclude_regions=True
+        ... )
+    """
+
+    CONSTANT_LEFT_FLANK = "AGGACCGGATCAACT"  # required for each sequence
+    CONSTANT_RIGHT_FLANK = "CATTGCGTGAACCGA"  # required for each sequence
+    LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG"  # from human_legnet
+    RIGHT_FLANK = (
+        "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT"  # from human_legnet
+    )
+
+    CELL_TYPES = ["HepG2", "K562", "WTC11"]
+    FLAG = "AgarwalJoint"
+
+    def __init__(
+        self,
+        split: str | List[int] | int,
+        cell_type: str | List[str],
+        use_specificity_score: bool = True,
+        genomic_regions: Optional[Union[str, List[Dict]]] = None,
+        exclude_regions: bool = False,
+        root=None,
+        transform=None,
+        target_transform=None,
+    ):
+        """
+        Initialize AgarwalMultiDataset instance.
+
+        Parameters
+        ----------
+        split : str | List[int] | int
+            Defines which data split to use. Can be:
+            - String: 'train', 'val', 'test' (uses predefined fold sets)
+            - List[int]: List of specific fold numbers (1-10)
+            - int: Single fold number (1-10)
+        cell_type : str | List[str]
+            Cell type(s) for filtering the data. Can be:
+            - str: Single cell type ('HepG2', 'K562', or 'WTC11')
+            - List[str]: Multiple cell types
+        genomic_regions : Optional[Union[str, List[Dict]]], optional
+            Genomic regions to include or exclude. Can be:
+            - str: Path to BED file containing genomic regions (hg38, 0-based)
+            - List[Dict]: List of dictionaries with 'chrom', 'start', 'end' keys (hg38, 0-based)
+            - None: No genomic region filtering
+        exclude_regions : bool, default=False
+            If True, exclude the specified genomic regions instead of including them
+        root : optional
+            Root directory for data storage
+        transform : callable, optional
+            Transformation function applied to each sequence
+        target_transform : callable, optional
+            Transformation function applied to target values
+
+        Raises
+        ------
+        ValueError
+            - If cell_type is not in CELL_TYPES
+            - If split string is not 'train', 'val', or 'test'
+            - If fold numbers are not in range 1-10
+        FileNotFoundError
+            If the required joint data file is not found
+
+        Notes
+        -----
+        - The dataset uses 10-fold cross-validation by default
+        - Training folds: 1-8, Validation fold: 9, Test fold: 10
+        - When genomic_regions is specified, the split parameter is ignored for filtering
+          but the split information is stored as 'genomic region'
+        - All genomic coordinates use hg38 assembly with 0-based indexing
+        - For multiple cell types, the target will be a multi-column array
+        """
+        MpraDataset.__init__(self, split, root)
+
+        if isinstance(cell_type, str):
+            if cell_type not in self.CELL_TYPES:
+                raise ValueError(
+                    f"Invalid cell_type: {cell_type}. Must be one of {self.CELL_TYPES}."
+                )
+            cell_type = [cell_type]
+        if isinstance(cell_type, List):
+            for i in range(len(cell_type)):
+                act = cell_type[i]
+                if act not in self.CELL_TYPES:
+                    raise ValueError(
+                        f"Invalid cell_type: {act}. Must be one of {self.CELL_TYPES}."
+                    )
+                
+        suffix = "_Specificity_Score" if use_specificity_score else "_log2"
+        cell_type_with_suffix = [cell + suffix for cell in cell_type]
+        self.cell_type = cell_type_with_suffix
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.split = self.split_parse(split)
+        self.genomic_regions = genomic_regions
+        self.exclude_regions = exclude_regions
+
+        self.prefix = self.FLAG + "_"
+
+        try:
+            file_name = self.prefix + "joint_data" + ".tsv"
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
+            df = pd.read_csv(file_path, sep="\t", low_memory=False)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        # Apply genomic region filtering
+        df = self.filter_by_genomic_regions(df)
+
+        if self.genomic_regions is None:
+            self.ds = df[df.fold.isin(self.split)].reset_index(drop=True)
+        else:
+            self.ds = df
+            self.split = "genomic region"
+
+        targets = self.ds[self.cell_type].to_numpy()
+        seq = self.ds.seq.to_numpy()
+        self.ds = {"targets": targets, "seq": seq}
+
+        self.name_for_split_info = self.prefix
