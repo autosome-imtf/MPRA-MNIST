@@ -25,7 +25,7 @@ HOMEPAGE = "https://github.com/autosome-imtf/MPRA-MNIST"
 INFO = {
     "Agarwal": {
         "python_class": "Agarwal",
-        "description": "The Agarwal dataset is based on a lentiviral MPRA system. The total data volume was 122,926 sequences for the HepG2 cell line, 196,664 for K562, and 46,185 for WTC11. Each sequence is 200 nucleotides long. The regression task was to predict a scalar value of regulatory activity for the corresponding cell line.",
+        "description": "The AgarwalSingle dataset is based on a lentiviral MPRA system. The total data volume was 122,926 sequences for the HepG2 cell line, 196,664 for K562, and 46,185 for WTC11. Each sequence is 200 nucleotides long. The regression task was to predict a scalar value of regulatory activity for the corresponding cell line.",
         "url_Agarwal_HepG2.tsv": "https://zenodo.org/records/17453603/files/Agarwal_HepG2.tsv?download=1",
         "MD5_Agarwal_HepG2.tsv": "13766f66e19d57c250fe733f4f521bc9",
         "url_Agarwal_K562.tsv": "https://zenodo.org/records/17453603/files/Agarwal_K562.tsv?download=1",
@@ -46,7 +46,7 @@ INFO = {
     },
     "AgarwalJoint": {
         "python_class": "AgarwalJoint",
-        "description": "The AgarwalJoint dataset contains 55,338 sequences, each 200 nucleotides long, comprising enhancers from the HepG2, K562, and WTC11 cell lines. The regression task is to predict three scalar values of regulatory activity for each of these cell lines.",
+        "description": "The AgarwalMulti (joint) dataset contains 55,338 sequences, each 200 nucleotides long, comprising enhancers from the HepG2, K562, and WTC11 cell lines. The regression task is to predict three scalar values of regulatory activity for each of these cell lines.",
         "url_AgarwalJoint_joint_data.tsv": "https://zenodo.org/records/18969018/files/AgarwalJoint_joint_data.tsv?download=1",
         "MD5_AgarwalJoint_joint_data.tsv": "b974b97992fd15d668a5fe5d9befd361",
         "scalar_features": {},
