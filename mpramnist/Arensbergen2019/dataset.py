@@ -5,7 +5,7 @@ import os
 import bioframe as bf
 from mpramnist.mpradataset import MpraDataset
 
-class SureDataset(MpraDataset):
+class ArensbergenDataset(MpraDataset):
     """
     A dataset class for SuRE (Survey of Regulatory Elements) MPRA data.
     
@@ -49,10 +49,6 @@ class SureDataset(MpraDataset):
         Type of machine learning task. Must be one of:
         - "classification": Binary classification with binned expression levels
         - "regression": Continuous regression with average expression values
-    permute : bool, optional, default=True
-        Whether to transpose one-hot encoded sequence matrices from 
-        (4, sequence_length) to (sequence_length, 4). format.
-        This converts from sequence-first to channels-first format for padding fuctions.
     genomic_regions : str | List[Dict], optional
         Genomic regions to include or exclude. Can be specified as:
         - Path to BED file (str)
@@ -126,7 +122,6 @@ class SureDataset(MpraDataset):
         split: str,
         genome_id: str,
         task: str,  # regression or classification. regression is default
-        permute=True,
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
         exclude_regions: bool = False,
         transform=None,
@@ -150,10 +145,6 @@ class SureDataset(MpraDataset):
             - "classification": for multi-class classification tasks
             - "regression": for continuous value prediction tasks
             Determines how target values are processed and interpreted.
-        permute : bool, optional, default=True
-            Whether to transpose one-hot encoded sequence matrices from 
-            (4, sequence_length) to (sequence_length, 4). format.
-            This is done for compatibility with padding functions.
         genomic_regions : str | List[Dict], optional
             Genomic regions to include/exclude. Can be:
             - Path to BED file
@@ -165,10 +156,9 @@ class SureDataset(MpraDataset):
         target_transform : callable, optional
             Transformation applied to the target data.
         """
-        super().__init__(split=split, permute=permute, root=root)
+        super().__init__(split=split, root=root)
         self.split = self.split_parse(split)
         self.task = task
-        self.permute = permute
         self.transform = transform
         self.target_transform = target_transform
         self.prefix = self.FLAG + "_"

@@ -1,8 +1,8 @@
-# Sure dataset
+# Arensbergen 2019 dataset
 
 ## Main information
 
-The SuRE dataset (Survey of Regulatory Elements) is based on the analysis of genomes from 4 individuals from 4 different populations ([van Arensbergen et al. 2017](https://pubmed.ncbi.nlm.nih.gov/28024146/)) and was scaled up by [van Arensbergen et al. (2019)](https://pmc.ncbi.nlm.nih.gov/articles/PMC6609452/). The genomes of these individuals are fragmented into 150–500 bp sequences, each cloned into a reporter plasmid. These fragments can drive expression if they contain a functional promoter. Approximately 2.4B and 1.2B fragments were tested (assayed) in K562 and HepG2 cells, respectively.
+The Arensbergen's SuRE dataset (Survey of Regulatory Elements) is based on the analysis of genomes from 4 individuals from 4 different populations ([van Arensbergen et al. 2017](https://pubmed.ncbi.nlm.nih.gov/28024146/)) and was scaled up by [van Arensbergen et al. (2019)](https://pmc.ncbi.nlm.nih.gov/articles/PMC6609452/). The genomes of these individuals are fragmented into 150–500 bp sequences, each cloned into a reporter plasmid. These fragments can drive expression if they contain a functional promoter. Approximately 2.4B and 1.2B fragments were tested (assayed) in K562 and HepG2 cells, respectively.
 
 Preprocessed data and code were integrated from the work of [Reddy et al. 2024](https://pmc.ncbi.nlm.nih.gov/articles/PMC10002662/) ([GitHub](https://github.com/anikethjr/promoter_models/blob/main/promoter_modelling/dataloaders/SuRE.py). Following their subsampling methodology, separate datasets are created for each individual. This subsampling controls for GC content and expression level distribution. The final datasets contain approximately 400-600K training sequences and 50-70K test and validation sequences per individual.
 
@@ -77,12 +77,6 @@ Type of machine learning task. Must be one of:
 
 Determines how target values are processed and interpreted.
 
-### **`permute : bool`, optional, `default=True`**
-
-Whether to transpose one-hot encoded sequence matrices from 
-(4, sequence_length) to (sequence_length, 4) format.
-This is done for compatibility with padding functions.
-
 ### **`genomic_regions : str | List[Dict]`, optional**
 
 Genomic regions to include/exclude. Can be:
@@ -109,13 +103,11 @@ Root directory where data is stored. If None, uses default data path.
 
 ## Data Handling Considerations
 
-1) **Variable Sequence Lengths**: The main characteristic of this data is that sequence lengths vary. To handle this, we use an approach where sequences in each batch are padded with "N" nucleotides to match the length of the longest sequence in the batch. The `pad_collate` function is used for implementation. However, to enable this function to work properly, the shape of sequence tensors needs to be changed, which is achieved by setting the `permute=True` parameter.
+1) **Variable Sequence Lengths**: The main characteristic of this data is that sequence lengths vary. To handle this, we use an approach where sequences in each batch are padded with "N" nucleotides to match the length of the longest sequence in the batch. The `pad_collate` function is used for implementation. However, to enable this function to work properly, the shape of sequence tensors needs to be changed, which is achieved by setting the `t.Seq2Tensor(sequence_first=True)` parameter.
 
-2) **Permute Parameter**: When `permute=True`, the function transforms tensors from shape (4, sequence_length) to (sequence_length, 4).
+2) **Genomic Coordinates**: Use the `genomic_regions` and `exclude_regions` parameters to select or exclude specific genomic regions across chromosomes in the dataset. *Uses 0-based indexing for genomic coordinates.*
 
-3) **Genomic Coordinates**: Use the `genomic_regions` and `exclude_regions` parameters to select or exclude specific genomic regions across chromosomes in the dataset. *Uses 0-based indexing for genomic coordinates.*
-
-4) **Example Usage**: See [Sure Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SureDataset_example.ipynb]) for detailed usage example and training
+3) **Example Usage**: See [Sure Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/SureDataset_example.ipynb]) for detailed usage example and training
 
 ## Examples
 
@@ -143,12 +135,12 @@ Root directory where data is stored. If None, uses default data path.
     train_transform = t.Compose(
         [
             t.ReverseComplement(0.5),
-            t.Seq2Tensor(),
+            t.Seq2Tensor(sequence_first=True),
         ]
     )
     test_transform = t.Compose(
         [
-            t.Seq2Tensor(),
+            t.Seq2Tensor(sequence_first=True),
         ]
 )
    
