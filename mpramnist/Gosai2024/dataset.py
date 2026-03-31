@@ -3,15 +3,16 @@ from typing import List, Union, Optional, Callable, Dict
 from functools import partial
 import os
 import bioframe as bf
+import warnings
 from mpramnist.mpradataset import MpraDataset
 
 
-class MalinoisDataset(MpraDataset):
+class GosaiDataset(MpraDataset):
     """
     Dataset class for Malinois MPRA (Massively Parallel Reporter Assay) data.
     
     This class handles loading, filtering, and processing of genomic sequence data
-    from the Malinois et al. study, with support for multiple cell types and
+    from the Gosai et al. study, with support for multiple cell types and
     advanced filtering options.
 
     The dataset uses human genome assembly hg19 with 0-based coordinate indexing.
@@ -31,24 +32,24 @@ class MalinoisDataset(MpraDataset):
 
     Examples:
         >>> # Load training data with original filtration
-        >>> dataset = MalinoisDataset(split='train', filtration='original')
+        >>> dataset = GosaiDataset(split='train', filtration='original')
         >>> 
         >>> # Load data for specific chromosomes with custom filtration
-        >>> dataset = MalinoisDataset(
+        >>> dataset = GosaiDataset(
         ...     split=['1', '2', '3'],
         ...     filtration='own',
         ...     stderr_threshold=0.8
         ... )
         >>> 
         >>> # Load data filtered by genomic regions
-        >>> dataset = MalinoisDataset(
+        >>> dataset = GosaiDataset(
         ...     split='test',
         ...     genomic_regions='path/to/regions.bed',
-        ...     cell_type=['K562_log2FC', 'HepG2_log2FC']
+        ...     cell_types=['K562_log2FC', 'HepG2_log2FC']
         ... )
         >>> 
         >>> # Load data with duplication and reverse complement
-        >>> dataset = MalinoisDataset(
+        >>> dataset = GosaiDataset(
         ...     split='val',
         ...     duplication_cutoff=2.0,
         ...     use_original_reverse_complement=True
@@ -70,7 +71,7 @@ class MalinoisDataset(MpraDataset):
         exclude_regions: bool = False,
         genomic_regions_column: str = ["start", "end", "strand"],
         filtration: str = "original",  # 'original', 'own' or 'none'
-        cell_type: List[str] = ["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"],
+        cell_types: List[str] = ["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"],
         stderr_columns: List[str] = ["K562_lfcSE", "HepG2_lfcSE", "SKNSH_lfcSE"],
         data_project: List[str] = ["UKBB", "GTEX", "CRE"],
         sequence_column="sequence",
@@ -81,6 +82,7 @@ class MalinoisDataset(MpraDataset):
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
         use_original_reverse_complement: bool = False,
+        use_A549: bool = False,
         root=None,
     ):
         """
@@ -107,7 +109,7 @@ class MalinoisDataset(MpraDataset):
             - 'original': Uses the original study's filtering approach with padding
             - 'own': Applies custom filtering with configurable parameters
             - 'none': No filtering applied
-        cell_type : List[str], default=["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"]
+        cell_types : List[str], default=["K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"]
             List of column names with activity data to be used for filtering and duplication.
         stderr_columns : List[str], default=["K562_lfcSE", "HepG2_lfcSE", "SKNSH_lfcSE"]
             List of column names with standard error values used for quality filtering.
@@ -130,6 +132,8 @@ class MalinoisDataset(MpraDataset):
         use_original_reverse_complement : bool, default=False
             Determines whether to generate the reverse complement of sequences using 
             the same approach as the original study.
+        use_A549 : bool, default=False
+            Determines whether to use small dataset with sequences measured in HepG2, K562, SKNSH and A549
         root : optional
             Root directory for data storage.
 
@@ -171,19 +175,20 @@ class MalinoisDataset(MpraDataset):
         self.prefix = self.FLAG + "_"
         self.genomic_regions = genomic_regions
         self.exclude_regions = exclude_regions
+        self.use_A549 = use_A549
 
         # Parse columns and split parameters
-        cell_type = self.activity_columns_parse(cell_type)
+        cell_types = self.activity_columns_parse(cell_types, use_A549=self.use_A549)
         self.split = self.split_parse(split)
 
         # Load and process the dataset
-        self.ds = self._load_and_filter_data(cell_type)
-        self.cell_type = cell_type
-        self.target = cell_type  # initialization for MpraDataset.__getitem__()
+        self.ds = self._load_and_filter_data(cell_types, use_A549=self.use_A549)
+        self.cell_types = cell_types
+        self.target = cell_types
 
         self.name_for_split_info = self.prefix
 
-    def _load_and_filter_data(self, activity_columns):
+    def _load_and_filter_data(self, activity_columns, use_A549 = False):
         """
         Loads and preprocesses the dataset by selecting specific columns, handling missing values,
         renaming columns, filtering data based on project and filtration type, splitting by chromosome,
@@ -193,6 +198,8 @@ class MalinoisDataset(MpraDataset):
         ----------
         activity_columns : list of str
             List of columns containing activity data in the dataset.
+        use_A549 : bool, default=False
+            Determines whether to use small dataset with sequences measured in HepG2, K562, SKNSH and A549
 
         Returns
         -------
@@ -212,8 +219,20 @@ class MalinoisDataset(MpraDataset):
         - All genomic coordinates are in hg19 with 0-based indexing
         """
 
+        if use_A549:
+            table_name = "Table_S2_with_A549"
+            if "A549_lfcSE" not in self.stderr_columns:
+                self.stderr_columns.append("A549_lfcSE")
+            warnings.warn(
+                    "When use_A549 is set to True, only sequences that have been investigated in all four "
+                    "cell lines (HepG2, K562, SKNSH, A549) are retained, reducing the dataset size",
+                    stacklevel=1,
+                )
+        else:
+            table_name = "Table_S2"
+
         try:
-            file_name = self.prefix + "Table_S2" + ".tsv"
+            file_name = self.prefix + table_name + ".tsv"
             self.download(self._data_path, file_name)
             file_path = os.path.join(self._data_path, file_name)
             df = pd.read_csv(file_path, sep="\t", low_memory=False)
@@ -582,12 +601,20 @@ class MalinoisDataset(MpraDataset):
         self,
         activity_columns: str | List[str],
         default_activity_columns=["K562", "HepG2", "SKNSH"],
+        use_A549: bool = False,
+        suffix: str = "_log2FC"
     ) -> List[str]:
         """
         Parses the input activity columns and returns a list of parsed activity_columns.
         """
         if isinstance(activity_columns, str):
             activity_columns = [activity_columns]
+
+        if use_A549:
+            default_activity_columns=["K562", "HepG2", "SKNSH", "A549"]
+            if "A549" not in activity_columns:
+                activity_columns.append("A549")
+
         if isinstance(activity_columns, List):
             for i in range(len(activity_columns)):
                 act = activity_columns[i]
@@ -596,6 +623,53 @@ class MalinoisDataset(MpraDataset):
                     raise ValueError(
                         f"Invalid activity column: {act}. Must be one of {default_activity_columns}."
                     )
-                activity_columns[i] = act + "_log2FC"
-                # activity_columns[i] = act + "_mean"
+                activity_columns[i] = act + suffix
+
         return activity_columns
+
+
+class GosaiDataset_Pairwise(GosaiDataset):
+
+    def __init__(self,
+        split: str | List[Union[int, str]] | int,
+        cell_types: List[str] = ["K562", "HepG2", "SKNSH", "GM12878", "A549"],
+        transform: Optional[Callable] = None,
+        target_transform: Optional[Callable] = None,
+        root=None,
+    ):
+        MpraDataset.__init__(self, split, root)
+
+        self.cell_types = self.activity_columns_parse(cell_types, 
+                                                      default_activity_columns=["K562", "HepG2", "SKNSH", "GM12878", "A549"], 
+                                                      suffix="_normalized_variant_effect")
+        self.transform = transform
+        self.target_transform = target_transform
+
+        self.split = self.split_parse(split)
+
+        self.prefix = self.FLAG + "_"  # Prefix for file names
+        
+        try:
+            # Load the data file
+            file_name = self.prefix + "variant_effect_data" + ".tsv"
+            self.download(self._data_path, file_name)
+            file_path = os.path.join(self._data_path, file_name)
+            df = pd.read_csv(file_path, sep="\t")
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        df["chromosome"] = df["chromosome"].astype(str)
+        df = df[df["chromosome"].isin(self.split)].reset_index(drop=True)
+
+        # Clean up and reset index after filtering
+        self.ds = df.dropna().reset_index(drop=True)
+
+        # Prepare final dataset structure
+        targets = self.ds[self.cell_types].to_numpy()
+        seq_alt = self.ds.alt_sequence.to_numpy()
+        seq_ref = self.ds.ref_sequence.to_numpy()
+        self.ds = {"targets": targets, "seq": seq_ref, "seq_alt": seq_alt}
+
+        # Identifier for split information
+        self.name_for_split_info = self.prefix
+
