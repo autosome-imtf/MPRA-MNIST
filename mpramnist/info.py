@@ -117,6 +117,10 @@ INFO = {
         "description": "The Malinois dataset includes 798,064 sequences tested in the K562, HepG2, and SK-N-SH cell lines. The original sequence length is approximately 200 nucleotides, and it is recommended to extend them to 600 bp. The task is to predict three normalized regulatory activity values for the respective cell lines.",
         "url_Malinois_Table_S2.tsv": "https://zenodo.org/records/17453603/files/Malinois_Table_S2.tsv?download=1",
         "MD5_Malinois_Table_S2.tsv": "6b17ac4091c28ead54cf962ed557b3b4",
+        "url_Malinois_Table_S2_with_A549.tsv": "",
+        "MD5_Malinois_Table_S2_with_A549.tsv": "c14f600c820708278f9b27f9f4bb5bae",
+        "url_Malinois_variant_effect_data.tsv": "",
+        "MD5_Malinois_variant_effect_data.tsv": "d0ac337dfdc6dc0f47a7925cffc48160",
         "scalar_features": {},
         "vector_features": {},
         "target_columns": {"K562_log2FC", "HepG2_log2FC", "SKNSH_log2FC"},
@@ -396,6 +400,18 @@ INFO = {
         "split": {        },
         "Fromel2025_split": {},
     },
+    "Klein2020": {
+        "python_class": "Klein2020",
+        "description": "",
+        "url_Klein2020_all_chr.tsv": "",
+        "MD5_Klein2020_all_chr.tsv": "e4c34ac17cf208c35897311824633e2c",
+        "scalar_features": {},
+        "vector_features": {},
+        "target_columns": {},
+        "task": "Regression",
+        "split": {        },
+        "Klein2020_split": {},
+    },
 }
 
 INFO['BarbadillaMartinez2026'] = {'python_class': 'BarbadillaMartinez2026',
@@ -464,4 +480,7 @@ INFO['BarbadillaMartinez2026'] = {'python_class': 'BarbadillaMartinez2026',
   'scalar_features': {},
   'vector_features': {},
   'task': 'Regression',
-  'split': {'train': [0, 1, 2, 3], 'val': 4, 'test': 'test'}}
+  'split': {'train': [0, 1, 2, 3], 'val': 4, 'test': 'test'},
+  
+  
+  }
