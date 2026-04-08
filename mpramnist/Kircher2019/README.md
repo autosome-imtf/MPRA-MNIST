@@ -195,6 +195,21 @@ Root directory where data is stored. If None, uses default data directory.
 
 See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/KircherDataset_example.ipynb) for detailed usage example and training
 
+## Launch Parameters
+
+```bash
+    python3 Kircher_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
+```
+```bash
+    python3 Kircher_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
+```
+```bash
+    python3 Kircher_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
+```
+```bash
+    python3 Kircher_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
+```
+
 ## Original Benchmark Quality
 
 Pearson correlation, r 
