@@ -227,6 +227,19 @@ Root directory for data storage.
     )
 ```
 
+## Launch Parameters
+
+```bash
+    #MPRALegNet
+    python3 Gosai_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 --result_dir ./Gosai_legnet.tsv
+    #Malinois
+    python3 Gosai_model_launch.py --model Malinois --lr 0.0032658700881052086 --wd 0.0003438210249762151 --batch_size 1076 --epoch_num 50 --runs 5 --cell_types HepG2 K562 --result_dir ./Gosai_malinois.tsv
+    #MPRAnn
+    python3 Gosai_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 --result_dir ./Gosai_mprann.tsv
+    #PARM
+    python3 Gosai_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 --result_dir ./Gosai_parm.tsv
+```
+
 
 ## Original Benchmark Quality
 
