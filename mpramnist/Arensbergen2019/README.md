@@ -200,6 +200,20 @@ Root directory where data is stored. If None, uses default data path.
         collate_fn=pad_collate,
     )
 ```
+
+## Launch Parameters
+
+```bash
+    #MPRALegNet
+    python3 Arensbergen_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --genome_ids SuRE42_HG02601 --cell_types HepG2 K562 --result_dir ./Arensbergen_legnet.tsv
+    #Malinois
+    python3 Arensbergen_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --genome_ids SuRE42_HG02601 --cell_types HepG2 K562 --result_dir ./Arensbergen_malinois.tsv
+    #MPRAnn
+    python3 Arensbergen_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --genome_ids SuRE42_HG02601 --cell_types HepG2 K562 --result_dir ./Arensbergen_mprann.tsv
+    #PARM
+    python3 Arensbergen_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --genome_ids SuRE42_HG02601 --cell_types HepG2 K562 --result_dir ./Arensbergen_parm.tsv
+```
+
 ## Original Benchmark Quality
 
 No other study has used this data for pretraining, so we don't have information about the quality metrics achieved by the original authors.

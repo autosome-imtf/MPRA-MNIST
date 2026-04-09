@@ -73,14 +73,14 @@ class ArensbergenDataset(MpraDataset):
     Examples
     --------
     >>> # Load training data for classification from one genome
-    >>> dataset = SureDataset(
+    >>> dataset = ArensbergenDataset(
     ...     split="train",
     ...     genome_id="SuRE42_HG02601", 
     ...     task="classification"
     ... )
     
     >>> # Load regression data with genomic region filtering
-    >>> dataset = SureDataset(
+    >>> dataset = ArensbergenDataset(
     ...     split="test",
     ...     genome_id="SuRE43_GM18983",
     ...     task="regression",
@@ -89,7 +89,7 @@ class ArensbergenDataset(MpraDataset):
     
     >>> # Load data excluding specific genomic regions
     >>> regions = [{"chrom": "chr1", "start": 1000000, "end": 2000000}]
-    >>> dataset = SureDataset(
+    >>> dataset = ArensbergenDataset(
     ...     split="val",
     ...     genome_id="SuRE44_HG01241",
     ...     task="classification", 
@@ -122,6 +122,7 @@ class ArensbergenDataset(MpraDataset):
         split: str,
         genome_id: str,
         task: str,  # regression or classification. regression is default
+        cell_type: str | List[str],
         genomic_regions: Optional[Union[str, List[Dict]]] = None,
         exclude_regions: bool = False,
         transform=None,
@@ -145,6 +146,10 @@ class ArensbergenDataset(MpraDataset):
             - "classification": for multi-class classification tasks
             - "regression": for continuous value prediction tasks
             Determines how target values are processed and interpreted.
+        cell_type : str | List[str]
+            Cell type(s) for filtering the data. Can be:
+            - str: Single cell type ('HepG2', 'K562')
+            - List[str]: Multiple cell types
         genomic_regions : str | List[Dict], optional
             Genomic regions to include/exclude. Can be:
             - Path to BED file
@@ -165,7 +170,9 @@ class ArensbergenDataset(MpraDataset):
         self.genomic_regions = genomic_regions
         self.exclude_regions = exclude_regions
         self.genome_id = genome_id
-        self.cell_type = self.CELL_TYPES
+        self.cell_type = cell_type
+        if isinstance(self.cell_type, str):
+            self.cell_type = [self.cell_type]
 
         if isinstance(genome_id, list):
             pass
@@ -212,15 +219,15 @@ class ArensbergenDataset(MpraDataset):
 
         # Process targets based on task type
         if self.task == "classification":
-            self.output_names = ["K562_bin", "HepG2_bin"]
+            self.cell_type = [cell + "_bin" for cell in self.cell_type]
             self.num_classes_per_output = [5, 5]
             self.num_outputs = np.sum(self.num_classes_per_output)
-            targets = combined_df[self.output_names].to_numpy()
+            targets = combined_df[self.cell_type].to_numpy()
 
         elif self.task == "regression":
-            self.output_names = ["avg_K562_exp", "avg_HepG2_exp"]
+            self.cell_type = ["avg_" + cell + "_exp" for cell in self.cell_type]
             self.num_outputs = 2
-            targets = combined_df[self.output_names].to_numpy()
+            targets = combined_df[self.cell_type].to_numpy()
 
         seq = combined_df.sequence.to_numpy()
 
