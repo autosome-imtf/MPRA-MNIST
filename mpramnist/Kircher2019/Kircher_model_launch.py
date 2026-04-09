@@ -81,7 +81,7 @@ args = parser.parse_args()
 
 
 if os.path.exists(args.result_dir):
-    results = pd.read_csv(args.result_dir)
+    results = pd.read_csv(args.result_dir, sep="\t")
 else:
     results = pd.DataFrame(columns = [args.cell_types])
 
@@ -154,15 +154,19 @@ for run in list(range(args.runs)):
             pool_sizes=[2, 2, 2, 2],
             resize_factor=4)
         model.apply(initialize_weights)
+        loss =nn.MSELoss()
     elif args.model == "MPRAnn":
-        model = MPRAnn(output_dim=len(args.cell_types))
+        model = MPRAnn(output_dim=1)
+        loss =nn.MSELoss()
     elif args.model == "Malinois":
         length = len(train_dataset[0][0][0])
-        model = BassetBranched(input_len=length, n_outputs=len(args.cell_types), loss_criterion=L1KLmixed)
+        model = BassetBranched(input_len=length, n_outputs=1, loss_criterion=L1KLmixed)
+        loss =L1KLmixed()
     elif args.model == "PARM":
         model = PARM(n_block=5, type_loss="mse", output_dim=1)
+        loss =nn.MSELoss()
 
-    seq_model = LitModel_Kircher(model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, print_each=10)
+    seq_model = LitModel_Kircher(model=model, loss=loss, weight_decay=args.wd, lr=args.lr, print_each=1)
 
     checkpoint_callback = ModelCheckpoint(monitor="val_pearson", mode="max", save_top_k=1, save_last=False)
 
@@ -184,14 +188,15 @@ for run in list(range(args.runs)):
     best_model_path = checkpoint_callback.best_model_path
     seq_model = LitModel_Kircher.load_from_checkpoint(best_model_path,model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, print_each=1)
 
-    test_forw = KircherDataset(length=200, elements=args.elements, transform=forw_transform, root="../data/")
-    test_rev = KircherDataset(length=200, elements=args.elements, transform=rev_transform, root="../data/")
+    test_forw = KircherDataset(length=200, elements=args.elements, transform=forw_transform, root=args.root)
+    test_rev = KircherDataset(length=200, elements=args.elements, transform=rev_transform, root=args.root)
 
     forw_single = DataLoader(dataset=test_forw, batch_size=1024, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
     rev_single = DataLoader(dataset=test_rev, batch_size=1024, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
 
     corr_pearson = meaned_prediction(forw_single, rev_single, trainer, seq_model, name=args.elements,is_kircher=True,)
 
+    print(corr_pearson.numpy())
     results.loc[len(results)] = corr_pearson.numpy()
 
     results.to_csv(args.result_dir, sep = "\t", index = False)

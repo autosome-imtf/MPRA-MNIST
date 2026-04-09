@@ -198,16 +198,14 @@ See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/exampl
 ## Launch Parameters
 
 ```bash
-    python3 Kircher_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
-```
-```bash
-    python3 Kircher_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
-```
-```bash
-    python3 Kircher_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
-```
-```bash
-    python3 Kircher_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1.tsv
+    #MpraLegNet
+    python3 Kircher_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1_legnet.tsv
+    #Malinois
+    python3 Kircher_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1_malinois.tsv
+    #MPRAnn
+    python3 Kircher_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1_mprann.tsv
+    #PARM
+    python3 Kircher_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 --elements SORT1 SORT1.2 SORT1-flip --result_dir ./kircher_sort1_parm.tsv
 ```
 
 ## Original Benchmark Quality
