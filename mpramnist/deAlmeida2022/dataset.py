@@ -7,7 +7,7 @@ import warnings
 from mpramnist.mpradataset import MpraDataset
 
 
-class DeepStarrDataset(MpraDataset):
+class deAlmeidaDataset(MpraDataset):
     """
     Dataset class for DeepSTARR MPRA data from Drosophila S2 cells.
 
@@ -102,7 +102,7 @@ class DeepStarrDataset(MpraDataset):
 
     FLAG = "DeepStarr"
 
-    ACTIVITY_COLUMNS = ["Dev_log2", "Hk_log2"]
+    CELL_TYPES = ["Dev_log2", "Hk_log2"]
     LIST_OF_CHR = [
         "2L",
         "2LHet",
@@ -165,10 +165,8 @@ class DeepStarrDataset(MpraDataset):
             Root directory for data storage.
         """
         super().__init__(split, root)
-        self.cell_type = ["Drosophila S2 Developmental", 
-                          "Drosophila S2 Housekeeping"] # for parent class compatibility
 
-        self.activity_column = cell_type
+        self.cell_type = cell_type
         if use_original_reverse_complement is None:
             if isinstance(split, list) or split != "train":
                 use_original_reverse_complement = False
@@ -223,7 +221,7 @@ class DeepStarrDataset(MpraDataset):
             rev_aug.sequence = rev_aug.sequence.apply(self.reverse_complement)
             df = pd.concat([df, rev_aug], ignore_index=True)
 
-        targets = df[self.activity_column].to_numpy()
+        targets = df[self.cell_type].to_numpy()
         seq = df.sequence.to_numpy()
         self.ds = {"targets": targets, "seq": seq}
 
@@ -386,7 +384,7 @@ class DeepStarrDataset(MpraDataset):
                 column = "split"
                 return [split], column
             elif split in self.LIST_OF_CHR:
-                column = "chr"
+                column = "chromosome"
                 return [split], column
             else:
                 raise ValueError(
@@ -395,7 +393,7 @@ class DeepStarrDataset(MpraDataset):
         # Validate list of folds
         elif isinstance(split, list):
             result = []
-            column = "chr"
+            column = "chromosome"
             for item in split:
                 if item in self.LIST_OF_CHR:
                     result.append(item)

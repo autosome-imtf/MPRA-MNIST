@@ -38,10 +38,11 @@ Data split specification. Can be:
 
 ### **`cell_type : str | List[str]`, default: `["Dev_log2", "Hk_log2"]`**
 
-Cell type(s) for target data. Can be:
+Promoter type(s) for target data.   Can be:
 - `"Dev_log2"`: Developmental activity
 - `"Hk_log2"`: Housekeeping activity
 - List containing both for multi-task learning
+- Named `cell_type` for other dataset's attribute consistency
 
 ### **`use_original_reverse_complement : bool | None`, optional**
 
@@ -76,9 +77,9 @@ Root directory for data storage.
 
 ## Data Handling Considerations
 
-1) **Cell Type Selection**: Use the `cell_type` parameter to select one or multiple cell lines. `Dev_log2`is Developmental activity, `Hk_log2` is Housekeeping activity.
+1) **Promoter Type Selection**: Use the `cell_type` parameter to select one or multiple promoter lines. `Dev_log2` is Developmental activity, `Hk_log2` is Housekeeping activity.
 
-2) **Multi-task Learning**: This dataset is designed for multi-task learning, where a single model predicts activities across multiple cell lines simultaneously.
+2) **Multi-task Learning**: This dataset is designed for multi-task learning, where a single model predicts activities across multiple promoter types simultaneously.
 
 3) **Genomic Region Filtering**: Use `the genomic_regions` and `exclude_regions` parameters to select or exclude specific genomic regions across chromosomes. The dataset uses **0-based** indexing for genomic coordinates in **D. melanogaster genome**.
 
@@ -160,6 +161,22 @@ val_loader = data.DataLoader(
     shuffle=False,          # No need to shuffle for validation/testing
     num_workers=8
 )
+```
+
+## Launch Parameters
+
+```bash
+    #MPRALegNet
+    python3 deAlmeida_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --promoter_types Dev_log2 Hk_log2 --result_dir ./deAlmeida_legnet.tsv
+    #Malinois
+    python3 deAlmeida_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --promoter_types Dev_log2 Hk_log2 --result_dir ./deAlmeida_malinois.tsv
+    #MPRAnn
+    python3 deAlmeida_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --promoter_types Dev_log2 Hk_log2 --result_dir ./deAlmeida_mprann.tsv
+    #PARM
+    python3 deAlmeida_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --promoter_types Dev_log2 Hk_log2 --result_dir ./deAlmeida_parm.tsv
+    #DeepStarr
+    python3 deAlmeida_model_launch.py --model DeepStarr --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --promoter_types Dev_log2 Hk_log2 --result_dir ./deAlmeida_deepstarr.tsv
+
 ```
 
 ## Original Benchmark Quality
