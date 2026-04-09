@@ -208,6 +208,32 @@ Transformation function applied to target values
     )
 ```
 
+## Launch Parameters
+
+### AgarwalSingle
+```bash
+    #MPRALegNet
+    python3 AgarwalSingle_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalsingle_legnet.tsv
+    #Malinois
+    python3 AgarwalSingle_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalsingle_malinois.tsv
+    #MPRAnn
+    python3 AgarwalSingle_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalsingle_mprann.tsv
+    #PARM
+    python3 AgarwalSingle_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalsingle_parm.tsv
+```
+
+```bash
+    #MPRALegNet
+    python3 AgarwalMulti_model_launch.py --model MPRALegNet --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalmulti_legnet.tsv
+    #Malinois
+    python3 AgarwalMulti_model_launch.py --model Malinois --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalmulti_malinois.tsv
+    #MPRAnn
+    python3 AgarwalMulti_model_launch.py --model MPRAnn --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalmulti_mprann.tsv
+    #PARM
+    python3 AgarwalMulti_model_launch.py --model PARM --lr 0.01 --wd 0.1 --epoch_num 50 --runs 5 --cell_types HepG2 K562 WTC11 --result_dir ./Agarwalmulti_parm.tsv
+```
+
+
 ## Original Benchmark Quality
 
 Pearson correlation, r

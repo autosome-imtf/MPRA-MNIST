@@ -3,11 +3,19 @@ import torch.nn as nn
 import os
 import pandas as pd
 
-# Single
+# multi
 from mpramnist.Agarwal2025.dataset import AgarwalMultiDataset
 from mpramnist.Agarwal2025.trainer import LitModel_AgarwalMulti
 
+from mpramnist.models import HumanLegNet
+from mpramnist.models import initialize_weights
+
+from mpramnist.models import BassetBranched
+from mpramnist.models import L1KLmixed
+
 from mpramnist.models import MPRAnn
+
+from mpramnist.models import PARM
 import mpramnist.transforms as t
 
 from torch.utils.data import DataLoader
@@ -24,7 +32,7 @@ general = parser.add_argument_group('general args',
 
 general.add_argument("--result_dir",
                      type=str,
-                     default = "./agarwalmulti_mprann.tsv")
+                     default = "./agarwalmulti.tsv")
 general.add_argument("--device", 
                      type=int,
                      default=0)
@@ -34,6 +42,9 @@ general.add_argument("--num_workers",
 general.add_argument("--runs",
                      type=int, 
                      default=5)
+general.add_argument("--model",
+                     type=str, 
+                     default="MPRALegNet") # or Malinois/MPRAnn/PARM   
 
 dataset_args =  parser.add_argument_group('dataset args', 
                                 'dataset arguments')
@@ -50,10 +61,10 @@ trainer_args =  parser.add_argument_group('trainer args',
                                 'trainer arguments')
 
 trainer_args.add_argument("--lr",
-                     type=int,
+                     type=float,
                      default=0.01)
 trainer_args.add_argument("--wd",
-                     type=int,
+                     type=float,
                      default=0.1)
 trainer_args.add_argument("--epoch_num",
                             type=int,
@@ -66,7 +77,7 @@ if isinstance(args.cell_types, str):
     args.cell_types = [args.cell_types]
 
 if os.path.exists(args.result_dir):
-    results = pd.read_csv(args.result_dir)
+    results = pd.read_csv(args.result_dir, sep = "\t")
 else:
     results = pd.DataFrame(columns = args.cell_types)
 
@@ -126,9 +137,30 @@ for run in list(range(args.runs)):
     val_loader = DataLoader(dataset=val_dataset, batch_size=1024, shuffle=False, num_workers=args.num_workers)
     test_loader = DataLoader(dataset=test_dataset, batch_size=1024, shuffle=False, num_workers=args.num_workers)
 
-    model = MPRAnn(output_dim=len(args.cell_types))
+    if args.model == "MPRALegNet":
+        model = HumanLegNet(
+            in_ch=len(train_dataset[0][0]),
+            output_dim=len(args.cell_types),
+            stem_ch=64,
+            stem_ks=11,
+            ef_ks=9,
+            ef_block_sizes=[80, 96, 112, 128],
+            pool_sizes=[2, 2, 2, 2],
+            resize_factor=4)
+        model.apply(initialize_weights)
+        loss =nn.MSELoss()
+    elif args.model == "MPRAnn":
+        model = MPRAnn(output_dim=len(args.cell_types))
+        loss =nn.MSELoss()
+    elif args.model == "Malinois":
+        length = len(train_dataset[0][0][0])
+        model = BassetBranched(input_len=length, n_outputs=len(args.cell_types))
+        loss =nn.MSELoss()
+    elif args.model == "PARM":
+        model = PARM(n_block=5, type_loss="mse", output_dim=len(args.cell_types))
+        loss =nn.MSELoss()
 
-    seq_model = LitModel_AgarwalMulti(model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, cell_types=args.cell_types, print_each=10)
+    seq_model = LitModel_AgarwalMulti(model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, cell_types=args.cell_types, print_each=1)
 
     checkpoint_callback = ModelCheckpoint(monitor="val_pearson", mode="max", save_top_k=1, save_last=False)
 
@@ -148,15 +180,15 @@ for run in list(range(args.runs)):
     trainer.fit(seq_model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     best_model_path = checkpoint_callback.best_model_path
-    seq_model = LitModel_AgarwalMulti.load_from_checkpoint(best_model_path,model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, print_each=1)
+    seq_model = LitModel_AgarwalMulti.load_from_checkpoint(best_model_path,model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, cell_types=args.cell_types, print_each=1)
 
     test_forw = AgarwalMultiDataset(cell_type=args.cell_types, split="test", transform=forw_transform, root=args.root)
     test_rev = AgarwalMultiDataset(cell_type=args.cell_types, split="test", transform=rev_transform, root=args.root)
 
-    forw_single = DataLoader(dataset=test_forw, batch_size=1024, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
-    rev_single = DataLoader(dataset=test_rev, batch_size=1024, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
+    forw_multi = DataLoader(dataset=test_forw, batch_size=1024, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
+    rev_multi = DataLoader(dataset=test_rev, batch_size=1024, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
 
-    corr_pearson = meaned_prediction(forw_single, rev_single, trainer, seq_model, args.cell_types, len(args.cell_types))
+    corr_pearson = meaned_prediction(forw_multi, rev_multi, trainer, seq_model, args.cell_types, len(args.cell_types))
 
     results.loc[len(results)] = corr_pearson.numpy()
 

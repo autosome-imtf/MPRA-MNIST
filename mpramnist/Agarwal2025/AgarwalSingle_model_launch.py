@@ -7,7 +7,15 @@ import pandas as pd
 from mpramnist.Agarwal2025.dataset import AgarwalSingleDataset
 from mpramnist.Agarwal2025.trainer import LitModel_AgarwalSingle
 
+from mpramnist.models import HumanLegNet
+from mpramnist.models import initialize_weights
+
+from mpramnist.models import BassetBranched
+from mpramnist.models import L1KLmixed
+
 from mpramnist.models import MPRAnn
+
+from mpramnist.models import PARM
 import mpramnist.transforms as t
 
 from torch.utils.data import DataLoader
@@ -24,7 +32,7 @@ general = parser.add_argument_group('general args',
 
 general.add_argument("--result_dir",
                      type=str,
-                     default = "./agarwalsingle_mprann.tsv")
+                     default = "./agarwalsingle.tsv")
 general.add_argument("--device", 
                      type=int,
                      default=0)
@@ -34,6 +42,9 @@ general.add_argument("--num_workers",
 general.add_argument("--runs",
                      type=int, 
                      default=5)
+general.add_argument("--model",
+                     type=str, 
+                     default="MPRALegNet") # or Malinois/MPRAnn/PARM  
 
 dataset_args =  parser.add_argument_group('dataset args', 
                                 'dataset arguments')
@@ -50,10 +61,10 @@ trainer_args =  parser.add_argument_group('trainer args',
                                 'trainer arguments')
 
 trainer_args.add_argument("--lr",
-                     type=int,
+                     type=float,
                      default=0.01)
 trainer_args.add_argument("--wd",
-                     type=int,
+                     type=float,
                      default=0.1)
 trainer_args.add_argument("--epoch_num",
                             type=int,
@@ -66,7 +77,7 @@ if isinstance(args.cell_types, str):
     args.cell_types = [args.cell_types]
 
 if os.path.exists(args.result_dir):
-    results = pd.read_csv(args.result_dir)
+    results = pd.read_csv(args.result_dir, sep = "\t")
 else:
     results = pd.DataFrame(columns = args.cell_types)
 
@@ -128,9 +139,30 @@ for run in list(range(args.runs)):
         val_loader = DataLoader(dataset=val_dataset, batch_size=1024, shuffle=False, num_workers=args.num_workers)
         test_loader = DataLoader(dataset=test_dataset, batch_size=1024, shuffle=False, num_workers=args.num_workers)
 
-        model = MPRAnn(output_dim=1)
+        if args.model == "MPRALegNet":
+            model = HumanLegNet(
+                in_ch=len(train_dataset[0][0]),
+                output_dim=1,
+                stem_ch=64,
+                stem_ks=11,
+                ef_ks=9,
+                ef_block_sizes=[80, 96, 112, 128],
+                pool_sizes=[2, 2, 2, 2],
+                resize_factor=4)
+            model.apply(initialize_weights)
+            loss =nn.MSELoss()
+        elif args.model == "MPRAnn":
+            model = MPRAnn(output_dim=1)
+            loss =nn.MSELoss()
+        elif args.model == "Malinois":
+            length = len(train_dataset[0][0][0])
+            model = BassetBranched(input_len=length, n_outputs=1)
+            loss =nn.MSELoss()
+        elif args.model == "PARM":
+            model = PARM(n_block=5, type_loss="mse", output_dim=1)
+            loss =nn.MSELoss()
 
-        seq_model = LitModel_AgarwalSingle(model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, print_each=10)
+        seq_model = LitModel_AgarwalSingle(model=model, loss=nn.MSELoss(), weight_decay=args.wd, lr=args.lr, print_each=1)
 
         checkpoint_callback = ModelCheckpoint(monitor="val_pearson", mode="max", save_top_k=1, save_last=False)
 
