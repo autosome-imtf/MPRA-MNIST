@@ -5,7 +5,7 @@ import os
 from mpramnist.mpradataset import MpraDataset
 
 
-class FluorescenceDataset(MpraDataset):
+class ReddyDataset(MpraDataset):
     """
     Dataset class for Fluorescence MPRA data.
 
@@ -26,12 +26,12 @@ class FluorescenceDataset(MpraDataset):
     Examples
     --------
     >>> # Basic usage with default settings (all cell types)
-    >>> dataset = FluorescenceDataset(split='train')
+    >>> dataset = ReddyDataset(split='train')
     >>> len(dataset)
     10000
     
     >>> # Specific cell type for regression
-    >>> dataset = FluorescenceDataset(
+    >>> dataset = ReddyDataset(
     ...     split='val',
     ...     cell_type='K562',
     ...     task='regression'
