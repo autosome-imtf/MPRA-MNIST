@@ -41,7 +41,7 @@ general.add_argument("--num_workers",
                      default=103)
 general.add_argument("--batch_size",
                      type=int, 
-                     default=103)
+                     default=1024)
 general.add_argument("--runs",
                      type=int, 
                      default=5)
