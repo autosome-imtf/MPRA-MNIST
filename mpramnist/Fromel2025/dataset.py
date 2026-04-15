@@ -160,7 +160,7 @@ class FromelDataset(MpraDataset):
                 targets = [targets]
             for ta in targets:
                 if ta not in self.HSPC_TARGETS:
-                    raise Exception(f'Wrong target {ta} for cell type {cell_type}')
+                    raise Exception(f'Wrong target {ta} for cell type {self.cell_type}')
         return targets 
 
     def split_parse(self, split: str | list[int] | int) -> tuple[str, list[str]]:
@@ -170,7 +170,7 @@ class FromelDataset(MpraDataset):
         # Process string input
         if split == 'train':
             folds = [0,1,2,3,4,5,6,7,8]
-        elif split == 'valid':
+        elif split == 'val':
             folds = [9]
         elif split == 'test':
             folds = [10]
