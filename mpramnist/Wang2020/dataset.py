@@ -4,9 +4,9 @@ import os
 from mpramnist.mpradataset import MpraDataset
 
 
-class DeepPromoterDataset(MpraDataset):
+class WangDataset(MpraDataset):
     """
-    Dataset class for DeepPromoter MPRA (Massively Parallel Reporter Assay) data.
+    Dataset class for MPRA (Massively Parallel Reporter Assay) data.
 
     This class extends MpraDataset to handle E. coli promoter classification data.
     The dataset contains sequence-activity relationships
@@ -20,7 +20,7 @@ class DeepPromoterDataset(MpraDataset):
     Examples
     --------
     >>> # Basic usage for training
-    >>> dataset = DeepPromoterDataset(split='train')
+    >>> dataset = WangDataset(split='train')
     >>> len(dataset)
     10000
     
@@ -42,7 +42,7 @@ class DeepPromoterDataset(MpraDataset):
 
     def __init__(self, split: str, transform=None, target_transform=None, root=None):
         """
-        Initialize DeepPromoterDataset instance.
+        Initialize Dataset instance.
         
         Attributes
         ----------
@@ -92,7 +92,7 @@ class DeepPromoterDataset(MpraDataset):
 
         self.df = df
         targets = self.df[self.activity_columns].to_numpy()
-        seq = self.df.sequence.to_numpy()
+        seq = self.df.sequence.str.upper().to_numpy()
 
         self.ds = {"targets": targets, "seq": seq}
 
