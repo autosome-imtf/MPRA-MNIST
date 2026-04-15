@@ -63,7 +63,7 @@ class BarbadillaMartinezDataset(MpraDataset):
 
     def __init__(self,
                  split: list[int] | str | int, # folds 
-                 cell_line: str | list[str] = 'AGS', 
+                 cell_type: str | list[str] = 'AGS', 
                  transform: Callable | None = None,
                  target_transform: Callable | None = None,
                  normalization_treshold: int | None = None,
@@ -78,24 +78,24 @@ class BarbadillaMartinezDataset(MpraDataset):
         self.split = split
         folds = self.split_parse(split)
 
-        if isinstance(cell_line, str):
-            if cell_line.startswith('all'):
-                version = cell_line.replace('all_', '')
-                cell_lines = [x for x, y in self.CELLLINE_2_LIBRARY.items() if y == version]
+        if isinstance(cell_type, str):
+            if cell_type.startswith('all'):
+                version = cell_type.replace('all_', '')
+                cell_types = [x for x, y in self.CELLLINE_2_LIBRARY.items() if y == version]
             else:
-                version = self.CELLLINE_2_LIBRARY.get(cell_line, None)
+                version = self.CELLLINE_2_LIBRARY.get(cell_type, None)
                 if version is None:
-                    raise Exception(f'Wrong cell line provided: {cell_line}')
-                cell_lines = [cell_line]
+                    raise Exception(f'Wrong cell line provided: {cell_type}')
+                cell_types = [cell_type]
         else: # list of cell lines
-            possible_versions = [self.CELLLINE_2_LIBRARY.get(x, None) for x in cell_line]
+            possible_versions = [self.CELLLINE_2_LIBRARY.get(x, None) for x in cell_type]
             if None in possible_versions:
-                raise Exception(f'Wrong cell line provided: {cell_line}')
+                raise Exception(f'Wrong cell line provided: {cell_type}')
             if len(set(possible_versions)) > 1:
                 raise Exception(f'Cell lines must be from the same library: {possible_versions}')
             version = possible_versions[0]
-            cell_lines = cell_line
-        self.cell_lines = cell_lines
+            cell_types = cell_type
+        self.cell_types = cell_types
         self.version = version
 
         normalization_column = self.LIBRARY_2_NORMALIZATION[version]
@@ -139,7 +139,7 @@ class BarbadillaMartinezDataset(MpraDataset):
             self.snps = data['SNPbase'].values
             self.snps_poses = data['SNPrelpos'].values
 
-        self.target_columns = [self.get_target_column(x) for x in cell_lines]
+        self.target_columns = [self.get_target_column(x) for x in cell_types]
         self.target = data[self.target_columns].values
 
         self.lengths = self.end - self.start
@@ -173,13 +173,13 @@ class BarbadillaMartinezDataset(MpraDataset):
         elif column == 'iPCR':
             normalization_treshold = 0
         else:
-            raise Exception(f'No defaults for normalization column: {normalization_column}')
+            raise Exception(f'No defaults for normalization column: {self.normalization_column}')
         return normalization_treshold
 
-    def get_target_column(self, cell_line) -> str:
-        if cell_line.endswith('_genomewide'):
-           cell_line = cell_line.replace('_genomewide', '')
-        return  f"Log2RPM_{cell_line}"
+    def get_target_column(self, cell_type) -> str:
+        if cell_type.endswith('_genomewide'):
+           cell_type = cell_type.replace('_genomewide', '')
+        return  f"Log2RPM_{cell_type}"
 
 
     @classmethod
@@ -187,7 +187,7 @@ class BarbadillaMartinezDataset(MpraDataset):
         return list(cls.GENOME_MAPPING.keys())
 
     @classmethod
-    def get_available_cell_lines(self) -> list[str]:
+    def get_available_cell_types(self) -> list[str]:
         return list(self.CELLLINE_2_LIBRARY.keys())
 
     def retrieve_data(self, folds: list[int], version):

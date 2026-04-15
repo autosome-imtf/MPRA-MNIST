@@ -1,122 +1,102 @@
+import torch
 import torch.nn as nn
-from mpramnist.trainers import LitModel
+import lightning.pytorch as L
 from torchmetrics import PearsonCorrCoef
 
-class LitModel_BarbadillaMartinez(LitModel):
-    def __init__(
-        self,
-        weight_decay,
-        lr,
-        num_outputs=3,
-        activity_columns=["HepG2", "K562", "WTC11"],
-        model=None,
-        loss=nn.MSELoss(),
-        print_each=1,
-    ):
-        super().__init__(model, loss, print_each, weight_decay, lr)
+class LitModel_BarbadillaMartinez(L.LightningModule):
+    def __init__( self, model, loss = nn.MSELoss(), print_each = 1, weight_decay=1e-2, lr=3e-4, cell_types=["HepG2", "K562"],):
 
-        self.num_outputs = num_outputs
-        self.activity_columns = activity_columns
+        super().__init__()
 
-        self.train_pearson = PearsonCorrCoef(num_outputs=num_outputs)
-        self.val_pearson = PearsonCorrCoef(num_outputs=num_outputs)
-        self.test_pearson = PearsonCorrCoef(num_outputs=num_outputs)
+        self.model = model
+
+        self.loss = loss
+        self.print_each = print_each
+        self.weight_decay = weight_decay
+        self.lr = lr
+
+        if isinstance(cell_types, str):
+            cell_types = [cell_types]
+
+        self.cell_types = cell_types
+        self.num_outputs = len(cell_types)
+
+        self.train_pearson = PearsonCorrCoef(num_outputs=self.num_outputs)
+        self.val_pearson = PearsonCorrCoef(num_outputs=self.num_outputs)
+        self.test_pearson = PearsonCorrCoef(num_outputs=self.num_outputs)
 
     def forward(self, x):
         return self.model(x)
+    
+    def labels_and_predicted_unsqueeze(self, pred, targets):
+        if pred.dim() == 1:
+            pred = pred.unsqueeze(-1)  # [1076] -> [1076, 1]
+        if targets.dim() == 1:
+            targets = targets.unsqueeze(-1)  # [1076] -> [1076, 1]
+        return pred, targets
 
     def training_step(self, batch, batch_nb):
         X, y = batch
-        y_hat = self.forward(X)
+        y_hat = self.model(X)
 
-        if y_hat.dim() == 1:
-            y_hat = y_hat.unsqueeze(-1)  # [1076] -> [1076, 1]
-        if y.dim() == 1:
-            y = y.unsqueeze(-1)  # [1076] -> [1076, 1]
+        y_hat, y = self.labels_and_predicted_unsqueeze(y_hat, y) # [1076] -> [1076, 1]
 
         loss = self.loss(y_hat, y)
+
         self.log(
-            "train_loss", loss, prog_bar=True, on_step=True, on_epoch=True, logger=True
+            "train_loss", loss, prog_bar=True, on_step=False, on_epoch=True, logger=True
         )
-
         self.train_pearson.update(y_hat, y)
-
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        y_hat = self.forward(x)
+        y_hat = self.model(x)
 
-        if y_hat.dim() == 1:
-            y_hat = y_hat.unsqueeze(-1)  # [1076] -> [1076, 1]
-        if y.dim() == 1:
-            y = y.unsqueeze(-1)  # [1076] -> [1076, 1]
+        y_hat, y = self.labels_and_predicted_unsqueeze(y_hat, y) # [1076] -> [1076, 1]
 
         loss = self.loss(y_hat, y)
-        self.log(
-            "val_loss", loss, prog_bar=True, on_step=False, on_epoch=True, logger=True
-        )
 
+        self.log("val_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
         self.val_pearson.update(y_hat, y)
 
+
     def on_validation_epoch_end(self):
+
         val_str = ""
         train_str = ""
 
         train_pearson = self.train_pearson.compute()
         val_pearson = self.val_pearson.compute()
 
-        # num_outputs = 1
-        if self.num_outputs == 1:
-            name_train_metric = "train_" + self.activity_columns[0] + "_pearson"
-            name_val_metric = "val_" + self.activity_columns[0] + "_pearson"
+        for i in range(self.num_outputs):
+            name_train_metric = "train_" + self.cell_types[i] + "_pearson"
+            name_val_metric = "val_" + self.cell_types[i] + "_pearson"
 
+            tr_pearson = train_pearson[i] if self.num_outputs > 1 else train_pearson
+            v_pearson = val_pearson[i] if self.num_outputs > 1 else val_pearson
             self.log(
                 name_train_metric,
-                train_pearson,
+                tr_pearson,
                 prog_bar=False,
                 on_epoch=True,
                 logger=True,
             )
             self.log(
-                name_val_metric, val_pearson, prog_bar=True, on_epoch=True, logger=True
+                name_val_metric,
+                v_pearson,
+                prog_bar=True,
+                on_epoch=True,
+                logger=True,
             )
 
-            val_str += f"| Val Pearson {self.activity_columns[0]}: {val_pearson:.5f} "
-            train_str += (
-                f"| Train Pearson {self.activity_columns[0]}: {train_pearson:.5f} "
+            val_str += (
+                f"| Val Pearson {self.cell_types[i]}: {v_pearson:.5f} "
             )
+            train_str += f"| Train Pearson {self.cell_types[i]}: {tr_pearson:.5f} "
 
-            mean_val_pearson = val_pearson
-            mean_train_pearson = train_pearson
-        else:
-            # num_outputs > 1
-            for i in range(self.num_outputs):
-                name_train_metric = "train_" + self.activity_columns[i] + "_pearson"
-                name_val_metric = "val_" + self.activity_columns[i] + "_pearson"
-
-                self.log(
-                    name_train_metric,
-                    train_pearson[i],
-                    prog_bar=False,
-                    on_epoch=True,
-                    logger=True,
-                )
-                self.log(
-                    name_val_metric,
-                    val_pearson[i],
-                    prog_bar=True,
-                    on_epoch=True,
-                    logger=True,
-                )
-
-                val_str += (
-                    f"| Val Pearson {self.activity_columns[i]}: {val_pearson[i]:.5f} "
-                )
-                train_str += f"| Train Pearson {self.activity_columns[i]}: {train_pearson[i]:.5f} "
-
-            mean_val_pearson = val_pearson.mean()
-            mean_train_pearson = train_pearson.mean()
+        mean_val_pearson = val_pearson.mean()
+        mean_train_pearson = train_pearson.mean()
 
         self.log(
             "val_pearson", mean_val_pearson, prog_bar=True, on_epoch=True, logger=True
@@ -142,45 +122,56 @@ class LitModel_BarbadillaMartinez(LitModel):
 
     def test_step(self, batch, _):
         x, y = batch
-        y_hat = self.forward(x)
+        y_hat = self.model(x)
 
-        if y_hat.dim() == 1:
-            y_hat = y_hat.unsqueeze(-1)  # [1076] -> [1076, 1]
-        if y.dim() == 1:
-            y = y.unsqueeze(-1)  # [1076] -> [1076, 1]
+        y_hat, y = self.labels_and_predicted_unsqueeze(y_hat, y) # [1076] -> [1076, 1]
 
         loss = self.loss(y_hat, y)
-        self.log(
-            "test_loss", loss, prog_bar=True, on_step=False, on_epoch=True, logger=True
-        )
+
+        self.log("test_loss", loss, prog_bar=True, on_step=False, on_epoch=True)
 
         self.test_pearson.update(y_hat, y)
 
     def on_test_epoch_end(self):
         test_pearson = self.test_pearson.compute()
 
-        if self.num_outputs == 1:
-            # num_outputs = 1
-            name_of_metric = "test_" + self.activity_columns[0] + "_pearson"
-            self.log(name_of_metric, test_pearson, prog_bar=True)
-        else:
-            # num_outputs > 1
-            for i in range(self.num_outputs):
-                name_of_metric = "test_" + self.activity_columns[i] + "_pearson"
-                self.log(name_of_metric, test_pearson[i], prog_bar=True)
+        for i in range(self.num_outputs):
+            te_pearson = test_pearson[i] if self.num_outputs > 1 else test_pearson
+            name_of_metric = "test_" + self.cell_types[i] + "_pearson"
+            self.log(name_of_metric, te_pearson, prog_bar=True)
 
         self.test_pearson.reset()
 
     def predict_step(self, batch, _):
         x, y = batch
-        pred = self.forward(x)
+        y_hat = self.model(x)
 
-        if pred.dim() == 1:
-            pred = pred.unsqueeze(-1)  # [1076] -> [1076, 1]
-        if y.dim() == 1:
-            y = y.unsqueeze(-1)  # [1076] -> [1076, 1]
+        y_hat, y = self.labels_and_predicted_unsqueeze(y_hat, y) # [1076] -> [1076, 1]
 
         return {
-            "predicted": pred.cpu().detach().float(),
+            "predicted": y_hat.cpu().detach().float(),
             "target": y.cpu().detach().float(),
         }
+    
+    def configure_optimizers(self):
+
+        self.optimizer = torch.optim.AdamW(
+            self.parameters(), lr=self.lr, weight_decay=self.weight_decay
+        )
+
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(
+            self.optimizer,
+            max_lr=self.lr,
+            three_phase=False,
+            total_steps=self.trainer.estimated_stepping_batches,
+            pct_start=0.3,
+            cycle_momentum=False,
+        )
+        lr_scheduler_config = {
+            "scheduler": lr_scheduler,
+            "interval": "step",
+            "frequency": 1,
+            "name": "cycle_lr",
+        }
+
+        return [self.optimizer], [lr_scheduler_config]
