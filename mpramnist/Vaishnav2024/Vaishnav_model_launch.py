@@ -127,7 +127,7 @@ def meaned_prediction(forw, rev, trainer, seq_model, name, is_paired=False):
 for run in list(range(args.runs)):
     r_array = []
     for env in args.data_env_type:
-        train_dataset = VaishnavDataset(split="val",dataset_env_type=env,transform=train_transform,root=args.root)
+        train_dataset = VaishnavDataset(split="train",dataset_env_type=env,transform=train_transform,root=args.root)
         val_dataset = VaishnavDataset(split="val",dataset_env_type=env,transform=val_test_transform,root=args.root)
 
         # encapsulate data into dataloader form
