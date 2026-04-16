@@ -6,7 +6,7 @@ from mpramnist.mpradataset import MpraDataset
 import os
 
 
-class StarrSeqDataset(MpraDataset):
+class SahuDataset(MpraDataset):
     """
     A dataset class for StarrSeq MPRA (Massively Parallel Reporter Assay) data.
     
@@ -40,13 +40,13 @@ class StarrSeqDataset(MpraDataset):
     Examples
     --------
     >>> # Load random enhancer training data
-    >>> dataset = StarrSeqDataset(task="randomenhancer", split="train")
+    >>> dataset = SahuDataset(task="randomenhancer", split="train")
     
     >>> # Load genomic enhancer data for specific chromosomes
-    >>> dataset = StarrSeqDataset(task="genomicenhancer", split=["chr1", "chr2"])
+    >>> dataset = SahuDataset(task="genomicenhancer", split=["chr1", "chr2"])
     
     >>> # Load binary classification data with specific class
-    >>> dataset = StarrSeqDataset(
+    >>> dataset = SahuDataset(
     ...     task="binary", 
     ...     split="train", 
     ...     binary_class="enhancer_from_input"
@@ -236,7 +236,7 @@ class StarrSeqDataset(MpraDataset):
 
         names, seqs, labels = [], [], []
         for name, seq, label in fa:
-            seqs.append(seq)
+            seqs.append(seq.upper())
             names.append(name.split(":")[0])
             labels.append(np.float32(label))
 
