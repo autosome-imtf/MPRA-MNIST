@@ -81,7 +81,11 @@ if isinstance(args.data_env_type, str):
 if os.path.exists(args.result_dir):
     results = pd.read_csv(args.result_dir, sep = "\t")
 else:
-    results = pd.DataFrame(columns = args.data_env_type)
+    columns = []
+    for i in args.data_env_type:
+        for type in ["native","drift","paired"]:
+            columns.append(i+"_"+type)
+    results = pd.DataFrame(columns = columns)
 
 length = 110
 plasmid = VaishnavDataset.PLASMID.upper()
@@ -123,7 +127,7 @@ def meaned_prediction(forw, rev, trainer, seq_model, name, is_paired=False):
 for run in list(range(args.runs)):
     r_array = []
     for env in args.data_env_type:
-        train_dataset = VaishnavDataset(split="train",dataset_env_type=env,transform=train_transform,root=args.root)
+        train_dataset = VaishnavDataset(split="val",dataset_env_type=env,transform=train_transform,root=args.root)
         val_dataset = VaishnavDataset(split="val",dataset_env_type=env,transform=val_test_transform,root=args.root)
 
         # encapsulate data into dataloader form
@@ -176,14 +180,14 @@ for run in list(range(args.runs)):
 
         for type in ["native","drift","paired"]:
 
-            test_forw = VaishnavDataset(split="test", data_env_type=env, test_dataset_type=type, transform=forw_transform,root=args.root,)
-            test_rev = VaishnavDataset(split="test", data_env_type=env, test_dataset_type=type, transform=rev_transform,root=args.root,)
+            test_forw = VaishnavDataset(split="test", dataset_env_type=env, test_dataset_type=type, transform=forw_transform,root=args.root,)
+            test_rev = VaishnavDataset(split="test", dataset_env_type=env, test_dataset_type=type, transform=rev_transform,root=args.root,)
 
             forw = DataLoader(dataset=test_forw,batch_size=args.batch_size,shuffle=False,num_workers=args.num_workers,pin_memory=True,)
             rev = DataLoader(dataset=test_rev,batch_size=args.batch_size,shuffle=False,num_workers=args.num_workers,pin_memory=True,)
 
             r = meaned_prediction(forw, rev, trainer, seq_model, type).numpy()
-            r_array.append()
+            r_array.append(r)
             print(r)
     
     results.loc[len(results)] = r_array
