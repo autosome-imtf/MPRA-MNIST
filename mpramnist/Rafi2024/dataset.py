@@ -6,7 +6,7 @@ import warnings
 from mpramnist.mpradataset import MpraDataset
 
 
-class DreamDataset(MpraDataset):
+class RafiDataset(MpraDataset):
     """
     Dataset class for DREAM challenge MPRA data with yeast-specific processing.
 
@@ -22,7 +22,7 @@ class DreamDataset(MpraDataset):
     Attributes
     ----------
     FLAG : str
-        Identifier flag for DREAM datasets ("Dream")
+        Identifier flag for Rafi datasets ("Dream")
     PLASMID : str
         Constant plasmid backbone sequence used in the MPRA constructs
     LEFT_FLANK : str
@@ -72,16 +72,16 @@ class DreamDataset(MpraDataset):
     Examples
     --------
     >>> # Load training data for yeast regulatory elements
-    >>> train_dataset = DreamDataset(split="train")
+    >>> train_dataset = RafiDataset(split="train")
     >>> 
     >>> # Load validation data for high-activity sequences
-    >>> val_dataset = DreamDataset(split="val", data_type="high")
+    >>> val_dataset = RafiDataset(split="val", data_type="high")
     >>>
     >>> # Load test data for SNV analysis
-    >>> test_dataset = DreamDataset(split="test", data_type="snv")
+    >>> test_dataset = RafiDataset(split="test", data_type="snv")
     >>>
     >>> # Load multiple dataset types
-    >>> multi_dataset = DreamDataset(split="val", data_type=["high", "yeast"])
+    >>> multi_dataset = RafiDataset(split="val", data_type=["high", "yeast"])
 
     Notes
     -----
@@ -120,7 +120,7 @@ class DreamDataset(MpraDataset):
         root=None,
     ):
         """
-        Initialize DreamDataset for yeast MPRA data analysis.
+        Initialize RafiDataset for yeast MPRA data analysis.
 
         The dataset is specifically designed for studying regulatory elements
         in yeast (S. cerevisiae) using MPRA technology. It provides access to
