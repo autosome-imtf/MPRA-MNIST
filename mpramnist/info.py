@@ -54,7 +54,7 @@ INFO = {
         "target_columns": {"HepG2", "K562", "WTC11"},
         "task": "Regression",
         "split": {"train": "1, 2, 3, 4, 5, 6, 7, 8", "val": 9, "test": 10},
-        "AgarwalJoint_split": {"train": 36946, "val": 4622, "test": 4622},
+        "AgarwalJoint_split": {"train": 44264, "val": 5541, "test": 5541},
     },
     "Kircher": {
         "python_class": "Kircher",
@@ -114,7 +114,7 @@ INFO = {
     },
     "Malinois": {
         "python_class": "Malinois",
-        "description": "The Malinois dataset includes 798,064 sequences tested in the K562, HepG2, and SK-N-SH cell lines. The original sequence length is approximately 200 nucleotides, and it is recommended to extend them to 600 bp. The task is to predict three normalized regulatory activity values for the respective cell lines.",
+        "description": "The Gosai dataset includes 798,064 sequences tested in the K562, HepG2, and SK-N-SH cell lines. The original sequence length is approximately 200 nucleotides, and it is recommended to extend them to 600 bp. The task is to predict three normalized regulatory activity values for the respective cell lines.",
         "url_Malinois_Table_S2.tsv": "https://zenodo.org/records/17453603/files/Malinois_Table_S2.tsv?download=1",
         "MD5_Malinois_Table_S2.tsv": "6b17ac4091c28ead54cf962ed557b3b4",
         "url_Malinois_Table_S2_with_A549.tsv": "",
@@ -134,7 +134,7 @@ INFO = {
     },
     "StarrSeq": {
         "python_class": "StarrSeq",
-        "description": "The STARR-seq dataset is based on several libraries designed to determine the activity of human regulatory elements. The classification task for most libraries was to predict whether a sequence is an active or inactive regulatory element.",
+        "description": "The Sahu dataset is based on several libraries designed to determine the activity of human regulatory elements. The classification task for most libraries was to predict whether a sequence is an active or inactive regulatory element.",
         "StarrSeq_ATACSeq_description": "ATAC Seq: Active elements were defined by ATAC-seq peaks.",
         "StarrSeq_binary_description": "Binary: Contains promoter-enhancer pairs for GP5d and HepG2 cell lines. For the 'Binary' dataset, the task was to predict active and inactive promoter-enhancer pairs.",
         "StarrSeq_CaptProm_description": "Capture Promoter: Determines promoter activity in GP5d cells.",
@@ -195,7 +195,7 @@ INFO = {
     },
     "Sure": {
         "python_class": "Sure",
-        "description": "The Sure dataset contains data from the analysis of genomes from 4 individuals. Experiments were conducted on the K562 and HepG2 cell lines. The dataset volume is ~400–600 thousand training and ~50–70 thousand test and validation sequences per individual. The classification task is to predict a class label reflecting the expression level for each cell line. The regression task is to predict a continuous value of the expression level for K562 and HepG2.",
+        "description": "The Arensbergen dataset contains data from the analysis of genomes from 4 individuals. Experiments were conducted on the K562 and HepG2 cell lines. The dataset volume is ~400–600 thousand training and ~50–70 thousand test and validation sequences per individual. The classification task is to predict a class label reflecting the expression level for each cell line. The regression task is to predict a continuous value of the expression level for K562 and HepG2.",
         "url_Sure_SuRE42_HG02601.tsv": "https://zenodo.org/records/17453603/files/Sure_SuRE42_HG02601.tsv?download=1",
         "MD5_Sure_SuRE42_HG02601.tsv": "ca3cf305a4a203d19037b1776b123108",
         "url_Sure_SuRE43_GM18983.tsv": "https://zenodo.org/records/17453603/files/Sure_SuRE43_GM18983.tsv?download=1",
@@ -219,7 +219,7 @@ INFO = {
     },
     "Sharpr": {
         "python_class": "Sharpr",
-        "description": "The Sharpr dataset contains activity measurements for approximately 487 thousand synthetic promoter sequences, each 145 bp long, tested in K562 and HepG2 cell lines. About 457 thousand sequences are used for training. The task is to predict 12 scalar values representing gene expression activity measurements.",
+        "description": "The Ernst dataset contains activity measurements for approximately 487 thousand synthetic promoter sequences, each 145 bp long, tested in K562 and HepG2 cell lines. About 457 thousand sequences are used for training. The task is to predict 12 scalar values representing gene expression activity measurements.",
         "url_Sharpr_all_chr.tsv": "https://zenodo.org/records/17723590/files/Sharpr_all_chr.tsv?download=1",
         "MD5_Sharpr_all_chr.tsv": "a3f66e56506013e58d869258922bce46",
         "scalar_features": {},
@@ -244,7 +244,7 @@ INFO = {
     },
     "Fluorescence": {
         "python_class": "Fluorescence",
-        "description": "The Fluorescence dataset is based on a lentiviral MPRA system, collected for three immune cell lines: Jurkat, K562, and THP-1. The dataset includes 17,104 sequences, each 250 bp long. The regression task was to predict normalized regulatory activity values for each cell line.",
+        "description": "The Reddy dataset is based on a lentiviral MPRA system, collected for three immune cell lines: Jurkat, K562, and THP-1. The dataset includes 17,104 sequences, each 250 bp long. The regression task was to predict normalized regulatory activity values for each cell line.",
         "url_Fluorescence_test.tsv": "https://zenodo.org/records/15195607/files/Fluorescence_test.tsv?download=1",
         "MD5_Fluorescence_test.tsv": "23dc89727366d031f7d55506585ed97f",
         "url_Fluorescence_train.tsv": "https://zenodo.org/records/15195607/files/Fluorescence_train.tsv?download=1",
@@ -283,7 +283,7 @@ INFO = {
     },
     "DeepPromoter": {
         "python_class": "DeepPromoter",
-        "description": "The DeepPromoter dataset contains 14,098 E. coli promoters. Each sequence is 50 nucleotides long. The regression task was to predict a scalar value of regulatory activity.",
+        "description": "The Wang dataset contains 14,098 E. coli promoters. Each sequence is 50 nucleotides long. The regression task was to predict a scalar value of regulatory activity.",
         "url_DeepPromoter_all_seqs.tsv": "https://zenodo.org/records/15195607/files/DeepPromoter_all_seqs.tsv?download=1",
         "MD5_DeepPromoter_all_seqs.tsv": "242bac7cbe193700b680bb6e839a3f06",
         "scalar_features": {},
@@ -295,7 +295,7 @@ INFO = {
     },
     "Dream": {
         "python_class": "Dream",
-        "description": "The Dream dataset is based on the DREAM challenge and contains data on the activity of promoters in the yeast Saccharomyces cerevisiae. The dataset comprises 6.7 million sequences. The input data consists of DNA sequences of variable length, and the output is a scalar value of regulatory activity. The task is to predict this value.",
+        "description": "The Rafi dataset is based on the DREAM challenge and contains data on the activity of promoters in the yeast Saccharomyces cerevisiae. The dataset comprises 6.7 million sequences. The input data consists of DNA sequences of variable length, and the output is a scalar value of regulatory activity. The task is to predict this value.",
         "url_Dream_paired.tsv": "https://zenodo.org/records/15195607/files/Dream_paired.tsv?download=1",
         "MD5_Dream_paired.tsv": "7512ae3f91711af4331210548cb3cb52",
         "url_Dream_single.tsv": "https://zenodo.org/records/15195607/files/Dream_single.tsv?download=1",
@@ -374,7 +374,7 @@ INFO = {
     },
     "DeepStarr": {
         "python_class": "DeepStarr",
-        "description": "The DeepSTARR data contains information on enhancer activity in D. melanogaster S2 cells. The dataset includes 282,892 sequences, each 249 nucleotides in length. The regression task is to predict two independent values of enhancer activity for two types of promoters.",
+        "description": "The deAlmeida data contains information on enhancer activity in D. melanogaster S2 cells. The dataset includes 282,892 sequences, each 249 nucleotides in length. The regression task is to predict two independent values of enhancer activity for two types of promoters.",
         "url_DeepStarr_all_chr.tsv": "https://zenodo.org/records/17724143/files/DeepStarr_all_chr.tsv?download=1",
         "MD5_DeepStarr_all_chr.tsv": "78fc4954eb5cf5343beff1788c7c225c",
         "scalar_features": {},
