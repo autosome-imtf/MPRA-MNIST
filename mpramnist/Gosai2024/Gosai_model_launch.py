@@ -104,14 +104,13 @@ def meaned_prediction(forw, rev, trainer, seq_model, name, num_outputs):
     print(pearson)
     print("===========")
     return pearson
-
+std_err = [cell + "_lfcSE" for cell in args.cell_types]
 for run in list(range(args.runs)):
     print(args.cell_types)
 
     train_transform = t.Compose([t.AddFlanks(GosaiDataset.LEFT_FLANK, GosaiDataset.RIGHT_FLANK), t.CenterCrop(600), t.ReverseComplement(0.5), t.Seq2Tensor(),])
     val_test_transform = t.Compose([t.AddFlanks(GosaiDataset.LEFT_FLANK, GosaiDataset.RIGHT_FLANK), t.CenterCrop(600), t.Seq2Tensor()])
 
-    std_err = [cell + "_lfcSE" for cell in args.cell_types]
     # load the data
     train_dataset_own = GosaiDataset(
         split="train",
