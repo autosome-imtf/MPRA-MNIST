@@ -32,7 +32,7 @@ class MpraDataset(Dataset):
     def __init__(
         self,
         split: str | List[int] | int | List[Union[int, str]],
-        root,
+        root = None,
         transform: Optional[Callable] = None,
         target_transform: Optional[Callable] = None,
     ):
@@ -50,7 +50,7 @@ class MpraDataset(Dataset):
         else:
             self.root = DEFAULT_ROOT
             self._data_path = os.path.join(DEFAULT_ROOT, self.FLAG)
-
+        
         self.info = INFO[self.FLAG]
 
     def __getitem__(self, idx):
