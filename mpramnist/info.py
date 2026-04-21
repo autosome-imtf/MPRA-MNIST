@@ -281,6 +281,16 @@ INFO = {
         "Evfratov_23_split": {"train": 9353, "val": 1169, "test": 1170},
         "Evfratov_33_split": {"train": 9511, "val": 1189, "test": 1189},
     },
+    "DNASynBench": {
+        "python_class": "DNASynBench",
+        "description": "The DNASynBench dataset is generated in manual mode and could decribe several tasks of regulatory genomics based on classification and regression.",
+        "scalar_features": {},
+        "vector_features": {},
+        "target_columns": {},
+        "task": "Regression/Classification",
+        "split": {"train", "val", "test"},
+        "DeepPromoter_split": {"train": '75%', "val": '12,5%', "test": '12,5%'},
+    },
     "DeepPromoter": {
         "python_class": "DeepPromoter",
         "description": "The Wang dataset contains 14,098 E. coli promoters. Each sequence is 50 nucleotides long. The regression task was to predict a scalar value of regulatory activity.",
