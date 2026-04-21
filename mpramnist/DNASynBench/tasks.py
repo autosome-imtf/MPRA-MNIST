@@ -37,7 +37,9 @@ def task_1(length, n_seqs, motif, gc_content=0.41, frac=0.2, random_state=42):
                 break
     print('Shuffling...')
     shuffle(seqs)
-    df = pd.DataFrame(seqs, columns=['sequence', 'label'])
+    df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+    group = ['train' for x in range(int(n_seqs*0.75))] + ['val' for x in range(int(n_seqs*0.125))] + ['test' for x in range(int(n_seqs*0.125))]
+    df['split'] = group
     return df
 
 def task_2(length, n_seqs, motif, gc_content=0.41, min_num=0, max_num=5, random_state=42):
@@ -59,7 +61,7 @@ def task_2(length, n_seqs, motif, gc_content=0.41, min_num=0, max_num=5, random_
                 break
     print('Shuffling...')
     shuffle(seqs)
-    df = pd.DataFrame(seqs, columns=['sequence', 'label'])
+    df = pd.DataFrame(seqs, columns=['sequence', 'target'])
     group = ['train' for x in range(int(n_seqs*0.75))] + ['val' for x in range(int(n_seqs*0.125))] + ['test' for x in range(int(n_seqs*0.125))]
     df['split'] = group
     return df
@@ -83,7 +85,9 @@ def task_3(length, n_seqs, motif, gc_content=0.41, min_num=0, max_num=5, random_
                 break
     print('Shuffling...')
     shuffle(seqs)
-    df = pd.DataFrame(seqs, columns=['sequence', 'label'])
+    df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+    group = ['train' for x in range(int(n_seqs*0.75))] + ['val' for x in range(int(n_seqs*0.125))] + ['test' for x in range(int(n_seqs*0.125))]
+    df['split'] = group
     return df
 
 def task_4(length, n_seqs, motif, alien, gc_content=0.41, ratio=0.2, rat_al=0.2, random_state=42):
@@ -134,7 +138,9 @@ def task_4(length, n_seqs, motif, alien, gc_content=0.41, ratio=0.2, rat_al=0.2,
                 break
     print('Shuffling...')
     shuffle(seqs)
-    df = pd.DataFrame(seqs, columns=['sequence', 'label'])
+    df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+    group = ['train' for x in range(int(n_seqs*0.75))] + ['val' for x in range(int(n_seqs*0.125))] + ['test' for x in range(int(n_seqs*0.125))]
+    df['split'] = group
     return df
 
 def task_5(length, n_seqs, motif, alien, gc_content=0.41, ratio=0.2, rat_al=0.2, random_state=42):
@@ -185,7 +191,9 @@ def task_5(length, n_seqs, motif, alien, gc_content=0.41, ratio=0.2, rat_al=0.2,
                 break
     print('Shuffling...')
     shuffle(seqs)
-    df = pd.DataFrame(seqs, columns=['sequence', 'label'])
+    df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+    group = ['train' for x in range(int(n_seqs*0.75))] + ['val' for x in range(int(n_seqs*0.125))] + ['test' for x in range(int(n_seqs*0.125))]
+    df['split'] = group
     return df
 
 def task_6(act_dist, n_seqs, motif, alien, gc_content=0.41, ratio=0.2, random_state=42):
@@ -223,5 +231,7 @@ def task_6(act_dist, n_seqs, motif, alien, gc_content=0.41, ratio=0.2, random_st
                 break
     print('Shuffling...')
     shuffle(seqs)
-    df = pd.DataFrame(seqs, columns=['sequence', 'label'])
+    df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+    group = ['train' for x in range(int(n_seqs*0.75))] + ['val' for x in range(int(n_seqs*0.125))] + ['test' for x in range(int(n_seqs*0.125))]
+    df['split'] = group
     return df
