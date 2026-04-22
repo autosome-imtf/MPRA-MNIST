@@ -147,21 +147,21 @@ class FromelDataset(MpraDataset):
         self.target_transform = target_transform
 
     def process_targets(self, targets: list[str] | str | None):
-        if targets is None or (isinstance(targets, str) and targets == 'all'):
-            if self.cell_type == 'HSPC':
+        if self.cell_type == "K562":
+            targets = ['State_9K']
+            
+        elif self.cell_type == "HSPC":
+            if targets is None or targets == 'all' or targets == self.HSPC_TARGETS:
                 targets = list(self.HSPC_TARGETS)
-
-            elif self.cell_type == 'K562':
-                targets = ['State_9K']
             else:
-                raise Exception(f'Wrong cell type: {self.cell_type}')
-        else:            
-            if isinstance(targets, str):
-                targets = [targets]
-            for ta in targets:
-                if ta not in self.HSPC_TARGETS:
-                    raise Exception(f'Wrong target {ta} for cell type {self.cell_type}')
-        return targets 
+                if isinstance(targets, str):
+                    targets = [targets]
+                for ta in targets:
+                    if ta not in self.HSPC_TARGETS:
+                        raise Exception(f'Wrong target {ta} for cell type {self.cell_type}')
+        else:
+            raise Exception(f'Wrong cell type: {self.cell_type}')
+        return targets
 
     def split_parse(self, split: str | list[int] | int) -> tuple[str, list[str]]:
         """
