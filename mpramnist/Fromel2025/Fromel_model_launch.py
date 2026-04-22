@@ -195,7 +195,7 @@ for run in list(range(args.runs)):
     trainer.fit(seq_model, train_dataloaders=train_loader, val_dataloaders=val_loader)
 
     best_model_path = checkpoint_callback.best_model_path
-    seq_model_finetune = LitModel_Fromel.load_from_checkpoint(best_model_path,model=model, loss=nn.MSELoss(), weight_decay=args.wd*0.01, lr=args.lr*0.01, 
+    seq_model = LitModel_Fromel.load_from_checkpoint(best_model_path,model=model, loss=loss, weight_decay=args.wd, lr=args.lr, 
                                                               activity_columns=args.targets, print_each=1)
     trainer.test(seq_model, dataloaders=test_loader)
     forw_transform = t.Compose([t.Seq2Tensor()])
@@ -207,7 +207,7 @@ for run in list(range(args.runs)):
     forw = DataLoader(dataset=test_forw, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
     rev = DataLoader(dataset=test_rev, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers, pin_memory=True,)
 
-    corr_pearson = meaned_prediction(forw, rev, trainer, seq_model_finetune, args.cell_types, len(args.targets))
+    corr_pearson = meaned_prediction(forw, rev, trainer, seq_model, args.cell_types, len(args.targets))
 
     results.loc[len(results)] = corr_pearson.numpy()
 
