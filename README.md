@@ -74,13 +74,11 @@ By eliminating data-wrangling barriers, MPRA-MNIST enables rapid algorithm valid
 | Priority | Artcile and link | DOI |
 |:-----------:|:-----------:|-----------|
 | HUMAN | ----------- | ----------- |
-| 1 | [Functional dissection of complex trait variants at single-nucleotide resolution
-]([https://www.nature.com/articles/s41592-020-0965-y](https://www.nature.com/articles/s41586-026-10121-6) | 10.1038/s41586-026-10121-6 |
+| 1 | [Functional dissection of complex trait variants at single-nucleotide resolution](https://www.nature.com/articles/s41586-026-10121-6) | 10.1038/s41586-026-10121-6 |
 | 1 | [A systematic evaluation of the design and context dependencies of massively parallel reporter assays](https://www.nature.com/articles/s41592-020-0965-y) | 10.1038/s41592-020-0965-y |
 | 1 | [Context-dependent regulatory variants in Alzheimer’s disease](https://www.biorxiv.org/content/10.1101/2025.07.11.659973v2) | 10.1101/2025.07.11.659973 |
 | 1 | [Massively parallel characterization of regulatory elements in the developing human cortex](https://www.science.org/doi/10.1126/science.adh0559) | 10.1126/science.adh0559 |
-| 1 | [Multi-scale dissection, compaction and derivatization of mammalian developmental enhancers]([https://www.science.org/doi/10.1126/science.adh0559](https://www.biorxiv.org/content/10.64898/2026.04.20.719625v1) | 10.64898/2026.04.20.719625 |
-
+| 1 | [Multi-scale dissection, compaction and derivatization of mammalian developmental enhancers](https://www.biorxiv.org/content/10.64898/2026.04.20.719625v1) | 10.64898/2026.04.20.719625 |
 | 2 | [BRAIN-MAGNET: A functional genomics atlas for interpretation of non-coding variants](https://www.cell.com/cell/fulltext/S0092-8674(25)01234-6) | 10.1016/j.cell.2025.10.029 |
 | 2 | [Generative Design of Cell Type-Specific RNA Splicing Elements for Programmable Gene Regulation](https://www.biorxiv.org/content/10.1101/2025.11.05.686847v1) | 10.1101/2025.11.05.686847 |
 | 2 | [Fine-tuning sequence-to-expression models on personal genome and transcriptome data](https://www.biorxiv.org/content/10.1101/2024.09.23.614632v1) | 10.1101/2024.09.23.614632 |
