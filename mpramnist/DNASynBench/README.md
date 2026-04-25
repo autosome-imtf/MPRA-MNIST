@@ -1,20 +1,23 @@
-# DeepPromoter dataset
+# DNASynBench dataset
 
 ## Main Information
 
-The DeepPromoter dataset is based on the experimental data from [Wang et al. 2020](https://academic.oup.com/nar/article/48/12/6403/5837049?login=false)., which includes 14,098 promoter sequences from E. coli that were experimentally validated for activity. This collection comprises:
+DNASynBench представляет собой инструмент для создания бенчмарковых датасетов на основе нескольких задач регуляторной геномики и предназначен для тестирования моделей на способность улавливать биологические закономерности в данных.
 
-- **Natural promoters** from the E. coli K12 MG1655 genome
-
-- **AI-generated synthetic promoters** created using a Generative Adversarial Network (GAN) trained on natural promoter features
-
-Each sequence is **50 nucleotides** long and represents the region upstream of the transcription start site (TSS), containing key promoter elements including the -10 and -35 boxes.
-
-After removing duplicates, the dataset was split into: **9,000 sequences for training, 1,000 for validation, and 1,884 for testing**.
-
-See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/DeepPromoterDataset_example.ipynb) for detailed usage example and training
+See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/DNASynBench/DNASynBench/DNASynDataset_example.ipynb) for detailed usage example and training
 
 ## Tasks
+
+| Number  | Name                     | Motifs per task | Type of task              |
+|---------|--------------------------|-----------------|---------------------------|
+| task_1  | Motif presency           | 1               | Classification            |
+| task_2  | Linear cooperativity     | variable        | Regression                |
+| task_3  | Nonlinear cooperativity  | variable        | Regression                |
+| task_4  | Alien motif              | 2               | Classification            |
+| task_5  | Motif combination        | 2               | Classification            |
+| task_6  | Range dependent activity | 2 the same      | Classification            |
+
+By default, dataset are split into: 0.75 sequences for training, 0.125 for validation, and 0.125 for testing. This ratio is a parameter and could be tuned if necessary.
 
 ### Regression
 
@@ -138,41 +141,4 @@ If `None`, uses the default dataset directory from parent class.
         shuffle=False,   # No need to shuffle for validation/testing
         num_workers=8
     )
-```
-
-## Original Benchmark Quality
-
-**Pearson correlation, r**
-
-- **r** = 0.25
-
-## Achieved Quality Using LegNet Model in MPRA-MNIST
-
-**Pearson correlation, r**
-
-- **r** = 0.25
-
-## Citation
-
-When using this dataset, please cite the original publication:
-
-[Ye Wang et al. 2020](https://academic.oup.com/nar/article/48/12/6403/5837049?login=false)
-
-Ye Wang, Haochen Wang, Lei Wei, Shuailin Li, Liyang Liu, Xiaowo Wang, Synthetic promoter design in Escherichia coli based on a deep generative network, Nucleic Acids Research, Volume 48, Issue 12, 09 July 2020, Pages 6403–6412, https://doi.org/10.1093/nar/gkaa325
-
-```bibtex
-    @article{Wang2020synthetic,
-        title = {Synthetic promoter design in Escherichia coli based on a deep generative network},
-        volume = {48},
-        issn = {1362-4962},
-        url = {https://doi.org/10.1093/nar/gkaa325},
-        doi = {10.1093/nar/gkaa325},
-        number = {12},
-        journal = {Nucleic Acids Research},
-        publisher = {Oxford University Press},
-        author = {Wang, Ye and Wang, Haochen and Wei, Lei and Li, Shuailin and Liu, Liyang and Wang, Xiaowo},
-        year = {2020},
-        month = {05},
-        pages = {6403–6412}
-    }
 ```
