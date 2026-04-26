@@ -2,9 +2,9 @@
 
 ## Main Information
 
-DNASynBench представляет собой инструмент для создания бенчмарковых датасетов на основе нескольких задач регуляторной геномики и предназначен для тестирования моделей на способность улавливать биологические закономерности в данных.
+DNASynBench is a tool for creating benchmark datasets based on several regulatory genomics tasks and is designed to test models for their ability to capture biological patterns in data.
 
-See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/DNASynBench/DNASynBench/DNASynDataset_example.ipynb) for detailed usage example and training
+See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/DNASynBench/mpramnist/DNASynBench/DNASynDataset_example.ipynb) for detailed usage example and training
 
 ## Tasks
 
@@ -19,50 +19,44 @@ See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/DNASynBench
 
 By default, dataset are split into: 0.75 sequences for training, 0.125 for validation, and 0.125 for testing. This ratio is a parameter and could be tuned if necessary.
 
-### Regression
+### 1) Motif presency
+Binary classification task to find the motif in the sequence.
 
-The regression task is to predict a single scalar value representing normalized promoter activity. The activity values in the dataset are calculated using the following experimental measurements from the original study:
+**Settings:**
+* length
+* n_seqs
+* motif
+* ratio
+* gc_content
+* split_ratio
+* random_state
+<img width="456" height="66" alt="1_eng" src="https://github.com/user-attachments/assets/51533320-a829-4f8f-ae2e-2a90b88d937b"/>
 
-1) **Experimental measurement**: Each promoter variant ("clone") was inserted upstream of the sfGFP reporter gene, and its expression was measured as fluorescence per cell (`F/OD600`).
+### 2, 3) Linear and Nonlinear cooperativity
+Regression tasks that assume that the activity of a sequence depends linearly or non-linearly on the number of motifs.
 
-2) **Normalization**: Promoter strength (S) was calculated relative to positive and negative controls using the formula:
-
-S = ( (F/OD600)_clone - (F/OD600)_blank ) / ( (F/OD600)_BBA_J23_119 - (F/OD600)_blank )
-
-Or in methematical notation:
-
-$$S = \frac{(F/OD600)_{\text{clone}} - (F/OD600)_{\text{blank}}}{(F/OD600)_{\text{BBA\_J23\_119}} - (F/OD600)_{\text{blank}}}$$
-
-Where:
-
- - **(F/OD600)**= Fluorescence normalized by cell density
-
- - **blank** = Control with a 10-nt random sequence (GGGCTCTGTA)
-
- - **BBA_J23_119** = Reference wild-type promoter (positive control)
-
-3) **Interpretation**: 
-   - S = 1: Activity equal to reference promoter
-   - S < 1: Weaker than reference
-   - S > 1: Stronger than reference
-   - Many AI-generated promoters showed S values >> 1, indicating significantly higher activity.
+**Settings:**
+|  motif   | length | n_seqs | min_num | max_num | gc_content | split_ratio | random_state |
+| required | length | n_seqs | min_num | max_num | gc_content | split_ratio | random_state |
+<img width="461" height="114" alt="2_eng" src="https://github.com/user-attachments/assets/d4e7f039-3467-4ae1-92e1-536bb50c3a10" />
 
 
-4) **Final values**: Reported activities are averages of three independent biological experiments.
-
-The target values in this dataset represent these normalized promoter activity scores, which quantify transcriptional strength relative to experimental controls.
-
-### Data Representation
+## Data Representation
 
 ```
-                sequence	                        target	split
+                   sequence	                      target	split
 taatttttatctgtctgtgcgctatgcctatattggttaaagtatttagt	36.84	train
 cgcgggaatcgcgcaggcagcactaccccagagcgtggtagcctgggagt	94.32	val
 gaatcactttttcgttgccgccttctttgaatttatcaacgatattaccc	70.45	test
 
 ```
+**Interpretation**: 
+   - S = 1: Activity equal to reference promoter
+   - S < 1: Weaker than reference
+   - S > 1: Stronger than reference
+   - Many AI-generated promoters showed S values >> 1, indicating significantly higher activity.
 
-## Parameters
+## Common parameters
 
 ### **`split : str`**
 Defines which data split to use. Must be one of: `'train'`, `'val'`, `'test'`.
@@ -90,7 +84,7 @@ If `None`, uses the default dataset directory from parent class.
     import mpramnist.transforms as t
 ```
 
-### 2) Initialize trannsforms
+### 2) Initialize transforms
 
 ```python
     # Define set of transforms
