@@ -8,122 +8,161 @@ See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/DNASynBench
 
 ## Tasks
 
-| Number  | Name                     | Motifs per task | Type of task              |
-|---------|--------------------------|-----------------|---------------------------|
-| task_1  | Motif presency           | 1               | Classification            |
-| task_2  | Linear cooperativity     | variable        | Regression                |
-| task_3  | Nonlinear cooperativity  | variable        | Regression                |
-| task_4  | Alien motif              | 2               | Classification            |
-| task_5  | Motif combination        | 2               | Classification            |
-| task_6  | Range dependent activity | 2 the same      | Classification            |
+| Number  | Name                        | Motifs per task | Type of task              |
+|---------|-----------------------------|-----------------|---------------------------|
+| task_1  | Motif presence              | 1               | Classification            |
+| task_2  | Linear cooperativity        | variable        | Regression                |
+| task_3  | Nonlinear cooperativity     | variable        | Regression                |
+| task_4  | Alien motif                 | 2               | Classification            |
+| task_5  | Motif combination           | 2               | Classification            |
+| task_6  | Distance dependent activity | 2               | Classification            |
 
-By default, dataset are split into: 0.75 sequences for training, 0.125 for validation, and 0.125 for testing. This ratio is a parameter and could be tuned if necessary.
-
-### 1) Motif presency
+### 1) Motif presence
 Binary classification task to find the motif in the sequence.
 
 **Settings:**
-* length
-* n_seqs
-* motif
-* ratio
-* gc_content
-* split_ratio
-* random_state
+|  motif   | length | n_seqs | ratio | gc_content |   split_ratio     | random_state |
+|----------|--------|--------|-------|------------|-------------------|--------------|
+| required |  200   | 10000  |  0.2  |    0.41    | [0.7, 0.15, 0.15] |      42      |
+
 <img width="456" height="66" alt="1_eng" src="https://github.com/user-attachments/assets/51533320-a829-4f8f-ae2e-2a90b88d937b"/>
 
 ### 2, 3) Linear and Nonlinear cooperativity
 Regression tasks that assume that the activity of a sequence depends linearly or non-linearly on the number of motifs.
 
 **Settings:**
-|  motif   | length | n_seqs | min_num | max_num | gc_content | split_ratio | random_state |
-| required | length | n_seqs | min_num | max_num | gc_content | split_ratio | random_state |
+|  motif   | length | n_seqs | min_num | max_num | gc_content |   split_ratio     | random_state |
+|----------|--------|--------|---------|---------|------------|-------------------|--------------|
+| required |  200   | 10000  |    0    |    5    |    0.41    | [0.7, 0.15, 0.15] |      42      |
+
 <img width="461" height="114" alt="2_eng" src="https://github.com/user-attachments/assets/d4e7f039-3467-4ae1-92e1-536bb50c3a10" />
 
+### 4) Alien motif
+Binary classification task to find the target motif in the presence of another alien motif that does not affect activity, but can be recognized by models as a regularly occurring element.
 
-## Data Representation
+**Settings:**
+|  motif   |  alien   | length | n_seqs | ratio | rat_al | gc_content |   split_ratio     | random_state |
+|----------|----------|--------|--------|-------|--------|------------|-------------------|--------------|
+| required | required |  200   | 10000  |  0.2  |  0.2   |    0.41    | [0.7, 0.15, 0.15] |      42      |
 
-```
-                   sequence	                      target	split
-taatttttatctgtctgtgcgctatgcctatattggttaaagtatttagt	36.84	train
-cgcgggaatcgcgcaggcagcactaccccagagcgtggtagcctgggagt	94.32	val
-gaatcactttttcgttgccgccttctttgaatttatcaacgatattaccc	70.45	test
+<img width="324" height="150" alt="4_eng" src="https://github.com/user-attachments/assets/eaeb83a7-c98f-479b-bd1d-cfaa256c002d" />
 
-```
-**Interpretation**: 
-   - S = 1: Activity equal to reference promoter
-   - S < 1: Weaker than reference
-   - S > 1: Stronger than reference
-   - Many AI-generated promoters showed S values >> 1, indicating significantly higher activity.
+### 5) Motif combination
+Binary classification task that implies that the activity requires the presence of both target and alien motifs.
 
-## Common parameters
+**Settings:**
+|  motif   |  alien   | length | n_seqs | ratio | rat_al | gc_content |   split_ratio     | random_state |
+|----------|----------|--------|--------|-------|--------|------------|-------------------|--------------|
+| required | required |  200   | 10000  |  0.2  |  0.2   |    0.41    | [0.7, 0.15, 0.15] |      42      |
 
-### **`split : str`**
+<img width="324" height="150" alt="5_eng" src="https://github.com/user-attachments/assets/a18a7275-2140-4b7d-88b4-dc90f8dbe7ac" />
+
+### 6) Distance dependent activity
+Binary classification task that suppose the activity only if the motifs are located at a close distance from each other. Maximum allowable distance is set as a parameter.
+
+**Settings:**
+|  motif   |  alien   | act_dist | n_seqs | ratio | gc_content |   split_ratio     | random_state |
+|----------|----------|----------|--------|-------|------------|-------------------|--------------|
+| required | required |   100    | 10000  |  0.2  |    0.41    | [0.7, 0.15, 0.15] |      42      |
+
+<img width="457" height="104" alt="6_eng" src="https://github.com/user-attachments/assets/d755ea5d-f771-48d4-9e73-1944c5de20c0" />
+
+## Dataset parameters
+#### **`split: str`**
 Defines which data split to use. Must be one of: `'train'`, `'val'`, `'test'`.
 The dataset filters sequences based on the 'split' column in the data file.
-### **`transform : callable`**, optional
 Transformation applied to each sequence object.
-### **`target_transform : callable`**, optional
+#### **`task: callable`**
+Mechanism for building a dataset. One of the six tasks from benchmarking tool.
+Set as the task name (`'presence'`, `'lin_coop'`, `'nonlin_coop'`, `'alien'`, `'combination'` or `'distance'`).
+#### **`transform: callable`**, optional
+Transformation applied to each sequence object.
+#### **`target_transform: callable`**, optional
 Transformation applied to the target data.
-### **`root : str`**, optional, `default=None`
-Root directory where dataset files are stored or should be downloaded.
-If `None`, uses the default dataset directory from parent class.
 
-## Data Handling Considerations
+## Task parameters
+#### **`motif; alien: str`**
+A short DNA sequence that determines the observed value of activity in the intended target gene.  It can be a binding site of a transcription factor or a polymerase, a response element, etc. It must consist of nucleotides A, C, G, T.
+#### **`length: int`**, optional, default=200
+The expected length of all generated sequences in the dataset.
+#### **`n_seqs: int`**, optional, default=10000
+The expected number of all sequences in the dataset (including train, val and test).
+#### **`act_dist: int`**, optional, default=100
+The limiting distance between the motifs in task 6. When the motifs are located at a greater distance, their TF stop interacting and the sequence loses activity.
+#### **`ratio, rat_al: float`**, optional, default=0.2
+The frequency of occurrence of target and alien motifs, respectively. In tasks 1 and 4, value of `ratio` also means the percentage of the positive class.
+#### **`min_num; max_num: int`**, optional, default=0; 5
+The minimum and maximum number of motifs in regression tasks, respectively.
+With min_num=0, activity tends to 0; max_num gives activity tends to 1.
+#### **`gc_content: float`**, optional, default=0.41
+The average GC-content of the background sequence. It is about 41% in human genome. In other organisms (and in specific genomic regions) this value varies.
+#### **`split_ratio: list`**, optional, default=[0.7, 0.15, 0.15]
+Percentages of training, validation, and test subsets.
+#### **`random_state: int`**, optional, default=42
+A fixed random_state allows you to get reproducible datasets.
 
-1) **Example Usage**: See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/DeepPromoterDataset_example.ipynb) for detailed usage example and training
+## Data Representation
+```
+                   sequence	                       target  split
+TACAGATATGACACACAGATATTAGAGACACACAGGCACACCAAGAATAT	  0    train
+CAGCCCCAAAGTAACGTCACTTTACCCAGGGGATATAGACAGAGACAGAT	 0.5    val
+GAATCCTGTCACACAGAGGGATAAATACGAGGATTTTTGTCACAGATTCG	  1    test
+...
+```
+**Interpretation**: 
+  - Target = 1: If this sequence is located in the corresponding regulatory element (promoter, enhancer, etc.), then this construction demonstrate maximum activity and provide maximum expression of the downstream gene.
+  - Target = 0: This sequence is background and has no regulatory activity.
+  - Values between 0 and 1 (in regression tasks) indicate the intermediate level of expression of a potential target gene. This means that the regulatory structure contains binding motifs, but they are not sufficient for the full activity of the factors.
 
 ## Examples
-
-### 1) Import Important Packages
-
+### 1) Import important packages
 ```python
-    import mpramnist
-    from mpramnist.trainers import LitModel_DeepPromoter
+    from mpramnist.DNASynBench import presence_dataset
+    from mpramnist.DNASynBench import LitModel_DNASyn
+    from mpramnist import transforms as t
     import torch.utils.data as data
-    import mpramnist.transforms as t
 ```
 
-### 2) Initialize transforms
-
+### 2) Transforms initialization
 ```python
     # Define set of transforms
     train_transform = t.Compose(
-        [
-            t.ReverseComplement(0.5),  # Apply reverse complement with 50% probability
-            t.Seq2Tensor(),
-        ]
+        [t.ReverseComplement(0.5),  # Apply reverse complement with 50% probability
+            t.Seq2Tensor(),]
     )
     val_test_transform = t.Compose(
-        [
-            t.Seq2Tensor(),  # No reverse complement for validation/test
+        [t.Seq2Tensor(),  # No reverse complement for validation/test
         ]
     )
 ```
 
-### 3) Dataset Creation
-
+### 3) Dataset creation
 ```python
     # Basic usage for training
-    dataset = DeepPromoterDataset(
-        split='train', 
-        transform = train_transform,
-        root="../data/"
+    train_dataset = presence_dataset(
+        split='train',
+        motif='GCCACGTGGC', 
+        length=500,
+        n_seqs=1_000_000,
+        ratio=0.25,
+        transform=train_transform
     )
 
-    val_dataset = DeepPromoterDataset(
-        split="val", 
-        transform=val_test_transform, 
-        root="../data/"
+    val_dataset = presence_dataset(
+        split="val",
+        motif='GCCACGTGGC', 
+        length=500,
+        n_seqs=1_000_000,
+        ratio=0.25,
+        transform=val_test_transform
     )
     
 ```
 
-### 4) Dataloader Creation
-
+### 4) Dataloader creation
 ```python 
     train_loader = data.DataLoader(
-        dataset=dataset, 
+        dataset=train_dataset, 
         batch_size=1024, 
         shuffle=True,   # Shuffle for the training set
         num_workers=8
