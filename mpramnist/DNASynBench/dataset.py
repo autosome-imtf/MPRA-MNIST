@@ -1,41 +1,23 @@
+from random import shuffle, seed, choices, randint
 import pandas as pd
+import numpy as np
+from tqdm import tqdm
 import os
-
 from mpramnist.mpradataset import MpraDataset
-from mpramnist.DNASynBench import tasks
 
 
-class DNASynDataset(MpraDataset):
+class SimpleMotifDataset(MpraDataset):
     """
-    Dataset class for synthetic data generation.
-
-    This class extends MpraDataset to generate synthetic data for benchmarking.
-    This dataset can be used for training and testing on several tasks
-    based on classification and regression.
-
-    Attributes
-    ----------
-    FLAG : str
-        Dataset identifier flag, set to "DNASynBench".
-
-    Examples
-    --------
-    >>> # Basic usage for training
-    >>> dataset = DNASynDataset(split='train', args={...})
-    >>> len(dataset)
-    10000
-    
-    >>> # Access individual samples
-    >>> sequence, target = dataset[0]
-    >>> print(sequence.shape, target.shape)
-    (300,) (1,)
-    >>> print(f"Sequence: {sequence}, Target: {target}")
-    Sequence: ATGCGTA..., Target: 1
+    Binary classification task to find the motif in the sequence.
     """
-
     FLAG = "DNASynBench"
 
-    def __init__(self, split: str, args: dict, task, transform=None, target_transform=None):
+    def __init__(
+        self,
+        split=None,
+        transform=None,
+        target_transform=None
+        ):
         """
         Initialize Dataset instance.
         
@@ -48,90 +30,498 @@ class DNASynDataset(MpraDataset):
             Transformation applied to each sequence object.
         target_transform : callable, optional
             Transformation applied to the target data.
-        root : str, optional, default=None
-            Root directory where dataset files are stored or should be downloaded.
-            If None, uses the default dataset directory from parent class.
-
-        Raises
-        ------
-        ValueError
-            If `split` parameter is not 'train', 'val', or 'test'.
-        FileNotFoundError
-            If the main dataset file cannot be found or downloaded.
-        KeyError
-            If required columns ('split', 'target', 'sequence') are missing from the data file.
-
-        Notes
-        -----
-        - All data is generated 'in place' by setting specific arguments for each task
-        - The 'split' column in the data file determines train/val/test assignment
         """
+        
         super().__init__(split)
 
-        self.activity_columns = "target"
         self.transform = transform
         self.target_transform = target_transform
-        self.split = self.split_parse(split)
         self.prefix = self.FLAG + "_"
-
-        df = task(**args).reset_index(drop=True)
-
-        self.df = df
-        targets = self.df[self.activity_columns].to_numpy()
-        seq = self.df.sequence.to_numpy()
-
-        self.ds = {"targets": targets, "seq": seq}
-
+        self.ds = {"targets": [], "seq": []}
         self.name_for_split_info = self.prefix
-
-    def split_parse(self, split: str) -> str:
-        """
-        Parse and validate the split parameter.
-
-        Validates that the provided split string is one of the allowed values
-        and returns it as a list for compatibility with the filtering mechanism.
-
-        Parameters
-        ----------
-        split : str
-            Data split identifier. Must be one of: 'train', 'val', 'test'.
-
-        Returns
-        -------
-        List[str]
-            List containing the validated split string.
-
-        Raises
-        ------
-        ValueError
-            If split is not one of the allowed values ('train', 'val', 'test').
-
-        Examples
-        --------
-        >>> dataset = DNASynDataset(split='train')
-        >>> dataset.split_parse('val')
-        ['val']
         
-        >>> dataset.split_parse('train')
-        ['train']
+    def generate(self,
+        motif: str,
+        length=200,
+        n_seqs=10000,
+        ratio=0.2,
+        gc_content=0.41,
+        train_size=0.7,
+        random_state=42):
         
-        >>> dataset.split_parse('invalid')
-        ValueError: Invalid split value: invalid. Expected 'train', 'val', or 'test'.
+        seed(random_state)
+        n_pos = int(n_seqs * ratio)
+        n_neg = n_seqs - n_pos
+        test_size = (1 - train_size) / 2
+        seqs = []
+        with tqdm(total=n_seqs) as pbar:
+            for i in range(n_pos):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert = randint(0, length - len(motif))
+                    seq = seq[:insert] + motif + seq[insert+len(motif):]
+                    if seq.count(motif) == 1:
+                        seqs.append((seq, 1))
+                        pbar.update(1)
+                        break
+            for i in range(n_neg):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    if motif not in seq:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+        shuffle(seqs)
+        df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+        group = ['train'] * int(n_seqs*train_size) + ['val'] * int(n_seqs*test_size) + ['test'] * int(n_seqs*test_size)
+        df['split'] = group
+        self.df = df
 
-        Notes
-        -----
-        - Returns a list to maintain compatibility with pandas isin() filtering
-        - The original data file contains a 'split' column with these values
-        - This method ensures only valid splits are requested
+    def get_split(self, split_name: str, transform=None, target_transform=None):
         """
+        Extract data from dataset only for specified split.
+        
+        Args:
+            split_name (str): 'train', 'val' or 'test'
+        
+        Returns:
+            Dataset: new dataset with splitted df
+        """
+        
+        splitted_df = self.df[self.df['split'] == split_name].copy()
+        new_dataset = SimpleMotifDataset(split=split_name,
+                                         transform=transform,
+                                         target_transform=target_transform)
+        new_dataset.df = splitted_df
+        targets = new_dataset.df.target.to_numpy()
+        seq = new_dataset.df.sequence.to_numpy()
+        new_dataset.ds = {"targets": targets, "seq": seq}
+        new_dataset.name_for_split_info = new_dataset.prefix
+        return new_dataset
 
-        # Default valid splits
-        valid_splits = {"train", "val", "test"}
 
-        # Process string input
-        if split not in valid_splits:
-            raise ValueError(
-                f"Invalid split value: {split}. Expected 'train', 'val', or 'test'."
-            )
+class LinCoopDataset(MpraDataset):
+    """
+    Regression task that assume that the activity of a sequence depends linearly on the number of motifs.
+    """
+    FLAG = "DNASynBench"
 
-        return [split]
+    def __init__(
+        self,
+        split=None,
+        transform=None,
+        target_transform=None
+        ):
+        
+        super().__init__(split)
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.prefix = self.FLAG + "_"
+        self.ds = {"targets": [], "seq": []}
+        self.name_for_split_info = self.prefix
+        
+    def generate(self,
+        motif: str,
+        length=200,
+        n_seqs=10000,
+        min_num=0,
+        max_num=5,
+        gc_content=0.41,
+        train_size=0.7,
+        random_state=42):
+        
+        seed(random_state)
+        test_size = (1 - train_size) / 2
+        seqs = []
+        with tqdm(total=n_seqs) as pbar:
+            for i in range(n_seqs):
+                while True:
+                    n_motifs = randint(min_num, max_num)
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert = -len(motif)
+                    if n_motifs != 0:
+                        section = (length - len(motif)) // n_motifs
+                        for k in range(n_motifs):
+                            insert = randint(insert+len(motif), (k+1)*section)
+                            seq = seq[:insert] + motif + seq[insert+len(motif):]
+                    if seq.count(motif) == n_motifs:
+                        seqs.append((seq, n_motifs/max_num))
+                        pbar.update(1)
+                        break
+        shuffle(seqs)
+        df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+        group = ['train'] * int(n_seqs*train_size) + ['val'] * int(n_seqs*test_size) + ['test'] * int(n_seqs*test_size)
+        df['split'] = group
+        self.df = df
+
+    def get_split(self, split_name: str, transform=None, target_transform=None):        
+        splitted_df = self.df[self.df['split'] == split_name].copy()
+        new_dataset = LinCoopDataset(split=split_name,
+                                     transform=transform,
+                                     target_transform=target_transform)
+        new_dataset.df = splitted_df
+        targets = new_dataset.df.target.to_numpy()
+        seq = new_dataset.df.sequence.to_numpy()
+        new_dataset.ds = {"targets": targets, "seq": seq}
+        new_dataset.name_for_split_info = new_dataset.prefix
+        return new_dataset
+
+
+class NonlinCoopDataset(MpraDataset):
+    """
+    Regression task that assume that the activity of a sequence depends non-linearly on the number of motifs.
+    """
+    FLAG = "DNASynBench"
+
+    def __init__(
+        self,
+        split=None,
+        transform=None,
+        target_transform=None
+        ):
+        
+        super().__init__(split)
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.prefix = self.FLAG + "_"
+        self.ds = {"targets": [], "seq": []}
+        self.name_for_split_info = self.prefix
+        
+    def generate(self,
+        motif: str,
+        length=200,
+        n_seqs=10000,
+        min_num=0,
+        max_num=5,
+        gc_content=0.41,
+        train_size=0.7,
+        random_state=42):
+        
+        seed(random_state)
+        test_size = (1 - train_size) / 2
+        seqs = []
+        with tqdm(total=n_seqs) as pbar:
+            for i in range(n_seqs):
+                while True:
+                    n_motifs = randint(min_num, max_num)
+                    seq = generation(length, gc_content, random_state)
+                    insert = -len(motif)
+                    if n_motifs != 0:
+                        section = (length - len(motif)) // n_motifs
+                        for k in range(n_motifs):
+                            insert = randint(insert+len(motif), (k+1)*section)
+                            seq = seq[:insert] + motif + seq[insert+len(motif):]
+                    if seq.count(motif) == n_motifs:
+                        seqs.append((seq, activity(n_motifs, max_num)))
+                        pbar.update(1)
+                        break
+        shuffle(seqs)
+        df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+        group = ['train'] * int(n_seqs*train_size) + ['val'] * int(n_seqs*test_size) + ['test'] * int(n_seqs*test_size)
+        df['split'] = group
+        self.df = df
+
+    def get_split(self, split_name: str, transform=None, target_transform=None):        
+        splitted_df = self.df[self.df['split'] == split_name].copy()
+        new_dataset = NonlinCoopDataset(split=split_name,
+                                        transform=transform,
+                                        target_transform=target_transform)
+        new_dataset.df = splitted_df
+        targets = new_dataset.df.target.to_numpy()
+        seq = new_dataset.df.sequence.to_numpy()
+        new_dataset.ds = {"targets": targets, "seq": seq}
+        new_dataset.name_for_split_info = new_dataset.prefix
+        return new_dataset
+
+
+class AlienDataset(MpraDataset):
+    """
+    Binary classification task to find the target motif in the presence of another alien motif that does not affect activity.
+    """
+    FLAG = "DNASynBench"
+
+    def __init__(
+        self,
+        split=None,
+        transform=None,
+        target_transform=None
+        ):
+        
+        super().__init__(split)
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.prefix = self.FLAG + "_"
+        self.ds = {"targets": [], "seq": []}
+        self.name_for_split_info = self.prefix
+        
+    def generate(self,
+        motif: str,
+        alien: str,
+        length=200,
+        n_seqs=10000,
+        ratio=0.2,
+        rat_al=0.2,
+        gc_content=0.41,
+        train_size=0.7,
+        random_state=42):
+        
+        seed(random_state)
+        n_mix = int(n_seqs * ratio * rat_al)
+        n_pos = int(n_seqs * ratio) - n_mix
+        n_al = int(n_seqs * rat_al) - n_mix
+        n_neg = n_seqs - n_pos - n_mix - n_al
+        max_len = max(len(motif), len(alien))
+        test_size = (1 - train_size) / 2
+        seqs = []
+        with tqdm(total=n_seqs) as pbar:
+            for i in range(n_pos):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert = randint(0, length - len(motif))
+                    seq = seq[:insert] + motif + seq[insert+len(motif):]
+                    if seq.count(motif) == 1:
+                        seqs.append((seq, 1))
+                        pbar.update(1)
+                        break
+            for i in range(n_al):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert = randint(0, length - len(alien))
+                    seq = seq[:insert] + alien + seq[insert+len(alien):]
+                    if seq.count(motif) == 0:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+            for i in range(n_mix):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert_1 = randint(0, length//2 - max_len)
+                    insert_2 = randint(length//2, length - max_len)
+                    inserts = [insert_1, insert_2]
+                    shuffle(inserts)
+                    seq = seq[:inserts[0]] + motif + seq[inserts[0]+len(motif):]
+                    seq = seq[:inserts[1]] + alien + seq[inserts[1]+len(alien):]
+                    if seq.count(motif) == 1:
+                        seqs.append((seq, 1))
+                        pbar.update(1)
+                        break
+            for i in range(n_neg):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    if motif not in seq and alien not in seq:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+        shuffle(seqs)
+        df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+        group = ['train'] * int(n_seqs*train_size) + ['val'] * int(n_seqs*test_size) + ['test'] * int(n_seqs*test_size)
+        df['split'] = group
+        self.df = df
+
+    def get_split(self, split_name: str, transform=None, target_transform=None):        
+        splitted_df = self.df[self.df['split'] == split_name].copy()
+        new_dataset = AlienDataset(split=split_name,
+                                   transform=transform,
+                                   target_transform=target_transform)
+        new_dataset.df = splitted_df
+        targets = new_dataset.df.target.to_numpy()
+        seq = new_dataset.df.sequence.to_numpy()
+        new_dataset.ds = {"targets": targets, "seq": seq}
+        new_dataset.name_for_split_info = new_dataset.prefix
+        return new_dataset
+
+
+class CombinationDataset(MpraDataset):
+    """
+    Binary classification task that implies that the activity requires the presence of both target and alien motifs.
+    """
+    FLAG = "DNASynBench"
+
+    def __init__(
+        self,
+        split=None,
+        transform=None,
+        target_transform=None
+        ):
+        
+        super().__init__(split)
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.prefix = self.FLAG + "_"
+        self.ds = {"targets": [], "seq": []}
+        self.name_for_split_info = self.prefix
+        
+    def generate(self,
+        motif: str,
+        alien: str,
+        length=200,
+        n_seqs=10000,
+        ratio=0.2,
+        rat_al=0.2,
+        gc_content=0.41,
+        train_size=0.7,
+        random_state=42):
+        
+        seed(random_state)
+        n_mix = int(n_seqs * ratio * rat_al)
+        n_pos = int(n_seqs * ratio) - n_mix
+        n_al = int(n_seqs * rat_al) - n_mix
+        n_neg = n_seqs - n_pos - n_mix - n_al
+        max_len = max(len(motif), len(alien))
+        test_size = (1 - train_size) / 2
+        seqs = []
+        with tqdm(total=n_seqs) as pbar:
+            for i in range(n_pos):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert = randint(0, length - len(motif))
+                    seq = seq[:insert] + motif + seq[insert+len(motif):]
+                    if seq.count(alien) == 0:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+            for i in range(n_al):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert = randint(0, length - len(alien))
+                    seq = seq[:insert] + alien + seq[insert+len(alien):]
+                    if seq.count(motif) == 0:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+            for i in range(n_mix):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    insert_1 = randint(0, length//2 - max_len)
+                    insert_2 = randint(length//2, length - max_len)
+                    inserts = [insert_1, insert_2]
+                    shuffle(inserts)
+                    seq = seq[:inserts[0]] + motif + seq[inserts[0]+len(motif):]
+                    seq = seq[:inserts[1]] + alien + seq[inserts[1]+len(alien):]
+                    if seq.count(motif) == 1 and seq.count(alien) == 1:
+                        seqs.append((seq, 1))
+                        pbar.update(1)
+                        break
+            for i in range(n_neg):
+                while True:
+                    seq = generation(length, gc_content, random_state=random_state)
+                    if motif not in seq and alien not in seq:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+        shuffle(seqs)
+        df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+        group = ['train'] * int(n_seqs*train_size) + ['val'] * int(n_seqs*test_size) + ['test'] * int(n_seqs*test_size)
+        df['split'] = group
+        self.df = df
+
+    def get_split(self, split_name: str, transform=None, target_transform=None):        
+        splitted_df = self.df[self.df['split'] == split_name].copy()
+        new_dataset = CombinationDataset(split=split_name,
+                                         transform=transform,
+                                         target_transform=target_transform)
+        new_dataset.df = splitted_df
+        targets = new_dataset.df.target.to_numpy()
+        seq = new_dataset.df.sequence.to_numpy()
+        new_dataset.ds = {"targets": targets, "seq": seq}
+        new_dataset.name_for_split_info = new_dataset.prefix
+        return new_dataset
+
+
+class DistanceDataset(MpraDataset):
+    """
+    Binary classification task that suppose the activity only if the motifs are located at a close distance from each other.
+    """
+    FLAG = "DNASynBench"
+
+    def __init__(
+        self,
+        split=None,
+        transform=None,
+        target_transform=None
+        ):
+        
+        super().__init__(split)
+
+        self.transform = transform
+        self.target_transform = target_transform
+        self.prefix = self.FLAG + "_"
+        self.ds = {"targets": [], "seq": []}
+        self.name_for_split_info = self.prefix
+        
+    def generate(self,
+        motif: str,
+        alien: str,
+        act_dist=10,
+        n_seqs=10000,
+        ratio=0.2,
+        gc_content=0.41,
+        train_size=0.7,
+        random_state=42):
+        
+        seed(random_state)
+        n_near = n_far = int(n_seqs * ratio // 2)
+        n_neg = n_seqs - n_near - n_far
+        test_size = (1 - train_size) / 2
+        seqs = []
+        with tqdm(total=n_seqs) as pbar:
+            for i in range(n_near):
+                while True:
+                    dist = generation(randint(0, act_dist), gc_content, random_state=random_state)
+                    left_flank = generation(randint(0, act_dist), gc_content, random_state=random_state)
+                    right_flank = generation(randint(0, act_dist), gc_content, random_state=random_state)
+                    seq = left_flank + motif + dist + alien + right_flank
+                    if len(dist) <= act_dist:
+                        seqs.append((seq, 1))
+                        pbar.update(1)
+                        break
+            for i in range(n_far):
+                while True:
+                    dist = generation(randint(act_dist+1, act_dist*2), gc_content, random_state=random_state)
+                    left_flank = generation(randint(10, act_dist*2), gc_content, random_state=random_state)
+                    right_flank = generation(randint(10, act_dist*2), gc_content, random_state=random_state)
+                    seq = left_flank + motif + dist + alien + right_flank
+                    if len(dist) >= act_dist:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+            for i in range(n_neg):
+                while True:
+                    length = randint(act_dist, 3*act_dist)
+                    seq = generation(length, gc_content, random_state=random_state)
+                    if motif not in seq and alien not in seq:
+                        seqs.append((seq, 0))
+                        pbar.update(1)
+                        break
+        shuffle(seqs)
+        df = pd.DataFrame(seqs, columns=['sequence', 'target'])
+        group = ['train'] * int(n_seqs*train_size) + ['val'] * int(n_seqs*test_size) + ['test'] * int(n_seqs*test_size)
+        df['split'] = group
+        self.df = df
+
+    def get_split(self, split_name: str, transform=None, target_transform=None):        
+        splitted_df = self.df[self.df['split'] == split_name].copy()
+        new_dataset = DistanceDataset(split=split_name,
+                                      transform=transform,
+                                      target_transform=target_transform)
+        new_dataset.df = splitted_df
+        targets = new_dataset.df.target.to_numpy()
+        seq = new_dataset.df.sequence.to_numpy()
+        new_dataset.ds = {"targets": targets, "seq": seq}
+        new_dataset.name_for_split_info = new_dataset.prefix
+        return new_dataset
+        
+
+def generation(length, gc_content, random_state):
+    gc = int(length * gc_content)
+    at = length - gc
+    seqs = choices(['G', 'C'], k=gc) + choices(['A', 'T'], k=at)
+    shuffle(seqs)
+    return ''.join(seqs)
+
+def activity(x, coef):
+    return 1/(1 + np.exp(5-10*x/coef))
