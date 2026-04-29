@@ -61,9 +61,9 @@ Binary classification task that implies that the activity requires the presence 
 Binary classification task that suppose the activity only if the motifs are located at a close distance from each other. Maximum allowable distance is set as a parameter.
 
 **Settings:**
-|  motif   |  alien   | act_dist | n_seqs | ratio | gc_content |   train_size   | random_state |
-|----------|----------|----------|--------|-------|------------|----------------|--------------|
-| required | required |    10    | 10000  |  0.2  |    0.41    |       0.7      |      42      |
+|  motif   |  alien   | length | act_dist | n_seqs | ratio | gc_content |   train_size   | random_state |
+|----------|----------|--------|----------|--------|-------|------------|----------------|--------------|
+| required | required |  200   |    10    | 10000  |  0.2  |    0.41    |       0.7      |      42      |
 
 <img width="457" height="104" alt="6_eng" src="https://github.com/user-attachments/assets/d755ea5d-f771-48d4-9e73-1944c5de20c0" />
 
