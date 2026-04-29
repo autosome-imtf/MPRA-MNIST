@@ -83,7 +83,7 @@ A short DNA sequence that determines the observed value of activity in the inten
 The expected length of all generated sequences in the dataset.
 #### **`n_seqs: int`**, optional, default=10000
 The expected number of all sequences in the dataset (including train, val and test).
-#### **`act_dist: int`**, optional, default=100
+#### **`act_dist: int`**, optional, default=10
 The limiting distance between the motifs in task 6. When the motifs are located at a greater distance, their TF stop interacting and the sequence loses activity.
 #### **`ratio, rat_al: float`**, optional, default=0.2
 The frequency of occurrence of target and alien motifs, respectively. In tasks 1 and 4, value of `ratio` also means the percentage of the positive class.
