@@ -21,9 +21,9 @@ See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/DNASynBench
 Binary classification task to find the motif in the sequence.
 
 **Settings:**
-|  motif   | length | n_seqs | ratio | gc_content |   split_ratio     | random_state |
-|----------|--------|--------|-------|------------|-------------------|--------------|
-| required |  200   | 10000  |  0.2  |    0.41    | [0.7, 0.15, 0.15] |      42      |
+|  motif   | length | n_seqs | ratio | gc_content |   train_size   | random_state |
+|----------|--------|--------|-------|------------|----------------|--------------|
+| required |  200   | 10000  |  0.2  |    0.41    |       0.7      |      42      |
 
 <img width="456" height="66" alt="1_eng" src="https://github.com/user-attachments/assets/51533320-a829-4f8f-ae2e-2a90b88d937b"/>
 
@@ -31,9 +31,9 @@ Binary classification task to find the motif in the sequence.
 Regression tasks that assume that the activity of a sequence depends linearly or non-linearly on the number of motifs.
 
 **Settings:**
-|  motif   | length | n_seqs | min_num | max_num | gc_content |   split_ratio     | random_state |
-|----------|--------|--------|---------|---------|------------|-------------------|--------------|
-| required |  200   | 10000  |    0    |    5    |    0.41    | [0.7, 0.15, 0.15] |      42      |
+|  motif   | length | n_seqs | min_num | max_num | gc_content |   train_size   | random_state |
+|----------|--------|--------|---------|---------|------------|----------------|--------------|
+| required |  200   | 10000  |    0    |    5    |    0.41    |       0.7      |      42      |
 
 <img width="461" height="114" alt="2_eng" src="https://github.com/user-attachments/assets/d4e7f039-3467-4ae1-92e1-536bb50c3a10" />
 
@@ -41,9 +41,9 @@ Regression tasks that assume that the activity of a sequence depends linearly or
 Binary classification task to find the target motif in the presence of another alien motif that does not affect activity, but can be recognized by models as a regularly occurring element.
 
 **Settings:**
-|  motif   |  alien   | length | n_seqs | ratio | rat_al | gc_content |   split_ratio     | random_state |
-|----------|----------|--------|--------|-------|--------|------------|-------------------|--------------|
-| required | required |  200   | 10000  |  0.2  |  0.2   |    0.41    | [0.7, 0.15, 0.15] |      42      |
+|  motif   |  alien   | length | n_seqs | ratio | rat_al | gc_content |   train_size   | random_state |
+|----------|----------|--------|--------|-------|--------|------------|----------------|--------------|
+| required | required |  200   | 10000  |  0.2  |  0.2   |    0.41    |       0.7      |      42      |
 
 <img width="324" height="150" alt="4_eng" src="https://github.com/user-attachments/assets/eaeb83a7-c98f-479b-bd1d-cfaa256c002d" />
 
@@ -51,9 +51,9 @@ Binary classification task to find the target motif in the presence of another a
 Binary classification task that implies that the activity requires the presence of both target and alien motifs.
 
 **Settings:**
-|  motif   |  alien   | length | n_seqs | ratio | rat_al | gc_content |   split_ratio     | random_state |
-|----------|----------|--------|--------|-------|--------|------------|-------------------|--------------|
-| required | required |  200   | 10000  |  0.2  |  0.2   |    0.41    | [0.7, 0.15, 0.15] |      42      |
+|  motif   |  alien   | length | n_seqs | ratio | rat_al | gc_content |   train_size   | random_state |
+|----------|----------|--------|--------|-------|--------|------------|----------------|--------------|
+| required | required |  200   | 10000  |  0.2  |  0.2   |    0.41    |       0.7      |      42      |
 
 <img width="324" height="150" alt="5_eng" src="https://github.com/user-attachments/assets/a18a7275-2140-4b7d-88b4-dc90f8dbe7ac" />
 
@@ -61,22 +61,18 @@ Binary classification task that implies that the activity requires the presence 
 Binary classification task that suppose the activity only if the motifs are located at a close distance from each other. Maximum allowable distance is set as a parameter.
 
 **Settings:**
-|  motif   |  alien   | act_dist | n_seqs | ratio | gc_content |   split_ratio     | random_state |
-|----------|----------|----------|--------|-------|------------|-------------------|--------------|
-| required | required |   100    | 10000  |  0.2  |    0.41    | [0.7, 0.15, 0.15] |      42      |
+|  motif   |  alien   | act_dist | n_seqs | ratio | gc_content |   train_size   | random_state |
+|----------|----------|----------|--------|-------|------------|----------------|--------------|
+| required | required |    10    | 10000  |  0.2  |    0.41    |       0.7      |      42      |
 
 <img width="457" height="104" alt="6_eng" src="https://github.com/user-attachments/assets/d755ea5d-f771-48d4-9e73-1944c5de20c0" />
 
 ## Dataset parameters
-#### **`split: str`**
-Defines which data split to use. Must be one of: `'train'`, `'val'`, `'test'`.
-The dataset filters sequences based on the 'split' column in the data file.
-Transformation applied to each sequence object.
-#### **`task: callable`**
-Mechanism for building a dataset. One of the six tasks from benchmarking tool.
-Set as the task name (`'presence'`, `'lin_coop'`, `'nonlin_coop'`, `'alien'`, `'combination'` or `'distance'`).
+#### **`split: str`**, optional
+Defines which data split to use, one of: `'train'`, `'val'`, `'test'`.
+It is used in `.generate()` method to extract necessary set.
 #### **`transform: callable`**, optional
-Transformation applied to each sequence object.
+Transformation applied to each sequence.
 #### **`target_transform: callable`**, optional
 Transformation applied to the target data.
 
@@ -96,8 +92,8 @@ The minimum and maximum number of motifs in regression tasks, respectively.
 With min_num=0, activity tends to 0; max_num gives activity tends to 1.
 #### **`gc_content: float`**, optional, default=0.41
 The average GC-content of the background sequence. It is about 41% in human genome. In other organisms (and in specific genomic regions) this value varies.
-#### **`split_ratio: list`**, optional, default=[0.7, 0.15, 0.15]
-Percentages of training, validation, and test subsets.
+#### **`train_size: float`**, optional, default=0.7
+Fraction of training subset. Sizes of validation and testing sets are equal.
 #### **`random_state: int`**, optional, default=42
 A fixed random_state allows you to get reproducible datasets.
 
@@ -117,7 +113,7 @@ GAATCCTGTCACACAGAGGGATAAATACGAGGATTTTTGTCACAGATTCG	  1    test
 ## Examples
 ### 1) Import important packages
 ```python
-    from mpramnist.DNASynBench import presence_dataset
+    from mpramnist.DNASynBench import SimpleMotifDataset
     from mpramnist.DNASynBench import LitModel_DNASyn
     from mpramnist import transforms as t
     import torch.utils.data as data
@@ -138,25 +134,18 @@ GAATCCTGTCACACAGAGGGATAAATACGAGGATTTTTGTCACAGATTCG	  1    test
 
 ### 3) Dataset creation
 ```python
-    # Basic usage for training
-    train_dataset = presence_dataset(
-        split='train',
-        motif='GCCACGTGGC', 
-        length=500,
-        n_seqs=1_000_000,
-        ratio=0.25,
-        transform=train_transform
-    )
+    # Generating task
+    dataset = SimpleMotifDataset()
+    dataset.generate(motif='AGTCGACT',
+        length=200,
+        n_seqs=10000,
+        train_size=0.7,
+        random_state=42)
 
-    val_dataset = presence_dataset(
-        split="val",
-        motif='GCCACGTGGC', 
-        length=500,
-        n_seqs=1_000_000,
-        ratio=0.25,
-        transform=val_test_transform
-    )
-    
+    # Extracting train, validation and testing subsets
+    train_dataset = dataset.get_split("train", transform=train_transform)
+    val_dataset = dataset.get_split("val", transform=val_test_transform)
+    test_dataset = dataset.get_split("test", transform=val_test_transform)
 ```
 
 ### 4) Dataloader creation
