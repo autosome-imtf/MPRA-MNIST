@@ -456,6 +456,7 @@ class DistanceDataset(MpraDataset):
     def generate(self,
         motif: str,
         alien: str,
+        length=200,
         act_dist=10,
         n_seqs=10000,
         ratio=0.2,
@@ -464,6 +465,7 @@ class DistanceDataset(MpraDataset):
         random_state=42):
         
         seed(random_state)
+        assert length >= len(motif) + len(alien) + act_dist*3, 'length must be greater'
         n_near = n_far = int(n_seqs * ratio // 2)
         n_neg = n_seqs - n_near - n_far
         test_size = (1 - train_size) / 2
@@ -471,27 +473,26 @@ class DistanceDataset(MpraDataset):
         with tqdm(total=n_seqs) as pbar:
             for i in range(n_near):
                 while True:
+                    seq = generation(length, gc_content, random_state=random_state)
                     dist = generation(randint(0, act_dist), gc_content, random_state=random_state)
-                    left_flank = generation(randint(0, act_dist), gc_content, random_state=random_state)
-                    right_flank = generation(randint(0, act_dist), gc_content, random_state=random_state)
-                    seq = left_flank + motif + dist + alien + right_flank
+                    insert = randint(0, length - len(motif) - len(alien) - len(dist))
+                    seq = seq[:insert] + motif + dist + alien + seq[insert+len(motif)+len(alien)+len(dist):]
                     if len(dist) <= act_dist:
                         seqs.append((seq, 1))
                         pbar.update(1)
                         break
             for i in range(n_far):
                 while True:
-                    dist = generation(randint(act_dist+1, act_dist*2), gc_content, random_state=random_state)
-                    left_flank = generation(randint(10, act_dist*2), gc_content, random_state=random_state)
-                    right_flank = generation(randint(10, act_dist*2), gc_content, random_state=random_state)
-                    seq = left_flank + motif + dist + alien + right_flank
+                    seq = generation(length, gc_content, random_state=random_state)
+                    dist = generation(randint(act_dist+1, act_dist*3), gc_content, random_state=random_state)
+                    insert = randint(0, length - len(motif) - len(alien) - len(dist))
+                    seq = seq[:insert] + motif + dist + alien + seq[insert+len(motif)+len(alien)+len(dist):]
                     if len(dist) >= act_dist:
                         seqs.append((seq, 0))
                         pbar.update(1)
                         break
             for i in range(n_neg):
                 while True:
-                    length = randint(act_dist, 3*act_dist)
                     seq = generation(length, gc_content, random_state=random_state)
                     if motif not in seq and alien not in seq:
                         seqs.append((seq, 0))
