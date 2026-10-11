@@ -1,9 +1,7 @@
-from pylab import true_divide
 import pandas as pd
 import numpy as np
 import os
 from typing import Tuple, List, Union, Dict, Optional
-from collections import defaultdict
 import pyfaidx
 import subprocess
 import bioframe as bf
@@ -22,38 +20,42 @@ class SirajMPRADataset(MpraDataset):
     The dataset uses human genome assembly hg19 with 0-based coordinate indexing.
     All genomic positions (start, end) follow 0-based indexing convention.
 
-    Inherits from:
-        MpraDataset: Base class for MPRA datasets
+    Attributes
+    ----------
+    FLAG : str
+        Identifier flag for Siraj datasets ("Siraj")
+    CELL_TYPE : list
+        Available cell types ['K562', 'HEPG2', 'A549', 'SKNSH', 'HCT116']
+    PLASMID : str
+        Constant plasmid backbone sequence used in the MPRA constructs
+    LEFT_FLANK : str
+        Left flanking sequence used for sequence extraction and alignment
+    RIGHT_FLANK : str
+        Right flanking sequence used for sequence extraction and alignment
 
-    Constants:
-        FLAG (str): Dataset identifier flag: 'Siraj'
-        CELL_TYPE (str): Available cell types
+    Examples
+    --------
+    >>> # Load data for specific cell type
+    >>> dataset = SirajMPRADataset(cell_type='K562')
+    >>>
+    >>> # Load data with custom sequence length
+    >>> dataset = SirajMPRADataset(cell_type='HEPG2', length=300)
+    >>>
+    >>> # Load data filtered by genomic regions
+    >>> dataset = SirajMPRADataset(
+    ...     cell_type='A549',
+    ...     genomic_regions='path/to/regions.bed'
+    ... )
 
-    Examples:
-        >>> # Load data for specific cell type
-        >>> dataset = SirajMPRADataset(cell_type='K562')
-        >>>
-        >>> # Load data with custom sequence length
-        >>> dataset = SirajMPRADataset(cell_type='HEPG2', length=300)
-        >>>
-        >>> # Load data filtered by genomic regions
-        >>> dataset = SirajMPRADataset(
-        ...     cell_type='A549',
-        ...     genomic_regions='path/to/regions.bed'
-        ... )
     """
 
     FLAG = "Siraj"
-
-    # Available cell types
     CELL_TYPE: list[str] = ["K562", "HEPG2", "A549", "SKNSH", "HCT116"]
 
-    CONSTANT_LEFT_FLANK = "ACTGGCCGCTTGACG"  # required for each sequence
-    CONSTANT_RIGHT_FLANK = "CACTGCGGCTCCTGC"  # required for each sequence
-    LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG"  # from human_legnet
-    RIGHT_FLANK = (
-        "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT"  # from human_legnet
-    )
+    PLASMID = "TCGGCTGCGGCGAGCGGTATCAGCTCACTCAAAGGCGGTAATACGGTTATCCACAGAATCAGGGGATAACGCAGGAAAGAACATGTGAGCAAAAGGCCAGCAAAAGGCCAGGAACCGTAAAAAGGCCGCGTTGCTGGCGTTTTTCCATAGGCTCCGCCCCCCTGACGAGCATCACAAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGACCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCATAGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGTTCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCCGTTCAGCCCGACCGCTGCGCCTTATCCGGTAACTATCGTCTTGAGTCCAACCCGGTAAGACACGACTTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTAGGCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACACTAGAAGAACAGTATTTGGTATCTGCGCTCTGCTGAAGCCAGTTACCTTCGGAAAAAGAGTTGGTAGCTCTTGATCCGGCAAACAAACCACCGCTGGTAGCGGTGGTTTTTTTGTTTGCAAGCAGCAGATTACGCGCAGAAAAAAAGGATCTCAAGAAGATCCTTTGATCTTTTCTACGGGGTCTGACGCTCAGTGGAACGAAAACTCACGTTAAGGGATTTTGGTCATGAGATTATCAAAAAGGATCTTCACCTAGATCCTTTTAAATTAAAAATGAAGTTTTAAATCAATCTAAAGTATATATGAGTAAACTTGGTCTGACAGCGGCCGCAAATGCTAAACCACTGCAGTGGTTACCAGTGCTTGATCAGTGAGGCACCGATCTCAGCGATCTGCCTATTTCGTTCGTCCATAGTGGCCTGACTCCCCGTCGTGTAGATCACTACGATTCGTGAGGGCTTACCATCAGGCCCCAGCGCAGCAATGATGCCGCGAGAGCCGCGTTCACCGGCCCCCGATTTGTCAGCAATGAACCAGCCAGCAGGGAGGGCCGAGCGAAGAAGTGGTCCTGCTACTTTGTCCGCCTCCATCCAGTCTATGAGCTGCTGTCGTGATGCTAGAGTAAGAAGTTCGCCAGTGAGTAGTTTCCGAAGAGTTGTGGCCATTGCTACTGGCATCGTGGTATCACGCTCGTCGTTCGGTATGGCTTCGTTCAACTCTGGTTCCCAGCGGTCAAGCCGGGTCACATGATCACCCATATTATGAAGAAATGCAGTCAGCTCCTTAGGGCCTCCGATCGTTGTCAGAAGTAAGTTGGCCGCGGTGTTGTCGCTCATGGTAATGGCAGCACTACACAATTCTCTTACCGTCATGCCATCCGTAAGATGCTTTTCCGTGACCGGCGAGTACTCAACCAAGTCGTTTTGTGAGTAGTGTATACGGCGACCAAGCTGCTCTTGCCCGGCGTCTATACGGGACAACACCGCGCCACATAGCAGTACTTTGAAAGTGCTCATCATCGGGAATCGTTCTTCGGGGCGGAAAGACTCAAGGATCTTGCCGCTATTGAGATCCAGTTCGATATAGCCCACTCTTGCACCCAGTTGATCTTCAGCATCTTTTACTTTCACCAGCGTTTCGGGGTGTGCAAAAACAGGCAAGCAAAATGCCGCAAAGAAGGGAATGAGTGCGACACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG<__ENHANCER_SEQ__>CACTGCGGCTCCTGCGATCGCGTCGACGAACCTCTAGANNNNNNNNNNNNNNNNNNNNAGATCGGAAGAGCGTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCTTGACCTACGGCGTGCAGTGCTTCGCCCGCTACCCCGACCACATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGCGACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAAGGTCTATATCACCGCCGACAAGCAGAAGAACGGCATCAAGGTGAACTTCAAGACCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTGCTGCCCGACAACCACTACCTGAGCACCCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATGGACGAGCTGTACAAGTAATGATAATAATTCTAGAGTCGGGGCGGCCGGCCGCTTCGAGCAGACATGATAAGATACATTGATGAGTTTGGACAAACCACAACTAGAATGCAGTGAAAAAAATGCTTTATTTGTGAAATTTGTGATGCTATTGCTTTATTTGTAACCATTATAAGCTGCAATAAACAAGTTAACAACAACAATTGCATTCATTTTATGTTTCAGGTTCAGGGGGAGGTGTGGGAGGTTTTTTAAAGCAAGTAAAACCTCTACAAATGTGGTAAAATCGATAAGGATCCGTCGACCGATGCCCTTGAGAGCCTTCAACCCAGTCAGCTCCTTCCGGTGGGCGCGGGGCATGACTATCGTCGCCGCACTTATGACTGTCTTCTTTATCATGCAACTCGTAGGACAGGTGCCGGCAGCGCTCTTCCGCTTCCTCGCTCACTGACTCGCTGCGCTCGGTCGT"
+
+    LEFT_FLANK = "ACTGGCCGCTTGACG"
+    RIGHT_FLANK = "CACTGCGGCTCCTGC"
 
     def __init__(
         self,
@@ -66,7 +68,6 @@ class SirajMPRADataset(MpraDataset):
         filter_not_emVar: bool = False,
         filter_not_active_in_cellline: bool = True,
         filter_not_emVar_in_cellline: bool = True,
-        filter_mnp: bool = True,
         transform=None,
         target_transform=None,
         root=None,
@@ -99,8 +100,6 @@ class SirajMPRADataset(MpraDataset):
             If True, exclude sequences not active in target cell line instead of including them.
         filter_not_emVar_in_cellline : bool, optional
             If True, exclude variants not expression-modulating in target cell line instead of including them.
-        filter_mnp : bool, optional
-            If True, exclude multiple nucleotide polymorphisms instead of including them.
         transform : callable, optional, optional
             Transformation applied to each sequence object.
         target_transform : callable, optional, optional
@@ -110,8 +109,6 @@ class SirajMPRADataset(MpraDataset):
         """
         # Initialize parent class
         super().__init__(split, root)
-
-        self.split = split
 
         if cell_type in self.CELL_TYPE:
             self.cell_type = cell_type
@@ -127,7 +124,6 @@ class SirajMPRADataset(MpraDataset):
         self.filter_not_emVar = filter_not_emVar
         self.filter_not_active_in_cellline = filter_not_active_in_cellline
         self.filter_not_emVar_in_cellline = filter_not_emVar_in_cellline
-        self.filter_mnp = filter_mnp
         self.prefix = self.FLAG + "_"  # Prefix for file names
 
         try:
@@ -164,11 +160,11 @@ class SirajMPRADataset(MpraDataset):
             df = df.loc[df[f"active in {self.cell_type}"] == True]
         if self.filter_not_emVar_in_cellline:
             df = df.loc[df[f"emVar in {self.cell_type}"] == True]
-        if self.filter_mnp:
-            df = df.loc[
-                (df.apply(lambda row: len(row["Ref"]), axis=1) == 1)
-                & (df.apply(lambda row: len(row["Alt"]), axis=1) == 1)
-            ]
+
+        df = df.loc[
+            (df.apply(lambda row: len(row["Ref"]), axis=1) == 1)
+            & (df.apply(lambda row: len(row["Alt"]), axis=1) == 1)
+        ]
 
         target_column = (
             f"log2Skew in {self.cell_type}"  # Column containing expression values
@@ -193,7 +189,6 @@ class SirajMPRADataset(MpraDataset):
             lambda row: self.get_sequence(
                 ref_genome=ref,
                 chromosome=row.Chrom,
-                length=self.length,
                 start=row.Start,
                 end=row.End,
                 pos=row.Pos,
@@ -208,7 +203,6 @@ class SirajMPRADataset(MpraDataset):
             lambda row: self.get_sequence(
                 ref_genome=ref,
                 chromosome=row.Chrom,
-                length=self.length,
                 start=row.Start,
                 end=row.End,
                 pos=row.Pos,
@@ -325,7 +319,6 @@ class SirajMPRADataset(MpraDataset):
         self,
         ref_genome,
         chromosome: str,
-        length: int,
         start: int,
         end: int,
         pos: int,
@@ -341,8 +334,6 @@ class SirajMPRADataset(MpraDataset):
             FASTA file object for sequence extraction
         chromosome : str
             Chromosome name (with 'chr' prefix)
-        length : int
-            Total length of sequence to extract
         start : int
             Start position (0-based, hg19)
         end : int
@@ -373,15 +364,17 @@ class SirajMPRADataset(MpraDataset):
         - For deletions, the sequence length is maintained by removing the deleted base
         """
         # Verify reference nucleotide matches expected
-        observed_ref = str(ref_genome[chromosome][pos : pos + len(ref)]).upper()
+        observed_ref = str(ref_genome[chromosome][pos : pos + 1]).upper()
         if observed_ref != ref.upper():
-            return None
+            raise ValueError(
+                f"Error processing {chromosome}:{pos}-{ref}>{alt}\nCalled ref ({ref.upper()}) differs from genomic ({observed_ref})"
+            )
 
-        half_len = length // 2
+        half_len = (end - start) // 2
 
         try:
             # Handle substitution or insertion
-            seq = str(ref_genome[chromosome][start : end - len(alt) + 1])
+            seq = str(ref_genome[chromosome][start : end + 1])
             modified_seq = seq[:half_len] + alt + seq[half_len + 1 :]
 
             return modified_seq
@@ -402,41 +395,46 @@ class SirajSatMutDataset(MpraDataset):
     The dataset uses human genome assembly hg19 with 0-based coordinate indexing.
     All genomic positions (start, end) follow 0-based indexing convention.
 
-    Inherits from:
-        MpraDataset: Base class for MPRA datasets
+    Attributes
+    ----------
+    FLAG : str
+        Identifier flag for Siraj datasets ("Siraj")
+    CELL_TYPE : list
+        Available cell types ['K562', 'HEPG2']
+    MUT_NUM : list
+        Available baseline mutation number [1, 2]
+    PLASMID : str
+        Constant plasmid backbone sequence used in the MPRA constructs
+    LEFT_FLANK : str
+        Left flanking sequence used for sequence extraction and alignment
+    RIGHT_FLANK : str
+        Right flanking sequence used for sequence extraction and alignment
 
-    Constants:
-        FLAG (str): Dataset identifier flag: 'Siraj'
-        CELL_TYPE (list): Available cell types
-        MUT_NUM (list): Available baseline mutation number
+    Examples
+    --------
+    >>> # Load data for specific cell type
+    >>> dataset = SirajSatMutDataset(cell_type='K562', mut_num=1)
+    >>>
+    >>> # Load data with custom sequence length
+    >>> dataset = SirajSatMutDataset(cell_type='HEPG2', mut_num=1, length=300)
+    >>>
+    >>> # Load data filtered by genomic regions
+    >>> dataset = SirajSatMutDataset(
+    ...     cell_type='K562',
+    ...     mut_num=1,
+    ...     genomic_regions='path/to/regions.bed'
+    ... )
 
-    Examples:
-        >>> # Load data for specific cell type
-        >>> dataset = SirajSatMutDataset(cell_type='K562', mut_num=1)
-        >>>
-        >>> # Load data with custom sequence length
-        >>> dataset = SirajSatMutDataset(cell_type='HEPG2', mut_num=1, length=300)
-        >>>
-        >>> # Load data filtered by genomic regions
-        >>> dataset = SirajSatMutDataset(
-        ...     cell_type='K562',
-        ...     mut_num=1,
-        ...     genomic_regions='path/to/regions.bed'
-        ... )
     """
 
     FLAG = "Siraj"
-
-    # Available cell types
     CELL_TYPE: list[str] = ["K562", "HEPG2"]
     MUT_NUM: list[int] = [1, 2]
 
-    CONSTANT_LEFT_FLANK = "ACTGGCCGCTTGACG"  # required for each sequence
-    CONSTANT_RIGHT_FLANK = "CACTGCGGCTCCTGC"  # required for each sequence
-    LEFT_FLANK = "GGCCCGCTCTAGACCTGCAGG"  # from human_legnet
-    RIGHT_FLANK = (
-        "CACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGT"  # from human_legnet
-    )
+    PLASMID = "TCGGCTGCGGCGAGCGGTATCAGCTCACTCAAAGGCGGTAATACGGTTATCCACAGAATCAGGGGATAACGCAGGAAAGAACATGTGAGCAAAAGGCCAGCAAAAGGCCAGGAACCGTAAAAAGGCCGCGTTGCTGGCGTTTTTCCATAGGCTCCGCCCCCCTGACGAGCATCACAAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGACCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCATAGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGTTCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCCGTTCAGCCCGACCGCTGCGCCTTATCCGGTAACTATCGTCTTGAGTCCAACCCGGTAAGACACGACTTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTAGGCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACACTAGAAGAACAGTATTTGGTATCTGCGCTCTGCTGAAGCCAGTTACCTTCGGAAAAAGAGTTGGTAGCTCTTGATCCGGCAAACAAACCACCGCTGGTAGCGGTGGTTTTTTTGTTTGCAAGCAGCAGATTACGCGCAGAAAAAAAGGATCTCAAGAAGATCCTTTGATCTTTTCTACGGGGTCTGACGCTCAGTGGAACGAAAACTCACGTTAAGGGATTTTGGTCATGAGATTATCAAAAAGGATCTTCACCTAGATCCTTTTAAATTAAAAATGAAGTTTTAAATCAATCTAAAGTATATATGAGTAAACTTGGTCTGACAGCGGCCGCAAATGCTAAACCACTGCAGTGGTTACCAGTGCTTGATCAGTGAGGCACCGATCTCAGCGATCTGCCTATTTCGTTCGTCCATAGTGGCCTGACTCCCCGTCGTGTAGATCACTACGATTCGTGAGGGCTTACCATCAGGCCCCAGCGCAGCAATGATGCCGCGAGAGCCGCGTTCACCGGCCCCCGATTTGTCAGCAATGAACCAGCCAGCAGGGAGGGCCGAGCGAAGAAGTGGTCCTGCTACTTTGTCCGCCTCCATCCAGTCTATGAGCTGCTGTCGTGATGCTAGAGTAAGAAGTTCGCCAGTGAGTAGTTTCCGAAGAGTTGTGGCCATTGCTACTGGCATCGTGGTATCACGCTCGTCGTTCGGTATGGCTTCGTTCAACTCTGGTTCCCAGCGGTCAAGCCGGGTCACATGATCACCCATATTATGAAGAAATGCAGTCAGCTCCTTAGGGCCTCCGATCGTTGTCAGAAGTAAGTTGGCCGCGGTGTTGTCGCTCATGGTAATGGCAGCACTACACAATTCTCTTACCGTCATGCCATCCGTAAGATGCTTTTCCGTGACCGGCGAGTACTCAACCAAGTCGTTTTGTGAGTAGTGTATACGGCGACCAAGCTGCTCTTGCCCGGCGTCTATACGGGACAACACCGCGCCACATAGCAGTACTTTGAAAGTGCTCATCATCGGGAATCGTTCTTCGGGGCGGAAAGACTCAAGGATCTTGCCGCTATTGAGATCCAGTTCGATATAGCCCACTCTTGCACCCAGTTGATCTTCAGCATCTTTTACTTTCACCAGCGTTTCGGGGTGTGCAAAAACAGGCAAGCAAAATGCCGCAAAGAAGGGAATGAGTGCGACACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG<__ENHANCER_SEQ__>CACTGCGGCTCCTGCGATCGCGTCGACGAACCTCTAGANNNNNNNNNNNNNNNNNNNNAGATCGGAAGAGCGTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCTTGACCTACGGCGTGCAGTGCTTCGCCCGCTACCCCGACCACATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGCGACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAAGGTCTATATCACCGCCGACAAGCAGAAGAACGGCATCAAGGTGAACTTCAAGACCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTGCTGCCCGACAACCACTACCTGAGCACCCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATGGACGAGCTGTACAAGTAATGATAATAATTCTAGAGTCGGGGCGGCCGGCCGCTTCGAGCAGACATGATAAGATACATTGATGAGTTTGGACAAACCACAACTAGAATGCAGTGAAAAAAATGCTTTATTTGTGAAATTTGTGATGCTATTGCTTTATTTGTAACCATTATAAGCTGCAATAAACAAGTTAACAACAACAATTGCATTCATTTTATGTTTCAGGTTCAGGGGGAGGTGTGGGAGGTTTTTTAAAGCAAGTAAAACCTCTACAAATGTGGTAAAATCGATAAGGATCCGTCGACCGATGCCCTTGAGAGCCTTCAACCCAGTCAGCTCCTTCCGGTGGGCGCGGGGCATGACTATCGTCGCCGCACTTATGACTGTCTTCTTTATCATGCAACTCGTAGGACAGGTGCCGGCAGCGCTCTTCCGCTTCCTCGCTCACTGACTCGCTGCGCTCGGTCGT"
+
+    LEFT_FLANK = "ACTGGCCGCTTGACG"
+    RIGHT_FLANK = "CACTGCGGCTCCTGC"
 
     def __init__(
         self,
@@ -484,7 +482,6 @@ class SirajSatMutDataset(MpraDataset):
         # Initialize parent class
         super().__init__(split, root)
 
-        self.split = split
         self.length = length
 
         if cell_type in self.CELL_TYPE:
@@ -565,7 +562,6 @@ class SirajSatMutDataset(MpraDataset):
             lambda row: self.get_sequence(
                 ref_genome=ref,
                 chromosome=row.chr,
-                length=self.length,
                 start=row.start,
                 end=row.end,
                 mut_num=self.mut_num,
@@ -584,7 +580,6 @@ class SirajSatMutDataset(MpraDataset):
             lambda row: self.get_sequence(
                 ref_genome=ref,
                 chromosome=row.chr,
-                length=self.length,
                 start=row.start,
                 end=row.end,
                 mut_num=self.mut_num,
@@ -711,7 +706,6 @@ class SirajSatMutDataset(MpraDataset):
         self,
         ref_genome,
         chromosome: str,
-        length: int,
         start: int,
         end: int,
         mut_num: int,
@@ -731,8 +725,6 @@ class SirajSatMutDataset(MpraDataset):
             FASTA file object for sequence extraction
         chromosome : str
             Chromosome name (without 'chr' prefix)
-        length : int
-            Total length of sequence to extract
         start : int
             Start position (0-based, hg19)
         end : int
@@ -774,14 +766,20 @@ class SirajSatMutDataset(MpraDataset):
         chromosome = "chr" + chromosome
         observed_ref1 = str(ref_genome[chromosome][pos[0] : pos[0] + 1]).upper()
         if observed_ref1 != ref[0].upper():
-            return None
+            raise ValueError(
+                f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled ref ({ref[0].upper()}) differs from genomic ({observed_ref1})"
+            )
         if mut_num == 2:
             observed_ref2 = str(ref_genome[chromosome][pos[1] : pos[1] + 1]).upper()
             if observed_ref2 != ref[1].upper():
-                return None
+                raise ValueError(
+                    f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled ref ({ref[1].upper()}) differs genomic ({observed_ref2})"
+                )
         observed_ref = str(ref_genome[chromosome][mut_pos : mut_pos + 1]).upper()
         if observed_ref != mut_ref.upper():
-            return None
+            raise ValueError(
+                f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled target ref ({mut_ref.upper()}) differs from genomic ({observed_ref})"
+            )
 
         try:
             # Handle substitution or insertion

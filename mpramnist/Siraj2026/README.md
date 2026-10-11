@@ -4,7 +4,7 @@
 
 The Siraj dataset is based on results from saturating mutagenesis MPRA experiments ([Siraj et al. 2026](https://doi.org/10.1038/s41586-026-10121-6)). The study focuses on functional dissection of complex trait variants at single-nucleotide resolution across relevant cell types.
 
-These experimentally characterized sequences are proposed as a benchmark dataset for validating machine learning model quality. Specifically, models can be trained on independent data (e.g., Agarwal dataset) and their predictive power can be evaluated on the Siraj MPRA data or SatMut data (see [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/mpramnist/Siraj2026/SirajDataset_example.ipynb)).
+These experimentally characterized sequences are proposed as a benchmark dataset for validating machine learning model quality. Specifically, models can be trained on independent data (e.g., Agarwal dataset) and their predictive power can be evaluated on the Siraj MPRA data or SatMut data (see [Usage Example](./SirajDatasets_example.ipynb)).
 
 ## Tasks
 
@@ -157,7 +157,7 @@ Root directory where data is stored. If None, uses default data directory.
 
 7) Use the `genomic_regions` and `exclude_regions` parameters to select or exclude specific genomic regions across chromosomes in the dataset. *Uses 0-based indexing for genomic coordinates.*
 
-8) **Example Usage**:   See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/examples/KircherDataset_example.ipynb) for detailed usage example and training
+8) **Example Usage**:   See [Usage Example](./SirajDatasets_example.ipynb) for detailed usage example and training
 
 ## Examples
 
@@ -209,7 +209,7 @@ siraj_forw = data.DataLoader(
 )
 ```
 
-See [Usage Example](https://github.com/autosome-imtf/MPRA-MNIST/blob/main/mpramnist/Siraj2026/SirajDataset_example.ipynb) for detailed usage example and training
+See [Usage Example](./SirajDatasets_example.ipynb) for detailed usage example and training
 
 ## Launch Parameters
 
