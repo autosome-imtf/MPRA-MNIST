@@ -110,12 +110,11 @@ class SirajMPRADataset(MpraDataset):
         # Initialize parent class
         super().__init__(split, root)
 
-        if cell_type in self.CELL_TYPE:
-            self.cell_type = cell_type
-        else:
-            raise Exception(f"Wrong cell line provided: {cell_type}")
+        self.cell_type = cell_type.upper()
+        if self.cell_type not in self.CELL_TYPE:
+            raise ValueError(f"Wrong cell line provided: {self.cell_type}")
 
-        self.length = length
+        self.length = int(length)
         self.transform = transform
         self.target_transform = target_transform
         self.genomic_regions = genomic_regions
@@ -124,7 +123,7 @@ class SirajMPRADataset(MpraDataset):
         self.filter_not_emVar = filter_not_emVar
         self.filter_not_active_in_cellline = filter_not_active_in_cellline
         self.filter_not_emVar_in_cellline = filter_not_emVar_in_cellline
-        self.prefix = self.FLAG + "_"  # Prefix for file names
+        self.prefix = self.FLAG  # Prefix for file names
 
         try:
             # Load the data file
@@ -141,7 +140,7 @@ class SirajMPRADataset(MpraDataset):
         if self.filter_not_emVar:
             df = df.loc[df["emVar (any cell-type)"] == True]
 
-        df = df.loc[
+        df = df[
             ["Variant"]
             + df.columns[df.columns.str.endswith(f"{self.cell_type}")].tolist()
         ]
@@ -152,9 +151,9 @@ class SirajMPRADataset(MpraDataset):
             .astype({"Chrom": str, "Pos": int, "Ref": str, "Alt": str})
         )
         df["Pos"] -= 1
-        half_len = length // 2
+        half_len = self.length // 2
         df["Start"] = df.Pos - half_len
-        df["End"] = df.Pos + length - half_len
+        df["End"] = df.Pos + self.length - half_len
 
         if self.filter_not_active_in_cellline:
             df = df.loc[df[f"active in {self.cell_type}"] == True]
@@ -170,6 +169,9 @@ class SirajMPRADataset(MpraDataset):
             f"log2Skew in {self.cell_type}"  # Column containing expression values
         )
         self.ds = df.loc[df[target_column].replace([np.inf, -np.inf], np.nan).notna()]
+
+        self.ds["Chrom"] = self.ds["Chrom"].str.removeprefix("chr")
+        self.ds[target_column] = self.ds[target_column].astype(float)
 
         if self.genomic_regions is not None:
             # If self.genomic_regions is not None filter by genomic regions
@@ -333,7 +335,7 @@ class SirajMPRADataset(MpraDataset):
         ref_genome : pyfaidx.Fasta
             FASTA file object for sequence extraction
         chromosome : str
-            Chromosome name (with 'chr' prefix)
+            Chromosome name (without 'chr' prefix)
         start : int
             Start position (0-based, hg19)
         end : int
@@ -364,6 +366,8 @@ class SirajMPRADataset(MpraDataset):
         - For deletions, the sequence length is maintained by removing the deleted base
         """
         # Verify reference nucleotide matches expected
+        chromosome = "chr" + str(chromosome)
+
         observed_ref = str(ref_genome[chromosome][pos : pos + 1]).upper()
         if observed_ref != ref.upper():
             raise ValueError(
@@ -429,7 +433,7 @@ class SirajSatMutDataset(MpraDataset):
 
     FLAG = "Siraj"
     CELL_TYPE: list[str] = ["K562", "HEPG2"]
-    MUT_NUM: list[int] = [1, 2]
+    BASELINE_ALLELE: list[str] = ["A", "R", "AA", "AR", "RA", "RR"]
 
     PLASMID = "TCGGCTGCGGCGAGCGGTATCAGCTCACTCAAAGGCGGTAATACGGTTATCCACAGAATCAGGGGATAACGCAGGAAAGAACATGTGAGCAAAAGGCCAGCAAAAGGCCAGGAACCGTAAAAAGGCCGCGTTGCTGGCGTTTTTCCATAGGCTCCGCCCCCCTGACGAGCATCACAAAAATCGACGCTCAAGTCAGAGGTGGCGAAACCCGACAGGACTATAAAGATACCAGGCGTTTCCCCCTGGAAGCTCCCTCGTGCGCTCTCCTGTTCCGACCCTGCCGCTTACCGGATACCTGTCCGCCTTTCTCCCTTCGGGAAGCGTGGCGCTTTCTCATAGCTCACGCTGTAGGTATCTCAGTTCGGTGTAGGTCGTTCGCTCCAAGCTGGGCTGTGTGCACGAACCCCCCGTTCAGCCCGACCGCTGCGCCTTATCCGGTAACTATCGTCTTGAGTCCAACCCGGTAAGACACGACTTATCGCCACTGGCAGCAGCCACTGGTAACAGGATTAGCAGAGCGAGGTATGTAGGCGGTGCTACAGAGTTCTTGAAGTGGTGGCCTAACTACGGCTACACTAGAAGAACAGTATTTGGTATCTGCGCTCTGCTGAAGCCAGTTACCTTCGGAAAAAGAGTTGGTAGCTCTTGATCCGGCAAACAAACCACCGCTGGTAGCGGTGGTTTTTTTGTTTGCAAGCAGCAGATTACGCGCAGAAAAAAAGGATCTCAAGAAGATCCTTTGATCTTTTCTACGGGGTCTGACGCTCAGTGGAACGAAAACTCACGTTAAGGGATTTTGGTCATGAGATTATCAAAAAGGATCTTCACCTAGATCCTTTTAAATTAAAAATGAAGTTTTAAATCAATCTAAAGTATATATGAGTAAACTTGGTCTGACAGCGGCCGCAAATGCTAAACCACTGCAGTGGTTACCAGTGCTTGATCAGTGAGGCACCGATCTCAGCGATCTGCCTATTTCGTTCGTCCATAGTGGCCTGACTCCCCGTCGTGTAGATCACTACGATTCGTGAGGGCTTACCATCAGGCCCCAGCGCAGCAATGATGCCGCGAGAGCCGCGTTCACCGGCCCCCGATTTGTCAGCAATGAACCAGCCAGCAGGGAGGGCCGAGCGAAGAAGTGGTCCTGCTACTTTGTCCGCCTCCATCCAGTCTATGAGCTGCTGTCGTGATGCTAGAGTAAGAAGTTCGCCAGTGAGTAGTTTCCGAAGAGTTGTGGCCATTGCTACTGGCATCGTGGTATCACGCTCGTCGTTCGGTATGGCTTCGTTCAACTCTGGTTCCCAGCGGTCAAGCCGGGTCACATGATCACCCATATTATGAAGAAATGCAGTCAGCTCCTTAGGGCCTCCGATCGTTGTCAGAAGTAAGTTGGCCGCGGTGTTGTCGCTCATGGTAATGGCAGCACTACACAATTCTCTTACCGTCATGCCATCCGTAAGATGCTTTTCCGTGACCGGCGAGTACTCAACCAAGTCGTTTTGTGAGTAGTGTATACGGCGACCAAGCTGCTCTTGCCCGGCGTCTATACGGGACAACACCGCGCCACATAGCAGTACTTTGAAAGTGCTCATCATCGGGAATCGTTCTTCGGGGCGGAAAGACTCAAGGATCTTGCCGCTATTGAGATCCAGTTCGATATAGCCCACTCTTGCACCCAGTTGATCTTCAGCATCTTTTACTTTCACCAGCGTTTCGGGGTGTGCAAAAACAGGCAAGCAAAATGCCGCAAAGAAGGGAATGAGTGCGACACGAAAATGTTGGATGCTCATACTCGTCCTTTTTCAATATTATTGAAGCATTTATCAGGGTTACTAGTACGTCTCTCAAGGATAAGTAAGTAATATTAAGGTACGGGAGGTATTGGACAGGCCGCAATAAAATATCTTTATTTTCATTACATCTGTGTGTTGGTTTTTTGTGTGAATCGATAGTACTAACATACGCTCTCCATCAAAACAAAACGAAACAAAACAAACTAGCAAAATAGGCTGTCCCCAGTGCAAGTGCAGGTGCCAGAACATTTCTCTGGCCTAACTGGCCGCTTGACG<__ENHANCER_SEQ__>CACTGCGGCTCCTGCGATCGCGTCGACGAACCTCTAGANNNNNNNNNNNNNNNNNNNNAGATCGGAAGAGCGTCGGCGGCCAAGCTTAGACACTAGAGGGTATATAATGGAAGCTCGACTTCCAGCTTGGCAATCCGGTACTGTTGGTAAAGCCACCATGGTGAGCAAGGGCGAGGAGCTGTTCACCGGGGTGGTGCCCATCCTGGTCGAGCTGGACGGCGACGTAAACGGCCACAAGTTCAGCGTGTCCGGCGAGGGCGAGGGCGATGCCACCTACGGCAAGCTGACCCTGAAGTTCATCTGCACCACCGGCAAGCTGCCCGTGCCCTGGCCCACCCTCGTGACCACCTTGACCTACGGCGTGCAGTGCTTCGCCCGCTACCCCGACCACATGAAGCAGCACGACTTCTTCAAGTCCGCCATGCCCGAAGGCTACGTCCAGGAGCGCACCATCTTCTTCAAGGACGACGGCAACTACAAGACCCGCGCCGAGGTGAAGTTCGAGGGCGACACCCTGGTGAACCGCATCGAGCTGAAGGGCATCGACTTCAAGGAGGACGGCAACATCCTGGGGCACAAGCTGGAGTACAACTACAACAGCCACAAGGTCTATATCACCGCCGACAAGCAGAAGAACGGCATCAAGGTGAACTTCAAGACCCGCCACAACATCGAGGACGGCAGCGTGCAGCTCGCCGACCACTACCAGCAGAACACCCCCATCGGCGACGGCCCCGTGCTGCTGCCCGACAACCACTACCTGAGCACCCAGTCCGCCCTGAGCAAAGACCCCAACGAGAAGCGCGATCACATGGTCCTGCTGGAGTTCGTGACCGCCGCCGGGATCACTCTCGGCATGGACGAGCTGTACAAGTAATGATAATAATTCTAGAGTCGGGGCGGCCGGCCGCTTCGAGCAGACATGATAAGATACATTGATGAGTTTGGACAAACCACAACTAGAATGCAGTGAAAAAAATGCTTTATTTGTGAAATTTGTGATGCTATTGCTTTATTTGTAACCATTATAAGCTGCAATAAACAAGTTAACAACAACAATTGCATTCATTTTATGTTTCAGGTTCAGGGGGAGGTGTGGGAGGTTTTTTAAAGCAAGTAAAACCTCTACAAATGTGGTAAAATCGATAAGGATCCGTCGACCGATGCCCTTGAGAGCCTTCAACCCAGTCAGCTCCTTCCGGTGGGCGCGGGGCATGACTATCGTCGCCGCACTTATGACTGTCTTCTTTATCATGCAACTCGTAGGACAGGTGCCGGCAGCGCTCTTCCGCTTCCTCGCTCACTGACTCGCTGCGCTCGGTCGT"
 
@@ -439,7 +443,7 @@ class SirajSatMutDataset(MpraDataset):
     def __init__(
         self,
         cell_type: str,
-        mut_num: int,
+        baseline_allele: str,
         split: str = "test",
         length: int = 200,
         log2Skew_pval: float | None = None,
@@ -456,7 +460,7 @@ class SirajSatMutDataset(MpraDataset):
         ----------
         cell_type : str
             Cell type to filter by. Must be one of: "K562", "HEPG2".
-        mut_num : int
+        baseline_allele : str
             Number of baseline mutations. Must be 1 or 2.
         split : str, optional
             Specifies how to split the data. Currently only "test" is supported.
@@ -482,24 +486,22 @@ class SirajSatMutDataset(MpraDataset):
         # Initialize parent class
         super().__init__(split, root)
 
-        self.length = length
+        self.length = int(length)
 
-        if cell_type in self.CELL_TYPE:
-            self.cell_type = cell_type
-        else:
-            raise Exception(f"Wrong cell line provided: {cell_type}")
+        self.cell_type = cell_type.upper()
+        if self.cell_type not in self.CELL_TYPE:
+            raise ValueError(f"Wrong cell line provided: {self.cell_type}")
 
-        if mut_num in self.MUT_NUM:
-            self.mut_num = mut_num
-        else:
-            raise Exception(f"Wrong cell line provided: {cell_type}")
+        self.baseline_allele = baseline_allele
+        if self.baseline_allele not in self.BASELINE_ALLELE:
+            raise ValueError(f"Wrong mutation number provided: {self.baseline_allele}")
 
         self.log2Skew_pval = log2Skew_pval
         self.transform = transform
         self.target_transform = target_transform
         self.genomic_regions = genomic_regions
         self.exclude_regions = exclude_regions
-        self.prefix = self.FLAG + "_"  # Prefix for file names
+        self.prefix = self.FLAG  # Prefix for file names
 
         try:
             # Load the data file
@@ -512,25 +514,29 @@ class SirajSatMutDataset(MpraDataset):
 
         # Process data - ensure proper chromosome formatting
         df = df.loc[df["Cell Type"] == self.cell_type]
+        df = df.loc[df["allele"] == self.baseline_allele]
         df = df.loc[df["indel"].isna()]
         df = df.loc[df["oligomut"] != "m0"]
+        df = df.loc[df["window"].isin(["wC", "wL", "wR"])]
         df = df.join(
             df["oligomut"]
-            .str.extract(r"m([ACGT])(\d+)([ACGT])")
-            .set_axis(["mut_ref", "mut_pos", "mut_alt"], axis=1)
-            .astype({"mut_pos": int, "mut_ref": str, "mut_alt": str})
+            .str.extract(r"m([ACGT])(?:\d+)([ACGT])")
+            .set_axis(["mut_ref", "mut_alt"], axis=1)
+            .astype({"mut_ref": str, "mut_alt": str})
         )
-        pos1 = df["pos1"].astype(int) - 1
-        if self.mut_num == 1:
-            df = df.loc[df["pos2"].isna()]
-            pos = pos1
+
+        df["pos1"] = df["pos1"].astype(int) - 1
+        if len(baseline_allele) == 1:
+            pos = df.pos1
         else:
-            df = df.loc[df["pos2"].notna()]
-            pos2 = df["pos2"].astype(int) - 1
-            pos = np.where(df["centervar"] == "var1", pos1, pos2)
+            df["pos2"] = df["pos2"].astype(int) - 1
+            pos = np.where(df["centervar"] == "var1", df.pos1, df.pos2)
         cent_mv = df["window"].map({"wC": 0, "wL": 50, "wR": -50})
-        df["start"] = pos + cent_mv - 100
-        df["end"] = pos + cent_mv + 100
+
+        half_len = self.length // 2
+        df["start"] = pos + cent_mv - half_len + 1
+        df["end"] = pos + cent_mv + self.length - half_len + 1
+        df["mut_pos"] -= 1
 
         df = df.loc[
             (df.apply(lambda row: len(row["ref"]), axis=1) == 1)
@@ -542,7 +548,11 @@ class SirajSatMutDataset(MpraDataset):
         self.ds = df.loc[df[target_column].replace([np.inf, -np.inf], np.nan).notna()]
 
         if self.log2Skew_pval is not None:
+            self.ds["log2Skew_pval"] = self.ds["log2Skew_pval"].astype(float)
             self.ds = self.ds.loc[self.ds["log2Skew_pval"] < self.log2Skew_pval]
+
+        self.ds["mut_pos"] = self.ds["mut_pos"].astype(int)
+        self.ds[target_column] = self.ds[target_column].astype(float)
 
         if self.genomic_regions is not None:
             # If self.genomic_regions is not None filter by genomic regions
@@ -564,11 +574,11 @@ class SirajSatMutDataset(MpraDataset):
                 chromosome=row.chr,
                 start=row.start,
                 end=row.end,
-                mut_num=self.mut_num,
-                pos=(row.pos1 - 1, row.pos2 - 1),
+                baseline_allele=self.baseline_allele,
+                pos=(row.pos1, row.pos2),
                 ref=(row.ref, row.ref2),
                 alt=(row.alt, row.alt2),
-                mut_pos=row.start + row.mut_pos - 1,
+                mut_pos=row.mut_pos + half_len - 100,
                 mut_ref=row.mut_ref,
                 mut_alt=row.mut_alt,
             ),
@@ -582,11 +592,11 @@ class SirajSatMutDataset(MpraDataset):
                 chromosome=row.chr,
                 start=row.start,
                 end=row.end,
-                mut_num=self.mut_num,
-                pos=(row.pos1 - 1, row.pos2 - 1),
+                baseline_allele=self.baseline_allele,
+                pos=(row.pos1, row.pos2),
                 ref=(row.ref, row.ref2),
                 alt=(row.alt, row.alt2),
-                mut_pos=row.start + row.mut_pos - 1,
+                mut_pos=row.mut_pos + half_len - 100,
                 mut_ref=row.mut_ref,
                 mut_alt=row.mut_ref,  # Use reference allele instead of alternative
             ),
@@ -597,13 +607,7 @@ class SirajSatMutDataset(MpraDataset):
         targets = self.ds[target_column].to_numpy()
         seq_alt = self.ds.seq_alt.to_numpy()
         seq_ref = self.ds.seq_ref.to_numpy()
-        seq_var_pos = self.ds.mut_pos.to_numpy() - 1  # Position of the target variant
-        self.ds = {
-            "targets": targets,
-            "seq": seq_ref,
-            "seq_alt": seq_alt,
-            "seq_var_pos": seq_var_pos,
-        }
+        self.ds = {"targets": targets, "seq": seq_ref, "seq_alt": seq_alt}
 
         # Identifier for split information
         self.name_for_split_info = self.prefix
@@ -708,7 +712,7 @@ class SirajSatMutDataset(MpraDataset):
         chromosome: str,
         start: int,
         end: int,
-        mut_num: int,
+        baseline_allele: str,
         pos: Tuple[int, int],
         ref: Tuple[str, str],
         alt: Tuple[str, str],
@@ -729,7 +733,7 @@ class SirajSatMutDataset(MpraDataset):
             Start position (0-based, hg19)
         end : int
             End position (0-based, hg19)
-        mut_num : int
+        baseline_allele : str
             Number of baseline mutations (1 or 2)
         pos : Tuple[int, int]
             Pair of variant positions (0-based, hg19)
@@ -763,31 +767,35 @@ class SirajSatMutDataset(MpraDataset):
         - For deletions, the sequence length is maintained by removing the deleted base
         """
         # Verify reference nucleotide matches expected
-        chromosome = "chr" + chromosome
+        chromosome = "chr" + str(chromosome)
+
         observed_ref1 = str(ref_genome[chromosome][pos[0] : pos[0] + 1]).upper()
         if observed_ref1 != ref[0].upper():
             raise ValueError(
-                f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled ref ({ref[0].upper()}) differs from genomic ({observed_ref1})"
+                f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled ref1 ({ref[0].upper()}) differs from genomic ({observed_ref1})"
             )
-        if mut_num == 2:
+        if len(baseline_allele) == 2:
             observed_ref2 = str(ref_genome[chromosome][pos[1] : pos[1] + 1]).upper()
             if observed_ref2 != ref[1].upper():
                 raise ValueError(
-                    f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled ref ({ref[1].upper()}) differs genomic ({observed_ref2})"
+                    f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled ref2 ({ref[1].upper()}) differs genomic ({observed_ref2})"
                 )
-        observed_ref = str(ref_genome[chromosome][mut_pos : mut_pos + 1]).upper()
-        if observed_ref != mut_ref.upper():
-            raise ValueError(
-                f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled target ref ({mut_ref.upper()}) differs from genomic ({observed_ref})"
-            )
 
         try:
             # Handle substitution or insertion
-            seq = str(ref_genome[chromosome][start : end + 1])
-            seq = seq[: pos[0] - start] + alt[0] + seq[pos[0] - start + 1 :]
-            if mut_num == 2:
+            seq = str(ref_genome[chromosome][start : end + 1]).upper()
+            if baseline_allele[0] == "A":
+                seq = seq[: pos[0] - start] + alt[0] + seq[pos[0] - start + 1 :]
+            if baseline_allele[1:] == "A":
                 seq = seq[: pos[1] - start] + alt[1] + seq[pos[1] - start + 1 :]
-            mut_seq = seq[: mut_pos - start] + mut_alt + seq[mut_pos - start + 1 :]
+
+            observed_ref = seq[mut_pos : mut_pos + 1]
+            if observed_ref != mut_ref.upper():
+                raise ValueError(
+                    f"Error processing {chromosome}:\n{pos}-{ref}>{alt}\n{mut_pos}-{mut_ref}>{mut_alt}\nCalled target ref ({mut_ref.upper()}) differs from genomic ({observed_ref})"
+                )
+
+            mut_seq = seq[:mut_pos] + mut_alt + seq[mut_pos + 1 :]
 
             return mut_seq
         except Exception as e:

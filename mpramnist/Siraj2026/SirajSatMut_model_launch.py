@@ -114,9 +114,9 @@ def parse_args() -> argparse.Namespace:
         help="SirajSatMut cell type to evaluate on.",
     )
     dataset_args.add_argument(
-        "--eval_mut_num",
+        "--eval_baseline_allele",
         type=str,
-        default="HepG2",
+        default="AA",
         help="SirajSatMut cell type to evaluate on.",
     )
 
@@ -398,14 +398,14 @@ def run_single_training_run(
     test_forward_dataset = SirajSatMutDataset(
         length=SIRAJ_ELEMENT_LEN,
         cell_type=args.eval_cell_type,
-        mut_num=args.eval_mut_num,
+        baseline_allele=args.eval_baseline_allele,
         transform=transforms["forward"],
         root=args.root,
     )
     test_reverse_dataset = SirajSatMutDataset(
         length=SIRAJ_ELEMENT_LEN,
         cell_type=args.eval_cell_type,
-        mut_num=args.eval_mut_num,
+        baseline_allele=args.eval_baseline_allele,
         transform=transforms["reverse"],
         root=args.root,
     )
@@ -430,7 +430,7 @@ def run_single_training_run(
         reverse_loader,
         trainer,
         lit_model,
-        f"{args.eval_cell_type}_{args.eval_mut_num}",
+        f"{args.eval_cell_type}_{args.eval_baseline_allele}",
     )
 
     return pearson
